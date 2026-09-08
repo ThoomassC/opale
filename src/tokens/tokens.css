@@ -5,14 +5,21 @@
 
        import '@thomascaron/ui/tokens.css';
 
-   Il assemble les deux couches et pose la base minimale qui doit être vraie
+   Il assemble les trois couches et pose la base minimale qui doit être vraie
    partout : le sol, l'encre, la police, le double anneau de focus et la règle
    de mouvement réduit. Rien d'autre — aucun style de composant ici, aucune
    remise à zéro opinionée qui écraserait le CSS du projet hôte.
+
+   L'ORDRE DES `@import` EST LA DIRECTION DE DÉPENDANCE, et il n'est pas
+   négociable : primitives (des couleurs), puis rôles (des emplois, qui citent
+   des primitives), puis matériaux (du verre et des halos, qui citent les deux).
+   `materials.css` vient en DERNIER parce qu'il lit `--surface` et
+   `--shadow-ink` ; l'inverse laisserait `--glass-fill-solid` sans valeur.
    ========================================================================== */
 
 @import './primitives.css';
 @import './roles.css';
+@import './materials.css';
 
 *,
 *::before,
