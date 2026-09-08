@@ -37,3 +37,25 @@ export {
   ruleBodies,
   stripComments,
 } from './stylesheet.js';
+
+/*
+ * Le SUPPORT composé — la pièce qui manquait, et la seule dont l'absence se
+ * payait en duplication. Le portfolio nommait ses piles de cartes dans son
+ * fichier de test (`CARD_FLOORS`, `WASH_SUPPORTS`), `travels_in_world` dans le
+ * sien (une fonction `stack()` maison) : deux copies d'un même modèle, donc
+ * deux définitions du mot « fond » qui dérivent. Elles arrivent ici.
+ *
+ * `resolveBackdrop` ne recalcule rien : il assemble `resolveToken` et
+ * `compositeLayers` et NOMME le résultat, ce qui est précisément ce qui manque
+ * à un message d'échec quand soixante piles sont mesurées d'un coup.
+ */
+export type { BackdropSpec, LayerSpec } from './backdrop.js';
+export {
+  DECOR_BACKDROPS,
+  GLASS_BACKDROPS,
+  GLASS_LAYERS,
+  SEMANTIC_WASHES,
+  STATE_WASHES,
+  resolveBackdrop,
+  withWash,
+} from './backdrop.js';
