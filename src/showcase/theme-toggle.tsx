@@ -1,61 +1,39 @@
-import type { ThemeChoice } from './use-theme';
 import { useTheme } from './use-theme';
-
-interface ThemeOption {
-  readonly value: ThemeChoice;
-  readonly label: string;
-  readonly glyph: string;
-}
-
-const THEME_OPTIONS: readonly ThemeOption[] = [
-  { value: 'light', label: 'Clair', glyph: '☀' },
-  { value: 'dark', label: 'Sombre', glyph: '☾' },
-  { value: 'system', label: 'Système', glyph: '◐' },
-];
 
 /**
  * Bascule de thème. **Le seul composant à état de tout le dépôt**, et il vit
  * dans la vitrine : `src/components` reste sans hook.
  *
- * Trois radios natives plutôt que trois boutons : le groupe est annoncé comme
- * tel, les flèches du clavier fonctionnent sans une ligne de JavaScript, et
- * l'option retenue est lisible par un lecteur d'écran sans `aria-pressed`.
+ * UN BOUTON UNIQUE `aria-pressed`, reprise du portfolio, en remplacement des
+ * trois radios de la v0.2.0. Ce qui s'en va avec les radios : le groupe annoncé
+ * comme tel, les flèches du clavier gratuites, et l'option retenue lisible sans
+ * ARIA. Ce qui s'en va aussi, et il faut le dire : le troisième état. Une fois
+ * cliqué, ce bouton ne sait plus rendre la main à `prefers-color-scheme` — le
+ * choix est définitif jusqu'au vidage du stockage.
+ *
+ * LE LIBELLÉ NE BASCULE PAS AVEC L'ÉTAT. Un bouton dont le nom passerait à
+ * « Thème clair » en même temps qu'`aria-pressed` devient vrai s'annoncerait
+ * « Thème clair, activé » : double négation, et plus personne ne sait ce qui est
+ * allumé. Le nom dit la CHOSE — « Thème sombre » — et `aria-pressed` dit le OUI.
+ *
+ * Le glyphe est TEXTUEL et masqué. Le portfolio tire son croissant de
+ * `@tabler/icons-react` ; une librairie de socle qui traîne un paquet d'icônes
+ * l'impose à tous ses consommateurs, donc cette dépendance n'entre pas.
  */
 export function ThemeToggle() {
-  const { choice, resolved, setChoice } = useTheme();
+  const { isDarkTheme, toggleTheme } = useTheme();
 
   return (
-    <div className="tc-doc-themetoggle">
-      <fieldset className="tc-doc-themetoggle__set">
-        <legend className="tc-doc-themetoggle__legend">Thème du document</legend>
-        <div className="tc-doc-themetoggle__options">
-          {THEME_OPTIONS.map((option) => (
-            <label key={option.value} className="tc-doc-themetoggle__option">
-              <input
-                className="tc-doc-themetoggle__input"
-                type="radio"
-                name="tc-doc-theme"
-                value={option.value}
-                checked={choice === option.value}
-                onChange={() => setChoice(option.value)}
-              />
-              <span className="tc-doc-themetoggle__face">
-                <span className="tc-doc-themetoggle__glyph" aria-hidden="true">
-                  {option.glyph}
-                </span>
-                {option.label}
-              </span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
-      <p className="tc-doc-themetoggle__state">
-        Rendu actif :{' '}
-        <strong>{resolved === 'dark' ? 'sombre' : 'clair'}</strong>
-        {choice === 'system'
-          ? ' — suit la préférence du système.'
-          : ' — choix explicite, retenu pour la prochaine visite.'}
-      </p>
-    </div>
+    <button
+      className="tc-doc-themetoggle"
+      type="button"
+      aria-pressed={isDarkTheme}
+      onClick={toggleTheme}
+    >
+      <span className="tc-doc-themetoggle__glyph" aria-hidden="true">
+        ☾
+      </span>
+      Thème sombre
+    </button>
   );
 }

@@ -8,6 +8,23 @@
       name="description"
       content="Charte graphique de @thomascaron/ui — la palette teal et cuivre, les échelles et les composants partagés par portfolio et travels_in_world."
     />
+    <!--
+      La couleur de la barre d'adresse mobile, et la SEULE copie en dur de
+      `--site-background` dans tout le dépôt.
+
+      Elle est là parce qu'un attribut HTML ne peut pas citer un jeton CSS : la
+      valeur initiale doit être écrite, et c'est le fond CLAIR — `--site-background`
+      vaut `var(--tc-mist-936)` en thème clair, soit #deedf0 (voir `tokens/roles.css`
+      et `tokens/primitives.css`). Le clair et non le sombre : c'est le thème que
+      la page sert quand rien n'est mémorisé et que l'OS ne demande rien.
+
+      Ensuite elle ne se recopie plus. `useTheme` relit `--site-background` dans
+      la feuille — jamais une constante TypeScript — et réécrit le `content` à
+      chaque bascule. Sans cette balise le hook sort proprement sur `null` : la
+      bascule marche, et la barre d'adresse reste au thème clair en thème sombre,
+      panne muette que rien ne signale.
+    -->
+    <meta name="theme-color" content="#deedf0" />
     <title>Charte graphique — @thomascaron/ui</title>
     <!--
       Le seul script bloquant de la page, et il tient en six lignes.

@@ -36,16 +36,33 @@ function PalettePlate({ plate }: { plate: Plate }) {
           <ul className="tc-doc-swatches">
             {group.swatches.map((swatch) => (
               <li className="tc-doc-swatch" key={swatch.token + swatch.hex}>
+                {/* Un lavis est peint par sa COMPOSITION et non par sa valeur
+                    déclarée : posé tel quel, il se composerait sur le sol de
+                    la plaque alors que son support réel est ailleurs — la
+                    carte, le plus souvent. La valeur déclarée reste affichée en
+                    texte, elle, parce que c'est elle que la feuille porte. */}
                 <span
                   className="tc-doc-swatch__chip"
-                  style={{ background: swatch.hex, borderColor: plate.rule }}
+                  style={{
+                    background: swatch.wash?.composite ?? swatch.hex,
+                    borderColor: plate.rule,
+                  }}
                   aria-hidden="true"
                 />
                 <span className="tc-doc-swatch__meta">
                   <code className="tc-doc-swatch__token">{swatch.token}</code>
-                  <span className="tc-doc-swatch__hex">{swatch.hex}</span>
+                  <span className="tc-doc-swatch__hex">
+                    {swatch.hex}
+                    {swatch.wash ? (
+                      <span className="tc-doc-swatch__against">
+                        {' '}
+                        → {swatch.wash.composite} sur {swatch.wash.over.join(' + ')}
+                      </span>
+                    ) : null}
+                  </span>
                   <span className="tc-doc-swatch__ratio" style={{ color: plate.inkMuted }}>
-                    {swatch.ratio} <span className="tc-doc-swatch__against">{swatch.against}</span>
+                    {swatch.ratio ? `${swatch.ratio} ` : null}
+                    <span className="tc-doc-swatch__against">{swatch.against}</span>
                   </span>
                 </span>
               </li>
@@ -65,21 +82,23 @@ export function PaletteSection() {
       title="La palette"
       lede={
         <>
-          Deux thèmes, une seule matière. Les deux plaques ci-dessous sont rendues avec
-          leurs hexadécimaux littéraux : elles ne suivent pas le thème que vous avez
-          choisi pour cette page, parce qu’elles documentent les deux.
+          Deux thèmes, une seule matière. Les deux plaques ci-dessous sont rendues avec leurs
+          hexadécimaux littéraux : elles ne suivent pas le thème que vous avez choisi pour cette
+          page, parce qu’elles documentent les deux. Les jetons translucides — lavis d’état,
+          remplissage de verre, arrêts de tuile — affichent leur valeur déclarée en{' '}
+          <code>rgba()</code> suivie de l’aplat qu’ils donnent sur leur support : c’est cet aplat
+          que la pastille peint, parce qu’un lavis n’a pas de couleur à lui.
         </>
       }
     >
       <ul className="tc-doc-laws">
         <li className="tc-doc-laws__item tc-doc-laws__item--teal">
-          <strong>Le teal est l’encre des actions.</strong> Boutons, liens, focus,
-          pastilles, états : s’il apparaît, quelque chose est actionnable ou vient de
-          changer.
+          <strong>Le teal est l’encre des actions.</strong> Boutons, liens, focus, pastilles, états
+          : s’il apparaît, quelque chose est actionnable ou vient de changer.
         </li>
         <li className="tc-doc-laws__item tc-doc-laws__item--copper">
-          <strong>Le cuivre est le décor et l’éditorial</strong>, et il ne porte jamais un
-          contrôle — une couleur chaude sur un bouton rompt le contrat.
+          <strong>Le cuivre est le décor et l’éditorial</strong>, et il ne porte jamais un contrôle
+          — une couleur chaude sur un bouton rompt le contrat.
         </li>
         <li className="tc-doc-laws__item tc-doc-laws__item--neutral">
           <strong>Les neutres sont le teal vidé de sa chroma</strong> : la même teinte, la
@@ -103,8 +122,8 @@ export function PaletteSection() {
           </p>
         </header>
         <p className="tc-doc-plate__groupnote">
-          Elles ne signifient jamais seules. Chaque emploi porte un mot et un glyphe ; la
-          couleur n’est que le troisième signal.
+          Elles ne signifient jamais seules. Chaque emploi porte un mot et un glyphe ; la couleur
+          n’est que le troisième signal.
         </p>
 
         {/* `tabIndex` + `role="group"` : le tableau porte une largeur plancher
