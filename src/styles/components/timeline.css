@@ -1,0 +1,134 @@
+/* -----------------------------------------------------------------------------
+   Timeline — recette du PORTFOLIO (`.timeline`, `.timeline-item`, et les règles
+   de contenu `.timeline h3`, `.timeline p`, `.timeline .company`).
+
+   CE FICHIER NE PORTE PAS LA CARTE DE VERRE. Chez le portfolio, `.timeline-item`
+   est AUSSI un `liquid-card` et pose `--liquid-radius` ; ici l'élément ne porte
+   que sa GÉOMÉTRIE — grille à deux colonnes, gouttière, coussin. Le matériau est
+   un autre composant (`Card`, et sa variante de verre), que l'appelant compose
+   en ajoutant sa classe : `className` est fusionné par `cx()`, jamais écrasé.
+   Écrire le verre ici en donnerait deux définitions divergentes.
+
+   DEUX JETONS FLUIDES DU PORTFOLIO N'EXISTENT PAS DANS LA LIBRAIRIE :
+   `--grid-gap` (clamp 1,25rem → 2rem) et `--card-padding` (clamp 1,25rem →
+   2rem). Ils sont remplacés par `--space-5` (1,5rem), qui tombe dans la course
+   des deux clamps — et surtout, `--space-5` est EXACTEMENT le coussin de
+   `.tc-card`. C'est ce qui rend la composition sûre : quand l'appelant empile
+   une classe de carte sur l'élément, les deux déclarations de `padding` valent
+   la même chose et l'ordre d'import des feuilles ne change plus le rendu.
+   Inliner le clamp aurait fait dépendre le coussin de qui est importé en
+   dernier.
+
+   POURQUOI LES RÈGLES DE L'ENTRÉE SONT PRÉFIXÉES `li`, ce qui n'est pas une
+   habitude du dépôt : `.tc-card` pose `display: block` et l'entrée pose
+   `display: grid`. À classe contre classe, la spécificité est la même et
+   c'est l'ORDRE D'IMPORT des feuilles qui trancherait — autrement dit la
+   composition recommandée ci-dessus marcherait ou non selon une décision prise
+   dans un autre fichier. Le sélecteur de type ajoute le dixième de spécificité
+   qui met l'entrée au-dessus, sans toucher à la feuille de la carte. Il n'exige
+   rien de plus du balisage : une entrée de frise EST un `<li>`.
+   -------------------------------------------------------------------------- */
+
+.tc-timeline {
+  display: grid;
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+li.tc-timeline__item {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+/* La deuxième colonne n'existe QUE s'il y a une tuile. Sans ce modificateur,
+   une frise sans icône verrait son contenu enfermé dans une colonne `auto`. */
+li.tc-timeline__item--with-icon {
+  grid-template-columns: auto 1fr;
+}
+
+/* La tuile ne s'étire pas à la hauteur de l'entrée : elle se cale en tête.
+   `:first-child` ne peut pas désigner un `::before` — les pseudo-éléments de la
+   carte de verre, tous deux hors flux, ne prennent donc ni cette règle ni une
+   cellule de la grille. */
+li.tc-timeline__item--with-icon > :first-child {
+  align-self: start;
+}
+
+/* CE BLOC DOIT POSER SES MARGES HAUTES À ZÉRO, ET CE N'EST PAS DU ZÈLE.
+
+   Le portfolio remettait `margin-top` à zéro sur `h1…h4` et sur `p` dans sa
+   base, et donnait `--text-strong` à ses titres (§ 3 de sa source).
+   `tokens.css` ne porte aucune remise à zéro de ce genre — décision assumée de
+   la librairie, qui n'écrase pas le CSS de l'hôte. Résultat mesuré dans cette
+   frise AVANT correction, contre les valeurs du portfolio à droite :
+
+       date → titre      25,3 px      4 px
+       titre → méta      14,0 px      4 px
+       méta → texte      16,0 px     12 px
+
+   Les 25,3 px sont la marge haute de `h4` du navigateur (1,33em), et elle
+   CHANGE avec le niveau demandé : 19 px sous un `h3`, 25 px sous un `h4`. Les
+   14 px sont la marge haute de paragraphe (1em à 14 px). Aucun des deux n'est
+   sur l'échelle de 4, et surtout : à 25 / 14 / 16 px, les quatre lignes de
+   l'entrée sont à peu près ÉQUIDISTANTES, donc plus rien ne se groupe. Chez le
+   portfolio, 4 / 4 / 12 px font lire d'un coup d'œil un premier bloc serré
+   (date, titre, lieu) puis son texte — c'est la proximité qui porte la
+   structure, et c'est elle qui était perdue. */
+/* LE SÉLECTEUR NE STYLE QUE LE NIVEAU DÉCLARÉ, et ce n'est pas cosmétique.
+   Il valait `.tc-timeline__body :is(h3, h4)`, donc les deux niveaux recevaient
+   la même typographie : un `<h4>` posé sous un `<h2>` — saut de niveau,
+   WCAG 1.3.1 — était visuellement IDENTIQUE au `<h3>` correct, et le défaut
+   n'existait qu'à l'oreille. `TimelineItem` déclare désormais son niveau
+   (`level`, 3 par défaut) et pose la classe qui va avec ; un titre écrit à un
+   autre niveau perd cette typographie et se voit immédiatement. Le composant
+   double le signal d'un `console.error`.
+
+   La spécificité est INCHANGÉE — `.tc-timeline__body--h3 h3` pèse 0,1,1 comme
+   `.tc-timeline__body :is(h3, h4)`, `:is()` ne comptant que son argument le
+   plus fort — donc le rapport de force avec `.tc-timeline__body p` (0,1,1) et
+   avec `.tc-timeline__body .tc-timeline__meta` (0,2,0) est le même qu'avant. */
+.tc-timeline__body--h3 h3,
+.tc-timeline__body--h4 h4 {
+  margin-block: 0 var(--space-1);
+  /* `--text-strong`, comme la base du portfolio le donnait à tous ses titres.
+     Sans cette ligne le titre héritait `--text-body` de la carte, et se
+     retrouvait MOINS contrasté que la ligne de méta juste en dessous. */
+  color: var(--text-strong);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.tc-timeline__body p {
+  margin-block-start: 0;
+  color: var(--text-body);
+  line-height: var(--leading-body);
+}
+
+.tc-timeline__body p:last-child {
+  margin-block-end: 0;
+}
+
+/* Ligne secondaire, sous le titre. C'est le `.company` du portfolio DÉBARRASSÉ
+   DE SON VOCABULAIRE : la librairie sert aussi une frise d'étapes de voyage, où
+   cette ligne porte un lieu et non un employeur. `__meta` nomme la place dans
+   la composition, pas la donnée qu'on y met.
+
+   LE SÉLECTEUR EST DESCENDANT PARCE QUE LA VERSION COURTE PERDAIT. `.tc-meta`
+   seul pèse 0,1,0 et `.tc-timeline__body p` juste au-dessus pèse 0,1,1 : la
+   déclaration de couleur de cette règle était donc MORTE, et la ligne de méta
+   se peignait en `--text-body`. Chez le portfolio le rapport était inverse
+   (`.timeline .company` à 0,2,0 contre `.timeline p` à 0,1,1), d'où une panne
+   qui n'existait qu'ici. Le préfixe rétablit le même rapport de force ; le
+   composant enveloppant toujours ses enfants dans `.tc-timeline__body`, il
+   n'exige rien de plus de l'appelant. */
+.tc-timeline__body .tc-timeline__meta {
+  margin-block: 0 var(--space-3);
+  color: var(--text-strong);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}

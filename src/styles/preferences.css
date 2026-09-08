@@ -1,0 +1,101 @@
+/* -----------------------------------------------------------------------------
+   Mouvement réduit.
+
+   `prefers-reduced-motion` demande moins de MOUVEMENT, pas moins de RETOUR
+   D'INFORMATION. On restreint donc la liste des propriétés animables aux
+   propriétés de couleur — le fondu de survol reste, la translation d'appui
+   disparaît — et on garde les 160 ms. Surtout pas `transition: none`.
+
+   La feuille de jetons pose déjà cette règle globalement ; on la redit ici pour
+   que `ui.css` porte son propre contrat, lisible sans ouvrir un autre fichier.
+
+   CE BLOC ÉTAIT ENTIÈREMENT INERTE, ET LES DEUX RAISONS SE VÉRIFIENT SANS
+   NAVIGATEUR. Il est écrit ici parce qu'aucune des deux ne se devine à la
+   lecture d'un seul fichier, et que la panne était silencieuse dans les deux
+   cas : rien ne rougissait, la préférence était simplement ignorée.
+
+   1. `transition-property` / `transition-duration`. `tokens.css` pose les
+      mêmes propriétés sur `*, *::before, *::after` AVEC `!important`. Une
+      déclaration `!important` d'auteur bat une déclaration normale quels que
+      soient l'ordre et la spécificité : les deux lignes ci-dessous, à (0,1,0)
+      et sans `!important`, ne s'appliquaient JAMAIS — et le montage documenté
+      (`tokens.css` puis `ui.css`) rend cette situation la seule qui existe.
+      D'où le `!important` ici : entre deux `!important` d'auteur, c'est la
+      spécificité qui tranche, et `[class*='tc-']` (0,1,0) bat `*` (0,0,0),
+      dans un sens comme dans l'autre de l'ordre d'import.
+
+      LA LISTE DOIT RESTER IDENTIQUE À CELLE DE `tokens.css`, à la propriété
+      près. Elle était un SOUS-ENSEMBLE — `text-decoration-color` et
+      `text-decoration-thickness` manquaient. Tant que la règle perdait, cela
+      n'avait aucun effet ; maintenant qu'elle gagne, une liste plus courte
+      RETIRERAIT le fondu de soulignement des liens à tout élément `tc-`, soit
+      exactement la perte d'utilisabilité que l'en-tête ci-dessus refuse.
+
+   2. `.tc-btn:active { transform: none }` pesait (0,2,0) face aux trois règles
+      d'appui de `button.css`, qui pèsent (0,4,0)
+      (`.tc-btn--primary:not(:disabled):not([aria-disabled='true']):active`, et
+      de même pour `--secondary` et `--danger`). Or `Button` applique TOUJOURS
+      un modificateur — `variant` vaut `'primary'` par défaut — donc aucun
+      bouton ne retombait sur la règle nue et le `translateY(1px)` d'appui
+      restait posé sous `prefers-reduced-motion: reduce`, alors que
+      `tokens.css` annonce que « la translation d'appui disparaît ».
+
+      `!important` plutôt que de recopier les trois sélecteurs de variante :
+      une liste de variantes recopiée ici redeviendrait fausse en silence au
+      quatrième variant, ce qui est précisément le mode de panne qu'on répare.
+      Sous une requête de préférence, « pas de mouvement » n'est pas une
+      suggestion à négocier avec la spécificité — c'est le même raisonnement
+      qui a mis les `!important` du bloc `prefers-reduced-motion` de
+      `tokens.css`, et le seul endroit de la librairie où il vaut.
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  [class*='tc-'] {
+    transition-property:
+      color, background-color, border-color, box-shadow, outline-color, text-decoration-color,
+      text-decoration-thickness !important;
+    transition-duration: var(--motion-color) !important;
+  }
+
+  .tc-btn:active {
+    transform: none !important;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Contraste élevé (forced-colors)
+
+   Le mode contraste élevé de Windows remplace TOUTES les couleurs de l'auteur
+   par la palette système et supprime les `box-shadow`. Un état de la LIBRAIRIE
+   n'y survit pas, parce qu'il n'est peint que par une couleur : le bouton
+   `aria-disabled`. Un `<button disabled>` reçoit `GrayText` du navigateur, mais
+   `aria-disabled` n'est qu'un attribut ARIA — aucun agent utilisateur ne le
+   grise. On le fait explicitement, et c'est tout ce que ce bloc contient.
+
+   CE BLOC PORTAIT AUSSI LA BASCULE DE THÈME, ET IL NE LA PORTE PLUS. La
+   bascule était un groupe de radios masquées par `opacity: 0`, dont l'option
+   cochée n'était signalée que par `background: var(--accent)` : en contraste
+   élevé les trois options devenaient identiques, d'où deux règles qui rendaient
+   la radio native à l'écran pour laisser le système dessiner la coche. Ce
+   balisage a disparu — la bascule est désormais un bouton unique portant
+   `aria-pressed`, et les deux règles ne correspondaient plus à aucun nœud.
+   Elles sont retirées, et leur remplaçante vit dans `doc.css`, à la fin du bloc
+   `.tc-doc-themetoggle` : un `@media (forced-colors: active)` qui repeint
+   l'état enfoncé en `Highlight` / `HighlightText`. Sa place est là et pas ici,
+   parce que la bascule est un objet de la VITRINE — `doc.css` n'est ni importé
+   par `ui.css` ni publié dans le paquet.
+
+   `GrayText` est un mot-clé de couleur SYSTÈME, pas un littéral : c'est la
+   seule façon d'écrire ce mode, et aucun jeton ne peut l'exprimer. Seule
+   dérogation à la règle 1, et elle est enfermée ici.
+
+   `Tag` et `Pill` n'ont besoin de rien : le premier se distingue par le style
+   de sa bordure, le second par son glyphe — deux signaux que le mode conserve.
+   -------------------------------------------------------------------------- */
+
+@media (forced-colors: active) {
+  .tc-btn[aria-disabled='true'] {
+    color: GrayText;
+    border-color: GrayText;
+  }
+}

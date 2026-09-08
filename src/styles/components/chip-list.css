@@ -1,0 +1,28 @@
+/* -----------------------------------------------------------------------------
+   ChipList — recette du PORTFOLIO (`.skill-group ul, .experience-stack,
+   .project-stack` et leur règle `:empty`).
+
+   CETTE FEUILLE NE PORTE QUE LE CONTENEUR. Le style de la chip elle-même est
+   celui de `Tag` en variante `plain` — le portfolio l'écrivait sur son `li`,
+   la librairie a déjà une étiquette pour ça, et en avoir deux ferait deux
+   pilules à maintenir. `ChipList` rend donc un `Tag` par entrée.
+
+   LA RÈGLE `:empty` EST UNE CEINTURE, PAS LA BRETELLE : le composant rend déjà
+   `null` sur une liste vide, de sorte qu'aucune liste sans entrée ne soit
+   annoncée par un lecteur d'écran. La règle CSS ne rattrape que le cas où le
+   `<ul>` est écrit à la main, hors du composant. Les deux se justifient, aucune
+   ne dispense de l'autre.
+   -------------------------------------------------------------------------- */
+
+.tc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tc-chips:empty {
+  display: none;
+}

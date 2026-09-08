@@ -1,0 +1,291 @@
+/* -----------------------------------------------------------------------------
+   Backdrop — l'hôte du décor, et les six halos qu'il contient.
+
+   Porté depuis `portfolio/src/index.css` § 5 « Décor : halos lumineux diffus »
+   (lignes 843-1013) pour les disques, et depuis la règle `.portfolio-page`
+   (ligne 757) pour l'hôte. Les valeurs sont celles de la source ; trois choses
+   seulement changent de nom :
+     `.portfolio-page`      → `.tc-backdrop`
+     `.liquid-bubble`       → `.tc-backdrop__halo`
+     `.liquid-bubble-<n>`   → `.tc-backdrop__halo--<n>`
+   et les deux `@keyframes` prennent le préfixe du dépôt (`tc-halo-breathe`,
+   `tc-halo-parallax`) : un nom d'animation est GLOBAL chez le consommateur, et
+   `halo-breathe` était un squat de l'espace de noms.
+
+   L'HÔTE N'EST PAS DÉCORATIF, il est structurel. Les disques sont
+   `position: absolute` : sans un ancêtre positionné, ils se rattachent au
+   premier bloc positionné au-dessus — ou au bloc initial — et s'échappent de
+   leur section. Le trio est indissociable :
+     `position: relative` donne le bloc conteneur des disques ;
+     `isolation: isolate` ferme le contexte d'empilement, sans quoi le
+       `z-index` des disques se compare aux calques de la page entière ;
+     `overflow: clip` coupe les disques qui débordent (ils sont posés à
+       `-14vw`, donc ils débordent toujours) et supprime le défilement
+       horizontal qu'ils créeraient. `clip` et non `hidden` : mesuré, `hidden`
+       crée un conteneur de défilement et tue un `position: sticky` enfant.
+   `glass.structure.test.ts` échoue si l'un des trois disparaît, parce que la
+   panne est SILENCIEUSE : rien ne casse, le décor passe simplement par-dessus
+   le contenu.
+
+   `z-index: -1` SUR LES DISQUES, ET C'EST UNE DIVERGENCE ASSUMÉE AVEC LA
+   SOURCE, qui les met à `z-index: 0`. Elle est mesurée, pas supposée.
+
+   À `z-index: 0`, un disque se peint à l'étape des descendants POSITIONNÉS,
+   donc au-dessus de tout enfant en flux non positionné. Le portfolio y échappe
+   par accident : son contenu est fait de `.liquid-card`, qui sont
+   `position: relative`. Une `Card` en variante `flat` ne l'est pas — et
+   `Backdrop` accepte n'importe quel enfant. Sonde de peinture (Chromium 151,
+   capture recadrée sur la carte, halos visibles puis masqués) : les pixels à
+   L'INTÉRIEUR d'une carte opaque changeaient selon la présence des halos, ce
+   qui sur un fond opaque ne peut vouloir dire qu'une chose — le décor était
+   peint PAR-DESSUS le texte.
+
+   À `z-index: -1` dans un hôte isolé, les disques se peignent après le fond de
+   l'hôte et avant tout contenu : ils restent visibles, et plus rien n'exige du
+   consommateur que ses enfants soient positionnés. C'est l'hôte qui tient la
+   garantie, ce qui est exactement son rôle. Revérifié par la même sonde après
+   le changement — voir le rapport de mesure.
+   -------------------------------------------------------------------------- */
+
+.tc-backdrop {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  background: var(--site-background);
+}
+
+.tc-backdrop__halo {
+  position: absolute;
+  /* -1 et non 0 : voir la note d'en-tête, c'est la seule divergence mesurée
+     avec la source. Sûr uniquement parce que l'hôte est isolé — sans
+     `isolation: isolate`, un `z-index: -1` passerait derrière le fond de
+     l'ancêtre au lieu de rester dans l'hôte. */
+  z-index: -1;
+  display: block;
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 50%;
+  /* Disques pleins : ni dégradé, ni cœur éclairci, ni bord fondu. Le dégradé radial
+     précédent mélangeait le centre à du blanc et s'éteignait vers le transparent, si
+     bien que les bulles n'étaient jamais des cercles complets. C'est le remplissage
+     teinté des cartes, et non l'effacement des bulles, qui protège le texte. */
+  background: var(--halo-tint);
+  opacity: var(--halo-opacity);
+  box-shadow: none;
+  pointer-events: none;
+}
+
+/* Trois disques sur six sont CHAUDS. C'est la moitié décorative du contrat de
+   couleur : le teal des actions ne se lit comme un signal que si le champ autour
+   de lui n'est pas teal aussi. Du décor, jamais un contrôle.
+
+   Le nombre et la répartition ne sont pas réglables par le composant, et c'est
+   la mesure qui l'interdit : la parité des deux halos est épinglée par le
+   contrat de couleur à 0,086 de ΔE OKLab près en clair (13,28 froid contre
+   13,36 chaud) et 0,062 en sombre. Trois-trois est la répartition mesurée. */
+.tc-backdrop__halo--two,
+.tc-backdrop__halo--four,
+.tc-backdrop__halo--six {
+  background: var(--halo-tint-warm);
+}
+
+/* Positions en pourcentage de la hauteur de l'hôte : plus de décalage magique en
+   rem qui se déplace dès que le contenu change. */
+.tc-backdrop__halo--one {
+  top: 3%;
+  left: -14vw;
+  width: min(34vw, 26rem);
+}
+
+.tc-backdrop__halo--two {
+  top: 1%;
+  right: -12vw;
+  width: min(30vw, 24rem);
+}
+
+.tc-backdrop__halo--three {
+  top: 21%;
+  right: 3vw;
+  width: min(16vw, 13rem);
+}
+
+.tc-backdrop__halo--four {
+  top: 44%;
+  left: -12vw;
+  width: min(28vw, 22rem);
+}
+
+.tc-backdrop__halo--five {
+  top: 66%;
+  right: -9vw;
+  width: min(24vw, 19rem);
+}
+
+.tc-backdrop__halo--six {
+  bottom: 4%;
+  left: -8vw;
+  width: min(22vw, 17rem);
+}
+
+/* Mouvement des halos.
+   Sans cela le décor défile à la vitesse exacte des cartes : rien ne change derrière
+   le verre, et le matériau paraît figé — un verre ne se lit comme du verre que si son
+   arrière-plan bouge par rapport à lui.
+
+   Deux animations superposées, sur des propriétés DISJOINTES pour ne pas se marcher
+   dessus : la dérive lente joue sur `scale`/`rotate` (pilotée par le temps, donc active
+   même à l'arrêt), la parallaxe joue sur `translate` (pilotée par le défilement). Les
+   propriétés de transformation individuelles évitent le conflit qu'auraient deux
+   animations d'un même `transform`.
+
+   La parallaxe est derrière @supports : sans scroll-driven animations (Firefox), il
+   reste la dérive, ce qui est une dégradation acceptable.
+
+   AUCUN RACCOURCI `animation` DANS CE BLOC, ET C'EST LA CORRECTION D'UN BUG RÉEL.
+   Un raccourci remet à leur valeur INITIALE toutes les propriétés qu'il ne cite pas.
+   Le `animation: tc-halo-breathe 26s … , tc-halo-parallax linear` que portait le
+   `@supports` ci-dessous était déclaré APRÈS les cinq blocs de durée par disque et à
+   spécificité ÉGALE (0,1,0 — `@supports` n'ajoute aucune spécificité) : il ramenait
+   donc `animation-duration` à 26s et `animation-delay` à 0s pour les SIX disques, les
+   cinq blocs suivants ne redéclarant que des `--halo-travel-*`. Résultat mesurable à
+   la lecture : partout où les animations de défilement existent — Chromium ≥ 115,
+   Safari ≥ 26, Edge — les six disques respiraient sur le même cycle de 26 s et en
+   phase, et la promesse « les halos ne se resynchronisent jamais » n'était vraie que
+   sous Firefox, seul moteur à ne pas satisfaire le `@supports`. Panne SILENCIEUSE :
+   rien ne casse, le décor est seulement plus pauvre qu'annoncé.
+
+   La durée et le décalage de chaque disque passent désormais par des PROPRIÉTÉS
+   PERSONNALISÉES, et c'est ce qui rend la promesse tenable plutôt que seulement
+   écrite : une custom property n'est pas une propriété d'animation, aucun raccourci
+   ne peut la réinitialiser, et sa valeur atterrit à la bonne place de la liste quel
+   que soit le nombre d'animations superposées. `glass.structure.test.ts` interdit le
+   raccourci dans cette feuille et vérifie que les six durées restent distinctes. */
+
+@keyframes tc-halo-breathe {
+  from {
+    scale: 1;
+    rotate: 0deg;
+  }
+  to {
+    scale: 1.14;
+    rotate: 7deg;
+  }
+}
+
+@keyframes tc-halo-parallax {
+  from {
+    translate: 0 var(--halo-travel-from, 14vh);
+  }
+  to {
+    translate: 0 var(--halo-travel-to, -22vh);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tc-backdrop__halo {
+    animation-name: tc-halo-breathe;
+    animation-duration: var(--halo-breathe-duration, 26s);
+    animation-delay: var(--halo-breathe-delay, 0s);
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+  }
+
+  /* Durées premières entre elles : les halos ne se resynchronisent jamais. Le
+     disque `--one` prend le repli du bloc ci-dessus (26 s, sans décalage) : 26
+     n'est pas premier, mais il est premier AVEC les cinq autres — 26 = 2 × 13 —
+     et c'est tout ce que la promesse demande. */
+  .tc-backdrop__halo--two {
+    --halo-breathe-duration: 31s;
+    --halo-breathe-delay: -7s;
+  }
+
+  .tc-backdrop__halo--three {
+    --halo-breathe-duration: 19s;
+    --halo-breathe-delay: -12s;
+  }
+
+  .tc-backdrop__halo--four {
+    --halo-breathe-duration: 37s;
+    --halo-breathe-delay: -4s;
+  }
+
+  .tc-backdrop__halo--five {
+    --halo-breathe-duration: 23s;
+    --halo-breathe-delay: -16s;
+  }
+
+  .tc-backdrop__halo--six {
+    --halo-breathe-duration: 29s;
+    --halo-breathe-delay: -9s;
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .tc-backdrop__halo {
+      /* Amplitudes croissantes = impression de profondeur : les halos « proches »
+         se déplacent plus que les halos « lointains ». */
+      --halo-travel-from: 10vh;
+      --halo-travel-to: -18vh;
+      /* Les sept longhands en LISTE DE DEUX, dans l'ordre `breathe, parallax`, et
+         jamais le raccourci : chaque valeur doit tomber sur la bonne animation, et
+         la durée de la dérive doit rester celle du disque. `auto` pour la
+         parallaxe est ce que le raccourci lui donnait implicitement — sur une
+         timeline de progression, c'est la totalité du défilement. */
+      animation-name: tc-halo-breathe, tc-halo-parallax;
+      animation-duration: var(--halo-breathe-duration, 26s), auto;
+      animation-delay: var(--halo-breathe-delay, 0s), 0s;
+      animation-timing-function: ease-in-out, linear;
+      animation-iteration-count: infinite, 1;
+      animation-direction: alternate, normal;
+      animation-timeline: auto, scroll(root block);
+    }
+
+    .tc-backdrop__halo--two {
+      --halo-travel-from: 16vh;
+      --halo-travel-to: -30vh;
+    }
+
+    .tc-backdrop__halo--three {
+      --halo-travel-from: 24vh;
+      --halo-travel-to: -46vh;
+    }
+
+    .tc-backdrop__halo--four {
+      --halo-travel-from: 12vh;
+      --halo-travel-to: -22vh;
+    }
+
+    .tc-backdrop__halo--five {
+      --halo-travel-from: 20vh;
+      --halo-travel-to: -36vh;
+    }
+
+    .tc-backdrop__halo--six {
+      --halo-travel-from: 14vh;
+      --halo-travel-to: -26vh;
+    }
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   TRANSPARENCE RÉDUITE — porté depuis `portfolio/src/index.css`, bloc
+   `@media (prefers-reduced-transparency: reduce)` (`.liquid-bubble
+   { display: none }`). Il ne l'avait pas été, et l'absence était une
+   demi-promesse écrite en trois endroits : `materials.css` annonce un repli
+   opaque « quand la transparence réduite est demandée », `contract/backdrop.ts`
+   reprend la phrase, `roles.css` dit que la carte « peut bien perdre son
+   backdrop-filter ». Aucun de ces trois fichiers ne mentait sur les JETONS —
+   ils s'aplatissent bien — mais rien, côté composants, ne rendait le verre
+   opaque ni ne retirait le décor.
+
+   `display: none` et non une opacité nulle : ce qui est demandé, c'est de ne
+   pas dépendre de ce qui passe derrière. Un disque à `opacity: 0` reste une
+   couche composée, et l'hôte garde son `--site-background` — le sol reste donc
+   peint, seul le décor s'en va.
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-transparency: reduce) {
+  .tc-backdrop__halo {
+    display: none;
+  }
+}

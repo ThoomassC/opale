@@ -1,0 +1,253 @@
+/* -----------------------------------------------------------------------------
+   Card — DEUX MATÉRIAUX, un seul socle.
+
+   `.tc-card` est le socle commun : boîte, rythme intérieur, encre. Il porte
+   aussi le rendu OPAQUE (`--surface`, `--border-subtle`, `--radius-md`), qui
+   reste le rendu de la variante `flat` seule.
+
+   `.tc-card--glass` (plus bas) rejoue les mêmes propriétés de boîte avec les
+   valeurs du verre. Les deux sélecteurs ont la MÊME spécificité (une classe) :
+   c'est donc l'ORDRE DU DOCUMENT qui décide, et le bloc verre doit rester
+   APRÈS ce socle et après les crans d'élévation. Ne pas remonter ce bloc.
+
+   Les crans d'élévation appartiennent à la variante opaque : la polarité de
+   l'élévation s'inverse entre les thèmes, d'où le liseré posé systématiquement
+   en plus de l'ombre. Le verre, lui, porte sa propre ombre — le composant ne
+   pose jamais `--elev-*` et `--glass` ensemble.
+   -------------------------------------------------------------------------- */
+
+.tc-card {
+  display: block;
+  padding: var(--space-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  /* MÊME SUPERELLIPSE QUE LE VERRE, et c'est ce qui permet de dire « même
+     carte, autre matériau ». Avant cette ligne, la variante `flat` était la
+     seule carte de la librairie à coins en arcs de cercle : posée dans la même
+     rangée que trois cartes de verre — la scène de la vitrine fait exactement
+     ça — elle se lisait comme un objet étranger et non comme la même boîte dans
+     un autre matériau. Le RAYON, lui, reste différent (`--radius-md` contre
+     `--radius-lg` du verre) : c'est une question ouverte, pas un oubli, et elle
+     appartient à qui décide de la charte. */
+  corner-shape: superellipse(1.45);
+  background: var(--surface);
+  color: var(--text-body);
+  /* WCAG 1.4.10 / 1.4.4, ET C'EST POSÉ SUR LE SOCLE POUR ATTEINDRE LE VERRE.
+     `overflow-wrap` s'HÉRITE, et le composant émet toujours les deux classes
+     (`card.tsx` : `'tc-card'` puis la variante) — cette ligne couvre donc la
+     carte de verre sans toucher à son bloc, qui est un déplacement verbatim.
+
+     Ce qu'elle répare : `.tc-card--glass` porte `overflow: hidden`, si bien
+     qu'une URL non coupable, un identifiant long ou un extrait de code plus
+     large que la carte perdait sa fin — sans barre de défilement (`hidden`
+     n'en montre pas) et sans accès clavier (un conteneur `overflow: hidden`
+     n'est pas défilable par l'utilisateur). À 200 % de zoom ou en 320 px de
+     large, la fin du contenu était donc définitivement inatteignable.
+     `anywhere` et non `break-word` : seul `anywhere` compte les points de
+     coupure dans la taille min-content, ce qui laisse en plus la carte se
+     rétrécir quand elle est l'élément d'un flex. `message.css` pose la même
+     protection sur son propre corps, par `min-inline-size: 0`. */
+  overflow-wrap: anywhere;
+}
+
+.tc-card--elev-0 {
+  box-shadow: var(--elevation-0);
+}
+
+.tc-card--elev-1 {
+  box-shadow: var(--elevation-1);
+}
+
+.tc-card--elev-2 {
+  box-shadow: var(--elevation-2);
+}
+
+.tc-card--elev-3 {
+  box-shadow: var(--elevation-3);
+}
+
+/* -----------------------------------------------------------------------------
+   Card, variante VERRE — le rendu par défaut.
+
+   DÉPLACEMENT VERBATIM depuis `portfolio/src/index.css` § 6 « Verre liquide »
+   (lignes 1019-1097 de la source). Seul le nom de classe change
+   (`.liquid-card` → `.tc-card--glass`) : mêmes valeurs, même ordre de
+   propriétés, mêmes commentaires, y compris la variable locale
+   `--liquid-radius`.
+
+   NE PAS « nettoyer au passage ». La coexistence de `backdrop-filter` et de
+   `mask` sur ces trois couches a déjà coûté un bug de rendu réel (voir le
+   commentaire du `::before`), et rien dans ce dépôt ne peut le rejouer : jsdom
+   ne peint pas, il n'y a pas de Playwright. Toute simplification est un pari
+   non vérifiable. `glass.structure.test.ts` ne garde que la FORME de ces
+   règles ; leur rendu, lui, se vérifie dans un navigateur.
+
+   DEUX OCTETS RESTENT HORS STYLE DU DÉPÔT, et c'est su : les `content: ""` du
+   `::before` et du `::after`. Le portfolio écrit prettier en `singleQuote:
+   false`, ce dépôt en `singleQuote: true`, donc `npm run format` les
+   réécrira en `content: ''`. Les deux chaînes sont la même chaîne vide — la
+   réécriture ne change rien au rendu, elle rompt seulement l'égalité à
+   l'octet avec la source. Le jour où le formateur passe, c'est la seule
+   différence attendue.
+
+   ET DEUX COULEURS LITTÉRALES, QUI SONT UNE VRAIE ENTORSE — pas une question
+   de formatage. Les deux `box-shadow … inset` du bloc ci-dessous s'écrivent
+   `rgba(255, 255, 255, 0.22)` et `rgba(0, 0, 0, 0.18)`, alors que la règle 1
+   de l'en-tête de `ui.css` n'admet que des `var(--token)`. Rien ne les voit :
+   le garde de `primitives.contract.test.ts` ne cherche que des
+   HEXADÉCIMAUX, et un `rgba()` lui passe sous le nez.
+
+   Ce qu'elles coûtent, exactement : ces deux liserés de ménisque — un filet
+   clair en haut, un filet sombre en bas, le biseau qui donne son épaisseur au
+   verre — NE BASCULENT PAS AVEC LE THÈME. Ils gardent la même valeur en clair
+   et en sombre, là où tout le reste du verre reprend le neutre clair de la
+   palette dans le thème sombre (voir `--glass-specular` et `--glass-highlight`
+   dans `materials.css`). Aucune mesure de contraste ne les regarde non plus :
+   ce sont des ornements de 1 px, ils ne portent ni texte ni forme de contrôle,
+   donc ni 1.4.3 ni 1.4.11 ne s'y appliquent. Le défaut est esthétique et
+   théorique, pas un manquement d'accessibilité.
+
+   POURQUOI ELLES SONT ENCORE LÀ : les tokeniser demande deux jetons de
+   matériau, donc une modification de `materials.css` — et deux primitives,
+   dont une seule existe (`--tc-white-a40` est à 0,40, il faudrait un
+   `--tc-white-a22`, et `rgba(0, 0, 0, 0.18)` est un noir PUR qu'aucune
+   primitive ne porte : `--tc-pitch-a20` vaut rgb(0, 4, 6) à 0,20). Les noms
+   proposés sont `--glass-bevel-light` et `--glass-bevel-shade`, à déclarer
+   dans le § matériaux du verre à côté de `--glass-specular`, avec une valeur
+   propre au thème sombre. Cette dette appartient à qui possède la couche des
+   matériaux ; elle est écrite ici pour ne plus être invisible.
+   -------------------------------------------------------------------------- */
+
+.tc-card--glass {
+  --liquid-radius: var(--radius-lg);
+  position: relative;
+  isolation: isolate;
+  /* SEUL ÉCART DE VALEUR avec la source du portfolio, qui écrit `hidden`, et il
+     est mesuré : `hidden` crée un conteneur de défilement qui devient le
+     référentiel de tout `position: sticky` enfant, `clip` n'en crée pas. La
+     sonde de `backdrop.css` (Chromium 151, trois positions de défilement) donne
+     la barre collante à `rect.top` 0/0/0 sous `clip` et −300/−900/−1000 sous
+     `hidden`. Une carte est bien plus susceptible qu'un hôte de décor de
+     contenir un en-tête de tableau collant, et le clip est identique dans les
+     deux cas : le changement n'a aucun coût visuel. La troncature du contenu
+     large, elle, est réparée sur le socle par `overflow-wrap: anywhere`. */
+  overflow: clip;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--liquid-radius);
+  corner-shape: superellipse(1.45);
+  /* Verre franchement transparent : le contraste tient parce que les halos derrière
+     sont diffus, pas parce que le remplissage masque le fond. */
+  background: var(--glass-fill);
+  box-shadow:
+    0 1.5rem 3rem -0.75rem var(--glass-shadow),
+    0 0.0625rem 0 rgba(255, 255, 255, 0.22) inset,
+    0 -0.0625rem 0 rgba(0, 0, 0, 0.18) inset;
+  /* Traitement du BORD : peu de flou, forte saturation, léger gain de luminosité.
+     Le centre est recouvert par ::before, il ne reste donc visible que sur la bande
+     périphérique — c'est le ménisque. */
+  backdrop-filter: blur(var(--glass-edge-blur)) saturate(var(--glass-edge-saturate))
+    brightness(var(--glass-edge-brightness));
+  -webkit-backdrop-filter: blur(var(--glass-edge-blur)) saturate(var(--glass-edge-saturate))
+    brightness(var(--glass-edge-brightness));
+}
+
+/* Cœur du verre : rentré de la largeur du ménisque, il porte le flou de lecture et les
+   reflets diffus. Le contraste du texte se joue ici, pas sur la bande de bord.
+   `z-index: -1` le place au-dessus du fond de la carte et sous son contenu — un masque
+   est impossible sur cette couche, car un backdrop-filter annule le masque (vérifié :
+   Chromium 151 perd complètement le masque quand les deux coexistent). */
+.tc-card--glass::before {
+  position: absolute;
+  z-index: -1;
+  inset: var(--glass-edge-width);
+  border-radius: calc(var(--liquid-radius) - var(--glass-edge-width));
+  corner-shape: inherit;
+  background: var(--glass-highlight);
+  content: "";
+  pointer-events: none;
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+
+/* Liseré spéculaire : un anneau fin (masque en `exclude`), sans backdrop-filter. */
+.tc-card--glass::after {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  padding: var(--glass-rim-width);
+  border-radius: inherit;
+  corner-shape: inherit;
+  background: var(--glass-specular);
+  content: "";
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.tc-card--glass > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Sans backdrop-filter, un verre à alpha 0.14 laisserait le texte à même le halo :
+   le remplissage doit alors devenir opaque. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .tc-card--glass {
+    background: var(--glass-fill-solid);
+  }
+
+  .tc-card--glass::before {
+    background: var(--glass-highlight), var(--glass-fill-solid);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   TRANSPARENCE RÉDUITE — le SECOND chemin vers le repli opaque, porté depuis
+   `portfolio/src/index.css`, bloc `@media (prefers-reduced-transparency:
+   reduce)` (règle `.liquid-card`, mêmes trois déclarations).
+
+   Il manquait, et son absence rendait FAUX trois commentaires du dépôt qui
+   l'annonçaient déjà : `materials.css` (« le repli OPAQUE, servi quand
+   `backdrop-filter` manque OU quand la transparence réduite est demandée »),
+   `contract/backdrop.ts` (même phrase, en justification de `GLASS_BACKDROPS`)
+   et `roles.css` (« `.liquid-card` peut bien perdre son `backdrop-filter` » —
+   dans cette librairie, il ne le perdait jamais). Les trois redeviennent vrais
+   d'eux-mêmes ; aucun n'a été touché.
+
+   CE QUI ÉTAIT CASSÉ N'ÉTAIT PAS SEULEMENT « un verre resté translucide ».
+   `roles.css` et `materials.css` aplatissent bien leurs lavis sous cette
+   préférence, et chacune de leurs valeurs est la composition MESURÉE du jeton
+   translucide sur `--surface`. Sans le bloc ci-dessous, la carte gardait
+   `var(--glass-fill)` à alpha 0,40 et son `backdrop-filter` : ces valeurs
+   aplaties se composaient donc sur un verre encore translucide posé sur un
+   halo, c'est-à-dire sur un support autre que celui contre lequel elles ont
+   été mesurées. Aplatir les jetons sans aplatir le matériau ne rapproche pas
+   de la mesure, ça la contredit.
+
+   `@supports not` et cette requête média sont INDÉPENDANTS : le premier
+   répond à un moteur qui ne sait pas filtrer, la seconde à une personne qui
+   demande à ne pas dépendre de ce qui passe derrière. Un même repli, deux
+   causes ; c'est pourquoi la déclaration se répète plutôt que de se factoriser
+   avec le bloc précédent — les fusionner exigerait un `@supports` imbriqué
+   dans un `@media` dont la moitié des combinaisons est fausse.
+
+   LE `::before` GARDE SON `backdrop-filter`, comme dans la source, et ce n'est
+   pas un oubli : le cœur est à `z-index: -1` dans un hôte `isolation:
+   isolate`, il se peint donc AU-DESSUS du fond de la carte, devenu opaque par
+   la règle ci-dessous. Son filtre n'a alors plus rien de translucide à
+   révéler. Le retirer serait un écart avec le portfolio sans gain mesuré.
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-transparency: reduce) {
+  .tc-card--glass {
+    background: var(--glass-fill-solid);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

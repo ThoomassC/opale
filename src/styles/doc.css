@@ -1,0 +1,977 @@
+/* =============================================================================
+   VITRINE — `tc-doc-*`
+
+   Ce qui suit habille la page de charte et n'appartient pas à la librairie.
+   C'est dans le même fichier parce que le projet n'a qu'une seule feuille, à
+   plat : pas de CSS Modules, pas de CSS-in-JS, pas d'`import './x.css'` dans un
+   `.tsx`. Les mêmes règles s'appliquent — pas une couleur littérale, pas une
+   longueur hors jeton.
+   ========================================================================== */
+
+.tc-doc {
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+}
+
+.tc-doc-shell {
+  inline-size: 100%;
+  max-inline-size: calc(var(--space-8) * 18);
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+}
+
+.tc-doc-prose {
+  max-inline-size: var(--measure);
+  margin-block: 0;
+}
+
+.tc-doc-mono,
+.tc-doc-inlinecode {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.tc-doc-inlinecode {
+  margin-inline: var(--space-1);
+  color: var(--text-accent);
+}
+
+.tc-doc code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+/* --- Lien d'évitement ------------------------------------------------------ */
+
+.tc-doc-skip {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-start: var(--space-2);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target-min);
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+  transform: translateY(calc(-1 * (var(--space-8) + var(--space-4))));
+  transition: transform var(--motion-move) var(--motion-ease);
+}
+
+.tc-doc-skip:focus-visible {
+  transform: translateY(0);
+  /* Même correction que le bloc de focus des composants : l'outline porte
+     l'anneau EXTÉRIEUR, sans quoi il repeint la bande 2-4 px. */
+  outline: 3px solid var(--focus-outer);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--focus-inner),
+    0 0 0 5px var(--focus-outer);
+}
+
+/* --- En-tête --------------------------------------------------------------- */
+
+.tc-doc-masthead {
+  padding-block: var(--section-space) var(--space-7);
+  border-block-end: 1px solid var(--rule);
+}
+
+.tc-doc-eyebrow {
+  margin: 0 0 var(--space-3);
+  color: var(--accent-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tc-doc-title {
+  margin: 0 0 var(--space-5);
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: var(--text-display-md);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-heading);
+}
+
+.tc-doc-lede {
+  font-size: var(--text-md);
+}
+
+.tc-doc-lede + .tc-doc-lede {
+  margin-block-start: var(--space-4);
+}
+
+.tc-doc-lede--quiet {
+  color: var(--text-muted);
+  font-size: var(--text-base);
+}
+
+/* --- Bascule de thème ------------------------------------------------------
+   UN BOUTON `aria-pressed`, à la place des trois radios de la v0.2.0 : la
+   bascule n'a plus que deux états, il n'y a plus de groupe à annoncer.
+
+   LES RÈGLES DU PORTFOLIO SONT RETEINTES, pas recopiées. Là-bas, `.theme-toggle`
+   emploie `--header-control-border`, `--header-control-surface{,-hover,-active}`,
+   `--header-text-strong` et `--header-text-hover` : le verre fumé de son en-tête,
+   qui n'a pas été porté dans cette librairie. Plutôt que d'inventer six jetons
+   pour un seul bouton, la bascule reprend le langage de contrôle DÉJÀ MESURÉ de
+   `.tc-btn--secondary` — liseré `--control-border`, encre `--text-accent`, lavis
+   `--accent-quiet` au survol, aplat `--accent` à l'état retenu. C'est le langage
+   que portaient déjà les radios, donc aucune paire de couleurs nouvelle n'entre
+   ici et il n'y a rien à remesurer.
+
+   Le `transform: translateY(1px)` de l'appui, lui, N'EST PAS repris :
+   `preferences.css` ne neutralise le déplacement d'appui que pour `.tc-btn`, si
+   bien qu'un `tc-doc-themetoggle` continuerait de sauter sous
+   `prefers-reduced-motion: reduce`. L'appui se lit sur `--accent-active`.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-themetoggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-block-size: var(--target-min);
+  margin-block-start: var(--space-6);
+  padding-inline: var(--space-4);
+  /* Même raison que `.tc-btn--secondary` : le liseré est la seule forme du
+     bouton non enfoncé, donc 3:1 exigés — `--accent-quiet-border` n'en donnait
+     que 1,82:1. */
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-pill);
+  /* `none` et non un jeton : un `<button>` porte un fond d'agent utilisateur
+     (`buttonface`) qu'il faut retirer pour que le sol de la page revienne — le
+     sol sur lequel `--text-accent` est mesuré à 6,60:1. */
+  background: none;
+  color: var(--text-accent);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-color) var(--motion-ease),
+    border-color var(--motion-color) var(--motion-ease),
+    color var(--motion-color) var(--motion-ease);
+}
+
+.tc-doc-themetoggle__glyph {
+  font-size: var(--text-base);
+}
+
+.tc-doc-themetoggle:hover {
+  border-color: var(--accent);
+  background: var(--accent-quiet);
+}
+
+.tc-doc-themetoggle:active {
+  border-color: var(--accent-active);
+  background: var(--accent-quiet);
+}
+
+.tc-doc-themetoggle:focus-visible {
+  /* Même correction que le bloc de focus des composants : l'outline porte
+     l'anneau EXTÉRIEUR, sans quoi il repeint la bande 2-4 px. */
+  outline: 3px solid var(--focus-outer);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--focus-inner),
+    0 0 0 5px var(--focus-outer);
+}
+
+/* Enfoncé : l'aplat accent, exactement comme l'option cochée d'avant. L'état se
+   lit à la PRÉSENCE d'un fond, pas à une teinte — la planche en niveaux de gris
+   de la vitrine le vérifie à l'œil, et `aria-pressed` le porte pour le reste. */
+.tc-doc-themetoggle[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+
+.tc-doc-themetoggle[aria-pressed='true']:hover {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+}
+
+.tc-doc-themetoggle[aria-pressed='true']:active {
+  border-color: var(--accent-active);
+  background: var(--accent-active);
+}
+
+/* Contraste élevé : le mode remplace les couleurs de l'auteur, et l'état
+   enfoncé — peint par un simple aplat — redeviendrait invisible. Même problème,
+   même dérogation et mêmes mots-clés de couleur SYSTÈME que le bloc
+   `forced-colors` de `preferences.css`, qui traitait le cas des radios.
+   `forced-color-adjust` est borné à ce seul état, et `Highlight` /
+   `HighlightText` sont une paire dont le système garantit le contraste.
+
+   « BORNÉ À CE SEUL ÉTAT » VEUT DIRE À CET ÉLÉMENT, PAS À CES DÉCLARATIONS, et
+   c'est la nuance qui a coûté un bug. `forced-color-adjust` n'existe qu'au
+   niveau de l'ÉLÉMENT — CSS n'offre aucune granularité par déclaration — donc
+   `none` désactive le forçage de TOUTES les couleurs de la bascule enfoncée, y
+   compris celles qu'une AUTRE règle du même fichier lui pose. L'`outline` de
+   `.tc-doc-themetoggle:focus-visible` était ainsi peinte à `--focus-outer`
+   d'auteur (#000000 en clair) alors que le fond, lui, vaut `Highlight`, dont la
+   valeur appartient au thème Windows de l'utilisateur : sur un thème à
+   `Highlight` sombre, cela donne un anneau noir sur fond sombre. La
+   `box-shadow` de l'anneau, que le mode aurait supprimée, survivait de la même
+   façon et en couleurs d'auteur.
+
+   On ne peut donc pas restreindre la dérogation — la retirer rendrait l'aplat
+   au système et l'état enfoncé redeviendrait invisible, ce que ce bloc existe
+   pour empêcher. On repeint l'anneau dans le même mode, à (0,3,0) contre les
+   (0,2,0) de la règle de focus, donc en gagnant par spécificité autant que par
+   l'ordre.
+
+   `CanvasText` et non `Highlight` : à `outline-offset: 2px`, l'anneau tombe
+   HORS de la boîte, sur le sol de la page, c'est-à-dire sur `Canvas`. Le
+   système garantit le contraste de la paire `Canvas` / `CanvasText` ; il ne
+   garantit rien entre `Canvas` et `Highlight`. Et `box-shadow: none` rend
+   simplement ce que `forced-colors` aurait fait sans la dérogation : l'anneau
+   se réduit à son `outline`, ce que `tokens.css` annonce déjà (« l'outline
+   reste le seul des deux que `forced-colors` rende »).
+
+   NON MESURABLE DANS CE DÉPÔT : il faut un poste Windows en contraste élevé,
+   et les mots-clés système n'ont aucune valeur calculable ici — jsdom ne peint
+   pas et aucun `@media (forced-colors)` ne s'y évalue. Ce qui est vérifié,
+   c'est la CASCADE (spécificité et ordre), pas le rendu. */
+@media (forced-colors: active) {
+  .tc-doc-themetoggle[aria-pressed='true'] {
+    forced-color-adjust: none;
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .tc-doc-themetoggle[aria-pressed='true']:focus-visible {
+    outline-color: CanvasText;
+    box-shadow: none;
+  }
+}
+
+/* --- Sommaire -------------------------------------------------------------- */
+
+.tc-doc-toc {
+  margin-block-start: var(--space-6);
+}
+
+.tc-doc-toc__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tc-doc-toc__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--target-min);
+  color: var(--text-accent);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  text-decoration-color: var(--accent-quiet-border);
+  text-underline-offset: 0.25em;
+  transition: text-decoration-color var(--motion-color) var(--motion-ease);
+}
+
+.tc-doc-toc__link:hover {
+  text-decoration-color: var(--accent);
+}
+
+.tc-doc-toc__index {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--accent-secondary);
+}
+
+/* --- Sections -------------------------------------------------------------- */
+
+.tc-doc-main {
+  padding-block: var(--section-space);
+}
+
+.tc-doc-section + .tc-doc-section {
+  margin-block-start: var(--section-space);
+  padding-block-start: var(--section-space);
+  border-block-start: 1px solid var(--rule);
+}
+
+.tc-doc-section__head {
+  margin-block-end: var(--space-6);
+}
+
+/* Le chiffre de section est du DÉCOR : c'est donc le cuivre, jamais le teal. */
+.tc-doc-section__index {
+  margin: 0 0 var(--space-2);
+  color: var(--accent-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.12em;
+}
+
+.tc-doc-section__title {
+  margin: 0;
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: var(--text-display-sm);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-heading);
+}
+
+.tc-doc-section__lede {
+  margin-block-start: var(--space-4);
+  font-size: var(--text-md);
+}
+
+.tc-doc-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.tc-doc-aside {
+  padding-inline-start: var(--space-4);
+  border-inline-start: 2px solid var(--accent-secondary);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+/* --- Spécimens ------------------------------------------------------------- */
+
+.tc-doc-specimen {
+  padding: var(--space-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.tc-doc-specimen__title {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-heading);
+}
+
+.tc-doc-specimen__note {
+  margin: var(--space-2) 0 0;
+  max-inline-size: var(--measure);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.tc-doc-specimen__stage {
+  margin-block-start: var(--space-5);
+}
+
+.tc-doc-specimen__stage--inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+/* --- Les trois lois de la couleur ------------------------------------------ */
+
+.tc-doc-laws {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 4)), 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tc-doc-laws__item {
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-block-start-width: var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: var(--text-sm);
+}
+
+.tc-doc-laws__item--teal {
+  border-block-start-color: var(--accent);
+}
+
+.tc-doc-laws__item--copper {
+  border-block-start-color: var(--accent-secondary);
+}
+
+.tc-doc-laws__item--neutral {
+  border-block-start-color: var(--text-muted);
+}
+
+.tc-doc-laws__item strong {
+  color: var(--text-strong);
+}
+
+/* --- Plaques de palette ----------------------------------------------------
+   Fond, encre et filet des deux premières plaques sont posés en style EN LIGNE
+   depuis `palette-data.ts`, avec des hexadécimaux littéraux : une plaque
+   documente un thème, elle ne suit pas celui du lecteur. C'est la seule
+   dérogation à la règle « aucune couleur littérale », et elle est délibérée.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-plates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 5)), 1fr));
+  gap: var(--space-5);
+}
+
+.tc-doc-plate {
+  padding: var(--space-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.tc-doc-plate--themed {
+  background: var(--surface);
+  color: var(--text-body);
+}
+
+.tc-doc-plate__head {
+  padding-block-end: var(--space-4);
+  margin-block-end: var(--space-4);
+  border-block-end: 1px solid var(--rule);
+}
+
+.tc-doc-plate__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-heading);
+}
+
+.tc-doc-plate__ground {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.tc-doc-plate__group + .tc-doc-plate__group {
+  margin-block-start: var(--space-5);
+}
+
+.tc-doc-plate__grouptitle {
+  margin: 0 0 var(--space-2);
+  padding-block-end: var(--space-2);
+  border-block-end: 1px solid var(--rule);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tc-doc-plate__groupnote {
+  margin: 0 0 var(--space-4);
+  max-inline-size: var(--measure);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.tc-doc-swatches {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tc-doc-swatch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.tc-doc-swatch__chip {
+  flex: none;
+  inline-size: var(--space-7);
+  block-size: var(--space-7);
+  border: 1px solid;
+  border-radius: var(--radius-sm);
+}
+
+.tc-doc-swatch__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  min-inline-size: 0;
+}
+
+.tc-doc-swatch__token {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.tc-doc-swatch__hex,
+.tc-doc-swatch__ratio {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.tc-doc-swatch__against {
+  font-family: var(--font-sans);
+}
+
+/* --- Tableaux -------------------------------------------------------------- */
+
+.tc-doc-tablewrap {
+  overflow-x: auto;
+  margin-block-start: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.tc-doc-table {
+  inline-size: 100%;
+  min-inline-size: calc(var(--space-8) * 11);
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  text-align: start;
+}
+
+.tc-doc-table th,
+.tc-doc-table td {
+  padding-block: var(--space-3);
+  padding-inline: var(--space-4);
+  border-block-end: 1px solid var(--rule);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.tc-doc-table thead th {
+  color: var(--text-strong);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tc-doc-table tbody tr:last-child th,
+.tc-doc-table tbody tr:last-child td {
+  border-block-end: 0;
+}
+
+.tc-doc-inkchip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-1);
+  padding-inline: var(--space-3);
+  border: 1px solid;
+  border-radius: var(--radius-sm);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+}
+
+/* --- Échelles (typo, espacement) ------------------------------------------- */
+
+.tc-doc-scale {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tc-doc-scale__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 4)), 1fr));
+  gap: var(--space-3);
+  align-items: baseline;
+  padding-block-end: var(--space-4);
+  border-block-end: 1px solid var(--rule);
+}
+
+.tc-doc-scale__row:last-child {
+  padding-block-end: 0;
+  border-block-end: 0;
+}
+
+.tc-doc-scale__row--bar {
+  align-items: center;
+}
+
+.tc-doc-scale__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+}
+
+.tc-doc-scale__token {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-accent);
+}
+
+.tc-doc-scale__value {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.tc-doc-scale__usage {
+  flex: 1 1 100%;
+  max-inline-size: var(--measure);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.tc-doc-scale__sample {
+  margin: 0;
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  line-height: var(--leading-heading);
+  overflow-wrap: break-word;
+}
+
+.tc-doc-scale__sample--family {
+  font-size: var(--text-md);
+}
+
+.tc-doc-scale__stack {
+  display: block;
+  margin-block-start: var(--space-1);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+/* Le teal a le monopole des états ; une barre de mesure est du décor, donc
+   cuivre. */
+.tc-doc-bar {
+  display: block;
+  block-size: var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--accent-secondary);
+}
+
+/* --- Rayons ---------------------------------------------------------------- */
+
+.tc-doc-radius {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  max-inline-size: calc(var(--space-8) * 3);
+}
+
+.tc-doc-radius__box {
+  inline-size: var(--space-8);
+  block-size: var(--space-8);
+  border: 2px solid var(--accent);
+  background: var(--accent-quiet);
+}
+
+.tc-doc-radius__caption {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* --- Grilles de cartes ------------------------------------------------------ */
+
+.tc-doc-grid {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.tc-doc-grid--elev {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 3.5)), 1fr));
+  /* Les ombres des crans 2 et 3 débordent : sans marge, elles seraient rognées
+     par le bord du spécimen. */
+  padding: var(--space-3);
+}
+
+.tc-doc-cardtitle {
+  margin: 0 0 var(--space-2);
+  color: var(--text-strong);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-heading);
+}
+
+.tc-doc-cardmeta {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-accent);
+}
+
+.tc-doc-cardtext {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+/* --- États figés d'un spécimen ---------------------------------------------
+   La vitrine doit montrer un survol et un appui CÔTE À CÔTE, ce qu'aucun
+   pointeur ne peut faire. Ces deux classes rejouent les déclarations des
+   pseudo-classes ; elles n'existent que pour le catalogue et ne sont pas
+   exportées par la librairie.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-state--hover.tc-btn--primary {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.tc-doc-state--active.tc-btn--primary {
+  background: var(--accent-active);
+  border-color: var(--accent-active);
+  transform: translateY(1px);
+}
+
+.tc-doc-state--hover.tc-btn--secondary {
+  background: var(--accent-quiet);
+  border-color: var(--accent);
+}
+
+.tc-doc-state--active.tc-btn--secondary {
+  background: var(--accent-quiet);
+  border-color: var(--accent-active);
+  transform: translateY(1px);
+}
+
+.tc-doc-state--hover.tc-btn--danger,
+.tc-doc-state--active.tc-btn--danger {
+  background: var(--danger-quiet);
+}
+
+.tc-doc-state--active.tc-btn--danger {
+  transform: translateY(1px);
+}
+
+.tc-doc-states {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+}
+
+/* `<figure>` : la marge par défaut du navigateur est à remettre à zéro. */
+.tc-doc-states__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.tc-doc-states__label {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+/* --- Formulaires et piles de démonstration ---------------------------------- */
+
+.tc-doc-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-inline-size: calc(var(--space-8) * 8);
+}
+
+.tc-doc-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* --- Démonstration du focus ------------------------------------------------- */
+
+.tc-doc-focusdemo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  border: 1px dashed var(--control-border);
+  border-radius: var(--radius-md);
+  background: var(--panel-surface);
+}
+
+.tc-doc-focusdemo .tc-field {
+  flex: 1 1 calc(var(--space-8) * 4);
+}
+
+.tc-doc-link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target-min);
+  color: var(--text-accent);
+  font-weight: var(--weight-medium);
+  text-underline-offset: 0.25em;
+}
+
+.tc-doc-code {
+  overflow-x: auto;
+  margin: var(--space-4) 0 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--panel-surface);
+  color: var(--text-strong);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+/* --- Couleur retirée -------------------------------------------------------- */
+
+.tc-doc-greyrow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 5)), 1fr));
+  gap: var(--space-4);
+}
+
+.tc-doc-greyrow__panel {
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--panel-surface);
+}
+
+.tc-doc-greyrow__panel--grey {
+  filter: grayscale(1);
+}
+
+.tc-doc-greyrow__caption {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* --- Cibles tactiles --------------------------------------------------------- */
+
+.tc-doc-targets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 4)), 1fr));
+  gap: var(--space-5);
+}
+
+.tc-doc-target {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.tc-doc-target__box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent-quiet);
+  color: var(--text-accent);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.tc-doc-target__box--min {
+  block-size: var(--target-min);
+}
+
+.tc-doc-target__box--button {
+  block-size: var(--target-button);
+  border-radius: var(--radius-pill);
+}
+
+.tc-doc-target__caption {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* --- Liste d'engagements ----------------------------------------------------- */
+
+.tc-doc-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding-inline-start: var(--space-5);
+  /* `disc`, pas `'◆'` : un marqueur CHAÎNE est énoncé par VoiceOver, ce qui
+     ramène exactement le bruit que le passage de `::before` à `::marker`
+     visait à supprimer. Un marqueur nommé, lui, reste une puce. La teinte
+     cuivre suffit à le rattacher au reste de la charte. */
+  list-style-type: disc;
+  max-inline-size: var(--measure);
+}
+
+.tc-doc-checklist li {
+  padding-inline-start: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.tc-doc-checklist li::marker {
+  color: var(--accent-secondary);
+  font-size: var(--text-xs);
+}
+
+/* --- Pied de page ------------------------------------------------------------ */
+
+.tc-doc-footer {
+  padding-block: var(--space-7);
+  border-block-start: 1px solid var(--rule);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+/* --- Scène de décor ----------------------------------------------------------
+   Un `Backdrop` n'a ni coussin ni grille : il est l'hôte du décor, pas une
+   mise en page. La vitrine lui en donne, parce qu'un verre collé aux bords de
+   son hôte ne laisse plus rien voir des halos qu'il est censé filtrer.
+   Le rayon est posé sur l'hôte lui-même : son `overflow: clip` le respecte,
+   donc les disques sont coupés en suivant le coin arrondi.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-scene {
+  border-radius: var(--radius-md);
+}
+
+.tc-doc-scene__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 3.5)), 1fr));
+  gap: var(--space-5);
+  padding: var(--space-6);
+}
+
+/* Une pile plutôt qu'une grille : la frise gère déjà l'écart entre ses entrées,
+   il ne reste à donner que le coussin — celui de la grille ci-dessus, pour que
+   les deux scènes commencent au même endroit.
+
+   CE QUE CETTE SCÈNE MONTRE MIEUX QUE L'AUTRE, et il faut le savoir avant de
+   juger le verre : les disques du décor sont positionnés en POURCENTAGE de la
+   hauteur de leur hôte et dimensionnés en `vw`. Sur la scène des cartes,
+   mesurée à 348 px de haut pour des disques de 206 à 418 px, ils se retrouvent
+   tous empilés sur la même bande — celui à `top: 66%` est même intégralement
+   rogné, donc invisible. Sur une page réelle l'hôte fait plusieurs milliers de
+   pixels et les six se répartissent. Cette scène-ci, plus haute, est celle qui
+   ressemble à ce que verra un consommateur. */
+.tc-doc-scene__stack {
+  padding: var(--space-6);
+}

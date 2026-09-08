@@ -30,7 +30,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "build:lib": "tsc -p tsconfig.lib.json && npm run build:css",
-    "build:css": "rm -rf dist/tokens dist/ui.css && mkdir -p dist/tokens && cp src/tokens/*.css dist/tokens/ && cp src/styles/ui.css dist/ui.css",
+    "build:css": "rm -rf dist/tokens && rm -f dist/*.css dist/components/*.css && mkdir -p dist/tokens dist/components && cp src/tokens/*.css dist/tokens/ && cp src/styles/*.css dist/ && cp src/styles/components/*.css dist/components/ && rm -f dist/doc.css",
     "prepare": "npm run build:lib",
     "lint": "eslint .",
     "format": "prettier --write .",

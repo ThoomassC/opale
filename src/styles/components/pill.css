@@ -1,0 +1,76 @@
+/* -----------------------------------------------------------------------------
+   Pill — pastille d'AVANCEMENT (acquis / en cours / à venir), reprise du
+   portfolio (`.education-status`, `.project-status` et leurs trois modificateurs
+   `--completed | --in-progress | --upcoming` : deux préfixes, un seul rendu).
+
+   LA BORDURE EST STRUCTURELLE, PAS DÉCORATIVE. `--status-done-surface` — alias
+   de `--badge-live-surface` — mesure 2,20:1 contre une carte sombre, sous le
+   3:1 de WCAG 1.4.11, et c'est arithmétiquement insoluble avec cette teinte :
+   aucune encre ne tient à la fois 4,5:1 contre le blanc et 3:1 contre une carte
+   sombre. `border: 1px solid currentColor` mesure 18,48:1 contre le repli de
+   carte et rattrape la lisibilité de la FORME. Ne la retirez pas.
+
+   Le glyphe est additif — le portfolio n'a rien à cet emplacement. Il existe
+   parce que les trois aplats sont mesurés indiscernables en deutéranopie
+   (1,16:1 entre ambre et violet en clair ; 1,06 / 1,21 / 1,14:1 en sombre) :
+   voir le commentaire du composant.
+   -------------------------------------------------------------------------- */
+
+.tc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* 1,75rem (28 px) : LA VALEUR DU PORTFOLIO, littérale et HORS DE L'ÉCHELLE
+     D'ESPACEMENT EXPRÈS. L'échelle passe de `--space-5` (24 px) à `--space-6`
+     (32 px) ; 28 px n'est aucun des deux, et l'arrondir vers l'un ou l'autre
+     serait décider à la place de la source.
+
+     Ce n'est pas une hauteur, c'est un PLANCHER, et il est là pour une raison
+     visible : sans lui la pastille retombe sur son coussin plus son
+     interlignage, soit environ 24 px, et une rangée qui mêle « Acquis » et
+     « En cours de validation » perd son alignement — les pastilles ne font plus
+     la même hauteur selon la longueur du libellé. Ce n'est pas non plus une
+     cible tactile : une pastille ne s'actionne pas, elle ne relève donc ni de
+     `--target-min` ni de `--target-button`.
+
+     Écrit en `min-block-size` et non `min-height` : le reste des feuilles est en
+     propriétés logiques (`padding-block`, `inline-size`), seul le nom change. */
+  min-block-size: 1.75rem;
+  padding-block: var(--space-1);
+  padding-inline: var(--space-2);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-pill);
+  /* 1,2 et non 1,45 : c'est la seconde liste du « langage de formes » du
+     portfolio, et le commentaire de sa source dit pourquoi — sur un rayon de
+     999 px, une superellipse marquée produit un losange arrondi. Les formes
+     réellement circulaires prennent donc la superellipse douce. */
+  corner-shape: superellipse(1.2);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  /* Valeurs du portfolio, hors échelle de jetons et conservées telles quelles :
+     un interlettrage n'est pas de l'espacement de mise en page, et la charte ne
+     nomme pas de pas d'interlettrage. */
+  letter-spacing: 0.03em;
+  line-height: var(--leading-heading);
+  white-space: nowrap;
+}
+
+.tc-pill__glyph {
+  font-size: var(--text-xs);
+}
+
+.tc-pill--done {
+  background: var(--status-done-surface);
+  color: var(--status-done-text);
+}
+
+.tc-pill--progress {
+  background: var(--status-progress-surface);
+  color: var(--status-progress-text);
+}
+
+.tc-pill--upcoming {
+  background: var(--status-upcoming-surface);
+  color: var(--status-upcoming-text);
+}

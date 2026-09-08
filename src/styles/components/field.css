@@ -1,0 +1,69 @@
+/* -----------------------------------------------------------------------------
+   Field, Input, Select, Textarea
+
+   Même liseré, même hauteur plancher (`--target-min`), même rayon.
+   -------------------------------------------------------------------------- */
+
+.tc-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.tc-field__label {
+  color: var(--text-strong);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-heading);
+}
+
+/* La classe est CONSERVÉE et porte deux règles réelles — une classe émise et
+   déclarée nulle part est du code mort qui finit par mentir.
+
+   1. Le libellé passe à `--danger` : dans un formulaire long, c'est ce qui
+      permet à l'œil de retrouver le champ fautif en survolant la colonne des
+      libellés. Renfort, jamais signal unique — le message d'erreur porte déjà
+      son glyphe et son texte.
+   2. Une marge de défilement, pour qu'un `scrollIntoView()` vers le premier
+      champ invalide ne le colle pas au ras du haut de la fenêtre, libellé
+      coupé. */
+.tc-field--invalid {
+  scroll-margin-block-start: var(--space-6);
+}
+
+.tc-field--invalid .tc-field__label {
+  color: var(--danger);
+}
+
+.tc-field__hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  max-inline-size: var(--measure);
+}
+
+.tc-field__control {
+  display: block;
+}
+
+.tc-field__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-body);
+  max-inline-size: var(--measure);
+}
+
+/* Le glyphe est `aria-hidden` dans le markup : il double le message pour l'œil,
+   il ne le répète pas à l'oreille. */
+.tc-field__glyph {
+  flex: none;
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}

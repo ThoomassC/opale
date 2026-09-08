@@ -1,0 +1,99 @@
+/* -----------------------------------------------------------------------------
+   Utilitaire
+   -------------------------------------------------------------------------- */
+
+.tc-visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* -----------------------------------------------------------------------------
+   Focus — le double anneau, et il n'y en a qu'un dans toute la librairie.
+
+   L'anneau intérieur et l'anneau extérieur inversent leurs tons entre les deux
+   thèmes : l'un des deux contraste donc toujours avec le fond local, y compris
+   sur l'aplat teal d'un bouton primaire, où un anneau unique disparaîtrait.
+
+   POURQUOI L'OUTLINE PORTE `--focus-outer` ET NON `--focus-inner` :
+   l'`outline` est peint AU-DESSUS du `box-shadow`. Avec la recette d'origine
+   (`outline: 2px solid var(--focus-inner)` à un décalage de 2 px), l'outline
+   occupe la bande 2–4 px et y repeint l'anneau extérieur en couleur
+   intérieure : il ne restait que 1 px utile de `--focus-outer`, entre 4 et
+   5 px. Or l'anneau intérieur ne contraste avec rien d'autre que l'aplat
+   accent — mesuré à 1,08:1 sur la carte et 1,16:1 sur le sol. Partout ailleurs
+   que sur un bouton primaire, le focus se réduisait donc à un filet de 1 px.
+
+   En passant l'outline à `3px solid var(--focus-outer)`, il recouvre
+   exactement la bande 2–5 px que la seconde ombre dessinait : 2 px d'anneau
+   intérieur (0–2 px), 3 px d'extérieur (2–5 px). Écart assumé à la recette
+   d'origine du portfolio, qui porte le même défaut latent.
+
+   LA LISTE DE SÉLECTEURS EST LA LISTE DES ÉLÉMENTS FOCUSABLES DE LA LIBRAIRIE,
+   et c'est la seule chose à tenir à jour ici. Tout composant qui rend un
+   élément atteignable au clavier — `<button>`, `<a href>`, un contrôle de
+   formulaire — doit y figurer, et ce qu'il perd à en être absent demande d'être
+   dit exactement, parce que ce n'est pas « rien » :
+
+   `tokens.css` porte un `:focus-visible` NU avec la même recette, donc l'anneau
+   n'est jamais totalement absent. Mais un sélecteur nu de pseudo-classe pèse
+   0,1,0 — exactement le poids d'une classe de composant, et `tokens.css` est
+   importé AVANT `ui.css`. Tout composant qui déclare sa propre `box-shadow`
+   écrase donc la moitié en ombre de l'anneau, et il ne reste que l'`outline`.
+   C'était le cas de `.tc-icontile--action` : la tuile pose
+   `box-shadow: var(--elevation-1)`, si bien qu'au focus l'ANNEAU INTÉRIEUR
+   disparaissait sous son ombre d'élévation et le double anneau se réduisait à
+   son anneau extérieur. Panne silencieuse — aucun test ne rougit, et elle ne se
+   voit qu'à la tabulation.
+
+   CE QUE LA RÈGLE CI-DESSOUS GAGNE, ET CE QU'ELLE NE GAGNE PAS. Elle pèse
+   0,2,0. Cela lui suffit contre une règle de composant de 0,1,0, où qu'elle
+   soit déclarée — le cas `.tc-icontile--action` ci-dessus. Cela ne lui suffit
+   NI contre une règle plus spécifique, NI contre une règle de 0,2,0 déclarée
+   après elle : cette feuille est importée en PREMIER par `ui.css`, donc à
+   spécificité égale l'ordre du document donne la victoire à l'autre. Une
+   feuille de composant peut ainsi écraser l'anneau tout en respectant à la
+   lettre le raisonnement du paragraphe précédent, et le même mécanisme s'est
+   effectivement rejoué une feuille plus loin — deux fois :
+
+     `.tc-btn:disabled, .tc-btn[aria-disabled='true'] { box-shadow: none }`,
+     (0,2,0) par membre, `button.css` importé second : l'ombre de l'anneau
+     tombait sur le seul état concerné, `[aria-disabled='true']` — `:disabled`
+     n'étant pas focusable — c'est-à-dire sur l'état que `button.tsx`
+     recommande pour rester focusable.
+
+     `.tc-btn--primary:…:active`, (0,4,0), qui remplaçait les deux ombres par
+     son ombre d'appui tant qu'ESPACE restait enfoncé.
+
+   Les deux sont réparés DANS `button.css`, par un `:not(:focus-visible)` sur
+   la seule déclaration `box-shadow` en cause, avec le calcul de spécificité
+   écrit sur place — et non en gonflant la règle ci-dessous, dont le poids
+   devrait alors monter à chaque état d'un composant. La question à se poser
+   avant d'ajouter une `box-shadow` à un composant focusable est donc : « à
+   quel poids, et déclarée après cette feuille ? » Si la réponse est « au moins
+   0,2,0 », l'anneau se perd, et c'est au composant de s'en garder.
+
+   Le sélecteur cible le MODIFICATEUR et non `.tc-icontile` : la tuile n'est un
+   `<a>` que lorsqu'un `href` est fourni. Sur la variante décorative, rendue en
+   `<span>` et `aria-hidden`, la règle ne peut pas s'appliquer faute d'élément
+   focusable — elle y est inerte, pas fausse.
+   -------------------------------------------------------------------------- */
+
+.tc-btn:focus-visible,
+.tc-input:focus-visible,
+.tc-select:focus-visible,
+.tc-textarea:focus-visible,
+.tc-checkbox__input:focus-visible,
+.tc-icontile--action:focus-visible {
+  outline: 3px solid var(--focus-outer);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--focus-inner),
+    0 0 0 5px var(--focus-outer);
+}
