@@ -17,7 +17,12 @@
 export type { BackdropProps } from './components/backdrop.js';
 export { Backdrop } from './components/backdrop.js';
 
-export type { ButtonProps, ButtonVariant } from './components/button.js';
+export type {
+  ButtonAsAnchorProps,
+  ButtonAsButtonProps,
+  ButtonProps,
+  ButtonVariant,
+} from './components/button.js';
 export { Button } from './components/button.js';
 
 export type {

@@ -92,7 +92,7 @@ const CASES: Array<[string, ComponentCase]> = [
       baseClass: 'tc-pill',
       refTagName: 'SPAN',
       render: (props) => (
-        <Pill tone="success" {...props}>
+        <Pill tone="done" {...props}>
           Publié
         </Pill>
       ),

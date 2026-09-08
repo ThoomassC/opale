@@ -61,15 +61,15 @@ box-shadow:
 
       <Specimen
         title="La couleur n’est qu’un renfort"
-        note="La même rangée, rendue en niveaux de gris. Si une information disparaît ici, c’est qu’elle reposait sur la couleur seule — et le composant est à corriger, pas la palette."
+        note="La même rangée, rendue en niveaux de gris. Si une information disparaît ici, c’est qu’elle reposait sur la couleur seule — et le composant est à corriger, pas la palette. Les trois pastilles d’avancement sont le cas mesuré : leurs aplats tombent à 1,16:1 l’un contre l’autre en simulation deutéranope, si bien que ce qui les sépare ici est le glyphe — plein, à moitié rempli, vide — et le libellé, jamais la teinte."
       >
         <div className="tc-doc-greyrow">
           <div className="tc-doc-greyrow__panel">
             <p className="tc-doc-greyrow__caption">En couleur</p>
             <div className="tc-doc-specimen__stage tc-doc-specimen__stage--inline">
-              <Pill tone="success">Mesuré</Pill>
-              <Pill tone="warning">À revérifier</Pill>
-              <Pill tone="danger">Hors seuil</Pill>
+              <Pill tone="done">Acquis</Pill>
+              <Pill tone="progress">En cours</Pill>
+              <Pill tone="upcoming">À venir</Pill>
               <Tag variant="measured">Mesuré</Tag>
               <Tag variant="proposed">Proposé</Tag>
               <Tag variant="open">Ouvert</Tag>
@@ -84,9 +84,9 @@ box-shadow:
               className="tc-doc-specimen__stage tc-doc-specimen__stage--inline"
               aria-hidden="true"
             >
-              <Pill tone="success">Mesuré</Pill>
-              <Pill tone="warning">À revérifier</Pill>
-              <Pill tone="danger">Hors seuil</Pill>
+              <Pill tone="done">Acquis</Pill>
+              <Pill tone="progress">En cours</Pill>
+              <Pill tone="upcoming">À venir</Pill>
               <Tag variant="measured">Mesuré</Tag>
               <Tag variant="proposed">Proposé</Tag>
               <Tag variant="open">Ouvert</Tag>

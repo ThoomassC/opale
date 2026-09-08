@@ -184,13 +184,13 @@ export function ComponentsSection() {
       </Specimen>
 
       <Specimen
-        title="Pastilles"
-        note="Bordure en currentColor, glyphe et libellé. Retirez la couleur : les trois restent distinguables."
+        title="Pastilles — l’avancement"
+        note="Trois tons d’avancement, et rien d’autre : la sévérité (succès, attention, erreur) est le vocabulaire de Message, pas celui d’une pastille. La bordure en currentColor n’est pas décorative — l’aplat de l’acquis mesure 2,20:1 contre une carte sombre, sous le seuil de WCAG 1.4.11, et c’est elle qui rattrape la forme à 18,48:1. Le glyphe non plus n’est pas un ornement : en simulation deutéranope, l’ambre et le violet tombent à 1,16:1 l’un contre l’autre. Retirez la couleur : le remplissage du glyphe et le libellé restent."
         inline
       >
-        <Pill tone="success">Mesuré</Pill>
-        <Pill tone="warning">À revérifier</Pill>
-        <Pill tone="danger">Hors seuil</Pill>
+        <Pill tone="done">Obtenu</Pill>
+        <Pill tone="progress">En cours</Pill>
+        <Pill tone="upcoming">À venir</Pill>
       </Specimen>
 
       <Specimen
@@ -229,8 +229,18 @@ export function ComponentsSection() {
       </Specimen>
 
       <Specimen
-        title="Étiquettes"
-        note="La distinction passe par la forme de la bordure — pleine, tiretée, pointillée — et par le glyphe. Imprimée en noir et blanc, la nuance survit."
+        title="Étiquettes — le défaut est neutre"
+        note="Sans variante, une étiquette est une chip : pilule, sans-serif, aucun glyphe. C’est ce qu’attend une liste de stack technique, où l’emplacement ne porte aucun sens à distinguer."
+        inline
+      >
+        <Tag>TypeScript</Tag>
+        <Tag>PostgreSQL</Tag>
+        <Tag>Vitest</Tag>
+      </Specimen>
+
+      <Specimen
+        title="Étiquettes — les trois variantes de charte"
+        note="Elles restent parce que cette page en a besoin : c’est son seul moyen de marquer une donnée mesurée, proposée ou restée ouverte. La distinction passe par la forme de la bordure — pleine, tiretée, pointillée — et par le glyphe. Imprimée en noir et blanc, la nuance survit."
         inline
       >
         <Tag variant="measured">Mesuré</Tag>
