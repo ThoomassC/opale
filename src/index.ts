@@ -14,10 +14,19 @@
  * consumers to depend on them.
  */
 
+export type { BackdropProps } from './components/backdrop.js';
+export { Backdrop } from './components/backdrop.js';
+
 export type { ButtonProps, ButtonVariant } from './components/button.js';
 export { Button } from './components/button.js';
 
-export type { CardElevation, CardProps } from './components/card.js';
+export type {
+  CardElevation,
+  CardFlatProps,
+  CardGlassProps,
+  CardProps,
+  CardVariant,
+} from './components/card.js';
 export { Card } from './components/card.js';
 
 export type { CheckboxProps } from './components/checkbox.js';
