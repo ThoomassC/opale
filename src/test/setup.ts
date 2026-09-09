@@ -25,6 +25,10 @@ Object.defineProperty(globalThis, 'localStorage', {
 beforeEach(() => {
   store.clear();
   document.documentElement.removeAttribute('data-theme');
+  /* Same leak, second axis: the material hook writes `data-material` on the
+     same shared `<html>`, so a file that ends on glass would hand glass to the
+     next one. This `beforeEach` exists to close exactly that. */
+  document.documentElement.removeAttribute('data-material');
 });
 
 /** jsdom has no matchMedia; the theme hook asks it for the system preference. */

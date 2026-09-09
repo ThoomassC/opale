@@ -355,6 +355,128 @@ describe('DocShell — la page courante', () => {
   });
 });
 
+/* ============================================================================
+   LES DEUX BASCULES DE LA BARRE DU HAUT.
+
+   Deux AXES indépendants — le thème (clair / sombre) et le matériau (aplat /
+   verre) — et un bouton `aria-pressed` par axe, jamais un sélecteur du produit
+   des deux : clair et sombre se croisent librement avec aplat et verre, et une
+   liste de quatre entrées aurait menti sur trois d'entre elles.
+
+   Ce que ces gardes tiennent, et que les tests des deux composants pris
+   séparément ne peuvent pas tenir : que la coquille porte bien LES DEUX, et
+   qu'un clic sur l'une ne bouge PAS l'autre. Le mode de défaillance visé est le
+   copier-coller — deux boutons câblés sur le même hook s'annonceraient encore
+   correctement chacun de leur côté.
+   ========================================================================== */
+describe('DocShell — les deux bascules de la barre du haut', () => {
+  const THEME_NAME = 'Thème sombre';
+  const MATERIAL_NAME = 'Verre liquide';
+
+  function topbar() {
+    return within(screen.getByRole('banner'));
+  }
+
+  /**
+   * L'état enfoncé de chaque axe, cherché PAR NOM ACCESSIBLE.
+   *
+   * Rendre `null` pour un nom absent plutôt que jeter : c'est ce qui fait dire
+   * à l'assertion quel axe manque, au lieu de mourir sur un `getByRole` en
+   * échec avant d'avoir rien comparé.
+   */
+  function pressedByAxis(): Record<string, string | null> {
+    return Object.fromEntries(
+      [THEME_NAME, MATERIAL_NAME].map((name) => [
+        name,
+        topbar().queryByRole('button', { name })?.getAttribute('aria-pressed') ?? null,
+      ]),
+    );
+  }
+
+  /** Le texte des boutons de la barre, glyphes compris — pour les messages. */
+  function toggleTexts(): readonly string[] {
+    return topbar()
+      .getAllByRole('button')
+      .map((button) => button.textContent ?? '');
+  }
+
+  /** Les deux attributs de présentation posés sur `<html>`. */
+  function documentAxes(): Record<string, string | null> {
+    return {
+      'data-theme': document.documentElement.getAttribute('data-theme'),
+      'data-material': document.documentElement.getAttribute('data-material'),
+    };
+  }
+
+  async function clickToggle(name: string) {
+    const user = userEvent.setup();
+    await user.click(topbar().getByRole('button', { name }));
+  }
+
+  it('devrait porter exactement les deux bascules', () => {
+    render(<DocShell pages={FIXTURE_PAGES} />);
+
+    expect(
+      toggleTexts(),
+      `boutons de la barre du haut : ${toggleTexts().join(' | ') || '(aucun)'} — la ` +
+        `barre porte un axe par bouton, ni plus ni moins`,
+    ).toHaveLength(2);
+    expect(
+      pressedByAxis(),
+      `un axe manque dans la barre du haut : ${toggleTexts().join(' | ') || '(aucun bouton)'}`,
+    ).toEqual({ [THEME_NAME]: 'false', [MATERIAL_NAME]: 'false' });
+  });
+
+  /* Le setup global fournit un `matchMedia` figé sur `matches: false`, donc un
+     système en clair, et vide le stockage avant chaque test : aucun des deux
+     axes n'a été choisi. */
+  it('ne devrait enfoncer aucune bascule quand rien n’a été choisi', () => {
+    render(<DocShell pages={FIXTURE_PAGES} />);
+
+    expect(pressedByAxis()).toEqual({ [THEME_NAME]: 'false', [MATERIAL_NAME]: 'false' });
+    expect(documentAxes()).toEqual({ 'data-theme': 'light', 'data-material': null });
+  });
+
+  it('ne devrait enfoncer QUE la bascule de thème au clic sur elle', async () => {
+    render(<DocShell pages={FIXTURE_PAGES} />);
+
+    await clickToggle(THEME_NAME);
+
+    expect(
+      pressedByAxis(),
+      `un clic sur « ${THEME_NAME} » a bougé l'autre axe : les deux boutons sont ` +
+        `câblés sur le même état`,
+    ).toEqual({ [THEME_NAME]: 'true', [MATERIAL_NAME]: 'false' });
+    expect(documentAxes()).toEqual({ 'data-theme': 'dark', 'data-material': null });
+  });
+
+  it('ne devrait enfoncer QUE la bascule de matériau au clic sur elle', async () => {
+    render(<DocShell pages={FIXTURE_PAGES} />);
+
+    await clickToggle(MATERIAL_NAME);
+
+    expect(pressedByAxis(), `un clic sur « ${MATERIAL_NAME} » a bougé l'autre axe`).toEqual({
+      [THEME_NAME]: 'false',
+      [MATERIAL_NAME]: 'true',
+    });
+    expect(
+      documentAxes(),
+      `le matériau a déplacé le thème sur le document — un clic qui ne le ` +
+        `demandait pas ferait basculer la page entière`,
+    ).toEqual({ 'data-theme': 'light', 'data-material': 'glass' });
+  });
+
+  it('devrait enfoncer les deux quand les deux axes sont choisis', async () => {
+    render(<DocShell pages={FIXTURE_PAGES} />);
+
+    await clickToggle(THEME_NAME);
+    await clickToggle(MATERIAL_NAME);
+
+    expect(pressedByAxis()).toEqual({ [THEME_NAME]: 'true', [MATERIAL_NAME]: 'true' });
+    expect(documentAxes()).toEqual({ 'data-theme': 'dark', 'data-material': 'glass' });
+  });
+});
+
 describe('DocShell — le rendu de la page', () => {
   /* Ce test est ce qui fait cesser d'être un postulat le `SHELL_HEADING_LEVEL
      = 1` de `registry.test.tsx` : c'est bien la coquille qui rend le titre de
@@ -764,7 +886,7 @@ describe('DocShell — la frontière d’erreur du contenu', () => {
     });
   });
 
-  it('devrait garder le sommaire et la bascule de thème quand une page jette', () => {
+  it('devrait garder le sommaire et les deux bascules quand une page jette', () => {
     render(<DocShell pages={BOUNDARY_PAGES} />);
 
     navigate(hrefFor(FAULTY_BODY_FIXTURE.slug));
@@ -774,7 +896,10 @@ describe('DocShell — la frontière d’erreur du contenu', () => {
       `le sommaire a disparu avec la page fautive — c'est précisément ce qui ` +
         `permet d'aller voir ailleurs`,
     ).toEqual(['Accueil', 'La palette', 'Pill', 'Tag']);
+    /* Les deux bascules aussi : une page fautive ne doit pas laisser le
+       visiteur bloqué dans le thème ou le matériau où il se trouvait. */
     expect(screen.getByRole('button', { name: /Thème sombre/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Verre liquide/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /@thomascaron\/ui/ })).toBeInTheDocument();
   });
 

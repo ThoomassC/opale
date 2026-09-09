@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import type { DocPage } from './doc-model';
 import { HOME_SLUG, findPage, hrefFor } from './doc-model';
 import { DocNav } from './doc-nav';
+import { MaterialToggle } from './material-toggle';
 import { PageBoundary } from './page-boundary';
 import { ThemeToggle } from './theme-toggle';
 import { useRoute } from './use-route';
@@ -149,8 +150,16 @@ export function DocShell({ pages }: DocShellProps) {
         Aller au contenu
       </a>
 
-      {/* La barre du haut porte l'identité et la bascule de thème, et rien
-          d'autre : le sommaire est en colonne, il n'a pas de doublon ici. */}
+      {/* La barre du haut porte l'identité et LES DEUX BASCULES DE
+          PRÉSENTATION — le thème et le matériau — et rien d'autre : le sommaire
+          est en colonne, il n'a pas de doublon ici.
+
+          DEUX AXES INDÉPENDANTS, DEUX BOUTONS `aria-pressed`, et non un
+          sélecteur à quatre entrées : clair et sombre se croisent librement
+          avec aplat et verre. Un `<select>` aurait fait de leur produit une
+          liste de quatre lignes dont trois auraient menti sur ce qui a été
+          choisi. Le second bouton reprend la classe du premier ; la raison est
+          dans `material-toggle.tsx`. */}
       <header className="tc-doc-topbar">
         <a className="tc-doc-topbar__brand" href={hrefFor(HOME_SLUG)}>
           <span className="tc-doc-topbar__glyph" aria-hidden="true">
@@ -158,11 +167,15 @@ export function DocShell({ pages }: DocShellProps) {
           </span>
           {SITE_NAME}
         </a>
-        {/* Le conteneur n'est pas décoratif : il pousse la bascule en fin de
-            ligne ET annule la marge haute que `.tc-doc-themetoggle` portait
-            pour l'ancien grand en-tête, sans modifier sa règle. */}
+        {/* Le conteneur n'est pas décoratif : il pousse les bascules en fin de
+            ligne, annule la marge haute que `.tc-doc-themetoggle` portait pour
+            l'ancien grand en-tête, et porte le `gap` qui sépare les deux
+            cibles — `doc.css` le déclare en boîte flexible avec
+            `gap: var(--space-3)`, mesuré à 12 px. L'espace-mot du JSX entre les
+            deux éléments ne pèse plus rien : un enchaînement purement blanc
+            entre deux éléments flexibles n'est pas rendu. */}
         <div className="tc-doc-topbar__actions">
-          <ThemeToggle />
+          <ThemeToggle /> <MaterialToggle />
         </div>
       </header>
 
@@ -180,7 +193,7 @@ export function DocShell({ pages }: DocShellProps) {
             </h1>
             {page.lede ? <p className="tc-doc-prose tc-doc-page__lede">{page.lede}</p> : null}
             {/* La frontière n'entoure QUE le contenu de la page : le titre, le
-                sommaire et la bascule de thème restent rendus quoi qu'il
+                sommaire et les deux bascules restent rendus quoi qu'il
                 arrive. Une page sur vingt-trois qui jette ne doit pas emporter
                 les vingt-deux autres avec elle — c'est l'incident que
                 `src/index.ts` documente, arrivé une fois avec un `Pill`. */}
