@@ -182,6 +182,27 @@ body {
    dessous en défilant, et un fond translucide laisserait deux textes se
    superposer. `z-index: 1` la met au-dessus de ce contenu et sous le lien
    d'évitement, qui est à 2.
+
+   ELLE N'EST PAS PASSÉE AU VERRE, ET C'EST MESURÉ — c'était pourtant le
+   meilleur candidat du site, puisque le contenu défile RÉELLEMENT dessous.
+   Deux chiffres l'interdisent :
+
+   — sur un sol blanc, `--glass-fill` (blanc à 0,40) composé sur le sol donne
+     1,000:1 et ΔE OKLab 0,00. Un verre posé sur du blanc est le MÊME PIXEL que
+     l'aplat blanc : le matériau ne se voit que là où autre chose passe
+     dessous ;
+   — et c'est précisément là qu'il coûte. Sous la barre défilent la plaque du
+     thème sombre de la page palette (#0f191c littéral, `palette-data.ts`) et
+     l'aplat `--accent`. Composés sous `--glass-fill` : support rgb(111, 117,
+     119) et rgb(107, 172, 183), sur lesquels l'encre de la marque tombe à
+     2,64:1 et 4,81:1 pour `--text-strong`, 1,69:1 et 3,09:1 pour
+     `--text-accent` au survol. WCAG 1.4.3 en demande 4,5:1. Un
+     `backdrop-filter` n'y change rien : le flou détruit le détail, pas la
+     luminance moyenne.
+
+   La barre reste donc un aplat, et elle emprunte au verre ce qui ne coûte
+   rien : le liseré d'encre `--glass-border` à la place de `--rule`, pour que
+   son bord et celui du sommaire soient le même trait.
    -------------------------------------------------------------------------- */
 
 .tc-doc-topbar {
@@ -194,7 +215,7 @@ body {
   gap: var(--space-3) var(--space-5);
   min-block-size: var(--doc-topbar-size);
   padding-inline: var(--space-5);
-  border-block-end: 1px solid var(--rule);
+  border-block-end: 1px solid var(--glass-border);
   background: var(--doc-ground);
 }
 
@@ -292,15 +313,112 @@ body {
    tronqué — mais on y perd le balayage vertical d'une liste de seize noms, qui
    est justement ce qu'on vient chercher dans un sommaire. Choix assumé : la
    coupe verticale, qui est le signal de défilement que tout le monde lit. */
+/* --- LE SOMMAIRE EST EN VERRE, ET LE MATÉRIAU EST RETEINT ICI ---------------
+
+   DEUX CHEMINS EXISTAIENT, et celui-ci est le second : reteindre en local avec
+   les jetons `--glass-*` plutôt que d'envelopper la nav dans `Backdrop` et de
+   lui poser `tc-card tc-card--glass` (le motif que `TimelineItem` emploie dans
+   la page compositions). Trois raisons, dans l'ordre de gravité :
+
+   1. LE COLLANT. `Backdrop` est `position: relative` : il deviendrait le bloc
+      conteneur du `sticky`, et sa hauteur est celle de son contenu — la course
+      du collant tomberait à zéro. C'est exactement le cas que `backdrop.tsx`
+      documente (« n'enveloppez pas votre application entière ») ;
+   2. LE DÉFILEMENT INTERNE. `.tc-card--glass` compose son matériau sur TROIS
+      couches, dont deux pseudo-éléments `position: absolute; inset: …`. Dans
+      un conteneur de défilement, un descendant absolu se positionne par
+      rapport à la boîte de rembourrage mais DÉFILE avec le contenu : le cœur
+      flouté et le liseré spéculaire remonteraient hors de vue au premier coup
+      de molette. Un `background`, lui, est attaché à l'élément
+      (`background-attachment: scroll` ne veut pas dire « défile ») et reste en
+      place — c'est pourquoi le verre est ici composé en couches de FOND ;
+   3. LES HALOS. `Backdrop` peint six disques teal et cuivre à 0,9 d'opacité.
+      L'utilisateur demande un fond BLANC : une colonne colorée derrière le
+      sommaire est la réponse à une autre question.
+
+   CE QUI MANQUE AU MATÉRIAU, ET POURQUOI. Pas de `backdrop-filter` : rien ne
+   passe derrière ce panneau — la barre du haut est au-dessus, le contenu est
+   dans l'AUTRE colonne de la grille — donc le filtre coûterait une passe de
+   peinture pour zéro pixel changé. Pas de ménisque (la bande de bord qui filtre
+   autrement que le centre) ni de liseré spéculaire, pour la même raison plus
+   une mesure : les arrêts de `--glass-specular` sont des blancs de 0,22 à 0,98,
+   et `materials.css` le dit déjà — « un filet blanc ne peut pas dessiner de
+   bord sur un remplissage quasi blanc ». Sur un sol BLANC, ce plafond tombe à
+   zéro : `--glass-fill` composé sur le sol mesure 1,000:1 et ΔE OKLab 0,00.
+
+   CE QUI FAIT DONC LE VERRE ICI, ET C'EST MESURÉ :
+   — le liseré d'encre `--glass-border`, qui « porte le contour à peu près
+     seul » (materials.css) : ΔE OKLab 18,13 contre le sol blanc, soit MIEUX
+     que les 16,7 mesurés contre le sol papier. En luminance il ne vaut que
+     1,75:1 — c'est un trait décoratif, pas une forme de contrôle (WCAG 1.4.11
+     ne s'y applique pas), et c'est le même arbitrage que la carte de verre ;
+   — l'ombre portée, `--elevation-3`, qui EST la géométrie et l'encre de
+     l'ombre du verre (`0 1.5rem 3rem -0.75rem var(--shadow-ink)`, et
+     `--glass-shadow` est un alias de `--shadow-ink`) : citée par son jeton,
+     donc aucune longueur écrite à la main ;
+   — le lavis `--glass-highlight`, dont le second arrêt radial est un teal à
+     0,10 au coin bas-gauche : le seul reflet du matériau qui survive au blanc
+     (1,15:1, la même valeur que `--accent-quiet`) ;
+   — la superellipse et `--radius-lg`, la forme de la carte de verre.
+
+   Le texte ne perd RIEN à ce panneau, et c'est la conséquence de 1,000:1 :
+   composées sur le verre, les encres de la nav valent exactement ce qu'elles
+   valent sur le sol — `--text-body` 10,08:1, `--text-strong` 12,35:1,
+   `--text-muted` 8,12:1, l'entrée courante 10,74:1 sur son lavis.
+   -------------------------------------------------------------------------- */
+
 .tc-doc-nav {
   max-block-size: 60dvh;
   overflow-y: auto;
+  /* Le panneau FLOTTE : sans coussin extérieur, un verre collé aux bords de la
+     fenêtre n'a plus de sol autour de lui et redevient une colonne. */
+  margin-block: var(--space-4);
+  margin-inline: var(--space-4);
   padding-block: var(--space-5);
   padding-inline: var(--space-5);
-  border-block-end: 1px solid var(--rule);
+  /* Le filet de séparation (`--rule`) a disparu des deux côtés : le bord du
+     panneau est désormais son propre liseré, et deux traits parallèles à 1 px
+     l'un de l'autre ne séparent rien de plus qu'un seul. */
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.45);
+  background: var(--glass-highlight), var(--glass-fill);
+  box-shadow: var(--elevation-3);
   /* Le défilement de la nav ne doit pas entraîner celui de la page quand elle
      arrive en butée. */
   overscroll-behavior: contain;
+}
+
+/* TRANSPARENCE RÉDUITE — même repli que `.tc-card--glass`, et pour la même
+   raison : les lavis de `roles.css` s'aplatissent sous cette préférence en
+   valeurs mesurées SUR `--surface`, donc le support doit devenir `--surface`.
+   `--glass-fill-solid` EST `--surface`. Il n'y a pas de `backdrop-filter` à
+   retirer ici, et les deux dégradés de `--glass-highlight` partent avec le
+   remplissage — ce qui est demandé, c'est de ne plus dépendre de ce qui passe
+   derrière.
+
+   LES DEUX CONDITIONS, comme `card.css` et `backdrop.css` — et il faut les
+   deux : `prefers-reduced-transparency` n'est implémenté que par Chromium,
+   `prefers-contrast: more` est partout. Un sommaire de verre qui resterait
+   translucide chez quelqu'un demandant plus de contraste sur Safari, pendant
+   que les cartes de la page s'aplatissent, serait le même demi-repli que celui
+   corrigé dans la feuille des composants. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .tc-doc-nav {
+    background: var(--glass-fill-solid);
+  }
+}
+
+/* CONTRASTE ÉLEVÉ : le verre doit se dégrader en APLAT LISIBLE. Le mode force
+   déjà `background-color` à `Canvas`, le liseré à `CanvasText` et supprime la
+   `box-shadow` — mais il ne touche PAS aux images de fond, et les deux dégradés
+   de `--glass-highlight` resteraient peints par-dessus le `Canvas` forcé. La
+   déclaration ci-dessous les retire, et elle ne fait rien d'autre : aucun
+   `forced-color-adjust`, donc le liseré et l'encre restent au système. */
+@media (forced-colors: active) {
+  .tc-doc-nav {
+    background: Canvas;
+  }
 }
 
 /* COLLANTE DANS SON PROPRE CONTENEUR. La colonne défile dès que la fenêtre est
@@ -308,15 +426,41 @@ body {
    et la première chose qui sortait de l'écran était précisément la version.
    Les marges négatives annulent puis rétablissent le coussin haut de la nav :
    sans elles, la pastille se collerait au bord au lieu de garder son coussin,
-   et un blanc de 24 px défilerait au-dessus d'elle. Le fond opaque est
-   obligatoire — la nav n'en a aucun, le texte passerait au travers. */
+   et un blanc de 24 px défilerait au-dessus d'elle.
+
+   LE FOND RESTE OPAQUE, ET IL DEVIENT CELUI DU VERRE : `--glass-fill-solid`,
+   c'est-à-dire le repli opaque du matériau (`--surface` : #ebf4f6 en clair,
+   #0c1518 en sombre). Deux choses le décident, et aucune n'est le goût :
+
+   — opaque, obligatoirement. C'est la SEULE surface du site sous laquelle du
+     contenu défile réellement, donc le seul endroit où un `backdrop-filter`
+     aurait quelque chose à filtrer — et c'est aussi le pire : ce qui passe
+     dessous, ce sont les vingt-deux entrées du sommaire, de l'encre à 10:1.
+     Mesuré : l'encre d'un lien (`--text-body`, #2b464c) sous `--glass-fill`
+     donne un support rgb(128, 144, 148), sur lequel `--text-strong` ne tient
+     plus que 3,722:1 — et 1,836:1 dans le thème sombre, où l'encre des liens
+     est claire. Un flou ne fabrique pas de contraste : il détruit le détail,
+     pas la luminance moyenne ;
+   — et `--glass-fill-solid` plutôt qu'un blanc, parce qu'il doit se LIRE.
+     Mesuré : la pastille lève de 1,117:1 (ΔE OKLab 4,03) contre le verre
+     composé sur le sol blanc en clair, et 1,002:1 en sombre où c'est le filet
+     qui prend le relais. Un `--tc-white` y serait rigoureusement invisible —
+     le verre sur blanc mesure 1,000:1 contre le sol. L'encre forte tient
+     11,06:1 sur la pastille. */
 .tc-doc-nav__version {
   position: sticky;
   inset-block-start: calc(-1 * var(--space-5));
   z-index: 1;
   margin-block-start: calc(-1 * var(--space-5));
   padding-block-start: var(--space-5);
-  background: var(--site-background);
+  /* LA MÊME ANNULATION, EN LIGNE : le coussin latéral de la nav est rendu à la
+     pastille, qui traverse donc le panneau de bord à bord. Sans ces deux
+     lignes, sa teinte s'arrêtait à 24 px des deux liserés et se lisait comme
+     une rangée surlignée au milieu du verre, pas comme la tête du panneau. Le
+     rayon du panneau la recoupe : `overflow-y: auto` clippe au rayon. */
+  margin-inline: calc(-1 * var(--space-5));
+  padding-inline: var(--space-5);
+  background: var(--glass-fill-solid);
   display: flex;
   flex-wrap: wrap;
   /* `baseline` et non `center` : centrer une pastille de 32 px sur une note de
@@ -324,7 +468,16 @@ body {
      fini » sans qu'on sache dire pourquoi. */
   align-items: baseline;
   gap: var(--space-2);
-  margin: 0 0 var(--space-4);
+  /* `margin-block-end` ET NON LE RACCOURCI `margin: 0 0 …`, ET C'EST LA
+     CORRECTION D'UN BUG SILENCIEUX. Le raccourci était déclaré ICI, donc APRÈS
+     le `margin-block-start` négatif ci-dessus, et un raccourci remet à leur
+     valeur initiale les composantes qu'il ne cite pas : la marge haute
+     retombait à 0. L'annulation du coussin que le commentaire d'en-tête
+     annonçait n'avait donc jamais lieu, et un blanc de 24 px défilait
+     effectivement au-dessus de la pastille — invisible tant que la pastille et
+     le sol portaient le même fond, lisible dès que la pastille prend la teinte
+     du verre. Longhands logiques, et l'ordre ne peut plus mordre. */
+  margin-block-end: var(--space-4);
   padding-block-end: var(--space-4);
   border-block-end: 1px solid var(--rule);
 }
@@ -499,14 +652,31 @@ body {
   .tc-doc-nav {
     position: sticky;
     /* Sous la barre du haut, jamais dessous au sens de la profondeur : le
-       décalage collant vaut exactement sa hauteur. */
-    inset-block-start: var(--doc-topbar-size);
+       décalage collant vaut sa hauteur PLUS le coussin du panneau.
+
+       LE COUSSIN NE S'AJOUTE PAS TOUT SEUL, ET C'EST MESURÉ, pas déduit de la
+       spécification : Chromium 151 contraint la boîte de BORDURE au décalage,
+       pas la boîte de marge. Sonde de layout à quatre positions de défilement,
+       avec `inset-block-start: var(--doc-topbar-size)` seul : le panneau
+       partait à 88 px (16 px de marge sous une barre de 72) puis remontait
+       COLLER le filet de la barre à 72 px dès le premier coup de molette — un
+       saut de 16 px, et le verre soudé à la barre. Avec le coussin dans le
+       décalage, la sonde donne 88 px aux quatre positions. */
+    inset-block-start: calc(var(--doc-topbar-size) + var(--space-4));
     align-self: start;
-    block-size: calc(100dvh - var(--doc-topbar-size));
+    /* Les deux coussins sont retirés de la hauteur, sans quoi le panneau
+       dépasserait la fenêtre du bas de ce qu'il en descend du haut. */
+    block-size: calc(100dvh - var(--doc-topbar-size) - var(--space-4) * 2);
     max-block-size: none;
-    padding-block: var(--space-6) var(--space-7);
-    border-block-end: 0;
-    border-inline-end: 1px solid var(--rule);
+    /* `--space-5` EN TÊTE ET NON `--space-6`, et c'est la correction d'un
+       défaut qui ne se voyait pas sur un fond uni : la pastille collante annule
+       exactement `--space-5` de coussin haut (marge négative + rembourrage).
+       À 32 px de coussin, il restait 8 px de panneau NON couverts au-dessus
+       d'elle, dans lesquels le premier lien du sommaire venait défiler. Tant
+       que la pastille et le sol portaient le même fond, la fuite était
+       invisible ; sur le verre, la pastille a sa propre teinte et le décalage
+       se lirait. */
+    padding-block: var(--space-5) var(--space-7);
   }
 }
 
