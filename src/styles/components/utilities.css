@@ -2,8 +2,30 @@
    Utilitaire
    -------------------------------------------------------------------------- */
 
+/* `inset-inline-start: 0` N'EST PAS COSMÉTIQUE, ET LE DÉFAUT A ÉTÉ MESURÉ.
+
+   Sans lui, la boîte reste à sa POSITION STATIQUE. Elle ne mesure qu'un pixel,
+   mais un pixel posé loin à droite suffit : `position: absolute` sans ancêtre
+   positionné prend le bloc initial pour bloc conteneur, si bien que la boîte
+   n'est PAS clippée par un `overflow` intermédiaire — elle gonfle le
+   défilement de la RACINE.
+
+   Constaté sur la vitrine (Chromium 151, viewport 320 px) : six libellés
+   masqués dans les cellules d'un tableau large, dont le conteneur défile
+   horizontalement, se plaçaient à `left: 410px`. La page défilait alors
+   horizontalement de 91 px — c'est-à-dire 411 − 320 — alors que `body`
+   mesurait exactement 320 et que le tableau, lui, défilait correctement dans
+   sa boîte. Un `overflow-x: clip` posé sur un ancêtre n'y changeait rien, par
+   construction. WCAG 1.4.10 est en cause, et le symptôme est illisible : une
+   page qui glisse sous le doigt sans qu'aucun contenu ne dépasse.
+
+   Épinglé à `0`, le libellé se pose au bord de départ de son bloc conteneur
+   et ne peut plus rien élargir. Sa position visuelle n'a aucune importance —
+   il est invisible — et l'ordre de lecture des technologies d'assistance suit
+   le DOM, pas la géométrie. */
 .tc-visually-hidden {
   position: absolute;
+  inset-inline-start: 0;
   inline-size: 1px;
   block-size: 1px;
   padding: 0;
