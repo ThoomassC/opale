@@ -10,28 +10,24 @@ export const palettePage: DocPage = {
   title: 'La palette',
   lede: (
     <>
-      Deux thèmes, une seule matière. Les deux plaques ci-dessous sont rendues avec leurs
-      hexadécimaux littéraux : elles ne suivent pas le thème que vous avez choisi pour cette page,
-      parce qu’elles documentent les deux. Les jetons translucides — lavis d’état, remplissage de
-      verre, arrêts de tuile — affichent leur valeur déclarée en <code>rgba()</code> suivie de
-      l’aplat qu’ils donnent sur leur support : c’est cet aplat que la pastille peint, parce qu’un
-      lavis n’a pas de couleur à lui.
+      Deux thèmes, une seule matière : les plaques sont rendues avec leurs hexadécimaux littéraux et
+      ne suivent donc pas le thème de la page. Les jetons translucides affichent leur valeur{' '}
+      <code>rgba()</code> déclarée puis l’aplat qu’elle donne sur son support — c’est cet aplat que
+      la pastille peint.
     </>
   ),
   render: () => (
     <PageBody>
       <ul className="tc-doc-laws">
         <li className="tc-doc-laws__item tc-doc-laws__item--teal">
-          <strong>Le teal est l’encre des actions.</strong> Boutons, liens, focus, pastilles, états
-          : s’il apparaît, quelque chose est actionnable ou vient de changer.
+          <strong>Le teal est l’encre des actions.</strong> Boutons, liens, focus, pastilles, états.
         </li>
         <li className="tc-doc-laws__item tc-doc-laws__item--copper">
-          <strong>Le cuivre est le décor et l’éditorial</strong>, et il ne porte jamais un contrôle
-          — une couleur chaude sur un bouton rompt le contrat.
+          <strong>Le cuivre est le décor et l’éditorial.</strong> Il ne porte jamais un contrôle.
         </li>
         <li className="tc-doc-laws__item tc-doc-laws__item--neutral">
-          <strong>Les neutres sont le teal vidé de sa chroma</strong> : la même teinte, la
-          saturation retirée, pour qu’aucun gris ne jure avec la marque.
+          <strong>Les neutres sont le teal vidé de sa chroma</strong> : la même teinte, sans
+          saturation.
         </li>
       </ul>
 
@@ -51,8 +47,7 @@ export const palettePage: DocPage = {
           </p>
         </header>
         <p className="tc-doc-plate__groupnote">
-          Elles ne signifient jamais seules. Chaque emploi porte un mot et un glyphe ; la couleur
-          n’est que le troisième signal.
+          Elles ne signifient jamais seules : chaque emploi porte un mot et un glyphe.
         </p>
 
         {/* `tabIndex` + `role="group"` : le tableau porte une largeur plancher

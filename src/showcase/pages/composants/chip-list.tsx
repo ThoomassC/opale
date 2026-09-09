@@ -32,15 +32,13 @@ export const chipListPage: DocPage = {
   title: 'ChipList',
   lede: (
     <>
-      Une <code>&lt;ul&gt;</code> nommée d’étiquettes neutres, sans ordre — la chip de stack
-      technique du portfolio. Elle ne porte que la mise en ligne : chaque entrée est rendue par{' '}
-      <code>Tag</code> en variante <code>plain</code>, pour qu’il n’existe qu’une définition de
-      l’étiquette. Sa décision :{' '}
+      Une <code>&lt;ul&gt;</code> nommée d’étiquettes neutres, sans ordre, dont chaque entrée est
+      rendue par <code>Tag</code> en variante <code>plain</code>. Elle rend{' '}
       <strong>
-        elle rend <code>null</code> sur une liste vide
-      </strong>
-      , parce qu’un <code>&lt;ul&gt;</code> sans enfant reste annoncé « liste, 0 élément » sous un
-      nom qui affirme un contenu inexistant.
+        <code>null</code> sur une liste vide
+      </strong>{' '}
+      : un <code>&lt;ul&gt;</code> sans enfant reste annoncé « liste, 0 élément » sous un nom qui
+      affirme un contenu inexistant.
     </>
   ),
   render: () => (
@@ -49,14 +47,7 @@ export const chipListPage: DocPage = {
 
       <Specimen
         title="Nommée par son libellé — aria-label"
-        note={
-          <>
-            Nommez ce que la liste énumère <strong>et</strong> son rattachement : « Technologies
-            utilisées chez Blue Soft » vaut mieux que « Technologies », répété six fois dans la
-            page. <code>&lt;ul&gt;</code> et non <code>&lt;ol&gt;</code> : l’ordre des chips ne
-            porte pas de sens.
-          </>
-        }
+        note="Nommez ce que la liste énumère et son rattachement, plutôt qu’un « Technologies » répété six fois dans la page."
       >
         <ChipList label="Technologies utilisées chez Blue Soft" items={STACK} />
       </Specimen>
@@ -65,10 +56,8 @@ export const chipListPage: DocPage = {
         title="Nommée par un titre visible — aria-labelledby"
         note={
           <>
-            À préférer dès qu’un titre porte déjà le nom : <code>aria-labelledby</code> gagne sur{' '}
-            <code>aria-label</code> au sens de la spécification, et un nom <em>visible</em> vaut
-            toujours mieux qu’un nom masqué. C’est pour cela que le type interdit le cumul — fournir
-            les deux, c’était écrire une chaîne dont la spécification garantit qu’elle sera écrasée.
+            <code>aria-labelledby</code> gagne sur <code>aria-label</code> au sens de la
+            spécification, et le type interdit le cumul.
           </>
         }
       >
@@ -88,11 +77,8 @@ export const chipListPage: DocPage = {
         title="La liste vide ne rend rien du tout"
         note={
           <>
-            La cellule de droite contient un appel complet — nom accessible compris — avec{' '}
-            <code>items=&#123;[]&#125;</code>. Il n’en sort aucun élément : ni liste, ni nœud dans
-            l’arbre d’accessibilité. La feuille de style double le garde d’un{' '}
-            <code>:empty &#123; display: none &#125;</code>, qui ne rattrape que les listes écrites
-            à la main hors du composant.
+            La cellule de droite est un appel complet avec <code>items=&#123;[]&#125;</code> : il
+            n’en sort ni liste, ni nœud dans l’arbre d’accessibilité.
           </>
         }
       >
@@ -116,14 +102,6 @@ export const chipListPage: DocPage = {
         </div>
       </Specimen>
 
-      <p className="tc-doc-prose tc-doc-aside">
-        Ce qui n’a <strong>pas</strong> été porté : la prop{' '}
-        <code>variant: &quot;experience-stack&quot; | &quot;project-stack&quot;</code> du portfolio.
-        Elle ne dit pas ce qu’<em>est</em> la liste, elle dit <em>où</em> elle est posée dans sa
-        feuille de style — deux emplacements au rendu identique. Une prop qui ne nomme qu’un
-        emplacement obligerait chaque appelant à choisir entre deux valeurs sans différence.
-      </p>
-
       <PropsTable
         id="chip-list"
         note={
@@ -134,9 +112,8 @@ export const chipListPage: DocPage = {
               &#123; items &#125; &amp; AccessibleNameProps
             </code>
             . Les deux <code>aria-*</code> sont retirés du type de base pour que{' '}
-            <code>AccessibleNameProps</code> soit seul à les décider : c’est une union à deux
-            branches, dont chacune déclare l’autre nom <code>never</code>.{' '}
-            <strong>Un nom est requis, un seul.</strong>
+            <code>AccessibleNameProps</code> soit seul à les décider :{' '}
+            <strong>un nom est requis, un seul</strong>.
           </>
         }
         rows={[
@@ -146,12 +123,11 @@ export const chipListPage: DocPage = {
             required: true,
             description: (
               <>
-                Les entrées.{' '}
+                Les entrées, qui servent aussi de clé de rendu ;{' '}
                 <strong>
-                  Une liste vide fait rendre <code>null</code>
-                </strong>{' '}
-                au composant. Les entrées servent aussi de clé de rendu : deux entrées identiques
-                dans la même liste sont un doublon à corriger côté données, pas ici.
+                  une liste vide fait rendre <code>null</code>
+                </strong>
+                .
               </>
             ),
           },
@@ -160,10 +136,8 @@ export const chipListPage: DocPage = {
             type: 'string',
             description: (
               <>
-                Branche 1 du nom, posée en <code>aria-label</code>. Exige{' '}
-                <code>aria-labelledby?: never</code> : les deux à la fois sont refusés à la
-                compilation. Aucun des deux non plus —{' '}
-                <code>&lt;ChipList items=&#123;…&#125; /&gt;</code> ne compile pas.
+                Branche 1 du nom, posée en <code>aria-label</code> ; exige{' '}
+                <code>aria-labelledby?: never</code>.
               </>
             ),
           },
@@ -173,8 +147,7 @@ export const chipListPage: DocPage = {
             description: (
               <>
                 Branche 2 du nom : l’identifiant d’un élément <strong>visible</strong> qui porte
-                déjà ce nom. À préférer, et il gagne sur <code>aria-label</code> au sens de la
-                spécification — d’où <code>label?: never</code> sur cette branche.
+                déjà ce nom.
               </>
             ),
           },
@@ -192,8 +165,8 @@ export const chipListPage: DocPage = {
             type: 'Ref<HTMLUListElement>',
             description: (
               <>
-                Posée sur la <code>&lt;ul&gt;</code>. Absente quand le composant rend{' '}
-                <code>null</code> : il n’y a alors pas d’élément à référencer.
+                Posée sur la <code>&lt;ul&gt;</code>, absente quand le composant rend{' '}
+                <code>null</code>.
               </>
             ),
           },

@@ -23,10 +23,8 @@ const PROPS: readonly PropRow[] = [
     type: 'ReactNode',
     description: (
       <>
-        Les <code>&lt;option&gt;</code> et <code>&lt;optgroup&gt;</code>, écrits en clair. Le
-        composant n’accepte pas de tableau de valeurs : une liste d’options n’a pas de forme unique
-        — libellé, valeur, groupe, option désactivée — et la figer en prop aurait fermé les trois
-        quarts des usages.
+        Les <code>&lt;option&gt;</code> et <code>&lt;optgroup&gt;</code>, écrits en clair — le
+        composant n’accepte pas de tableau de valeurs.
       </>
     ),
   },
@@ -57,11 +55,9 @@ export const selectPage: DocPage = {
   title: 'Select',
   lede: (
     <>
-      Une liste déroulante <strong>native</strong>, et le chevron reste celui du système : le
-      remplacer demanderait une image, et la librairie s’interdit toute ressource — même une{' '}
-      <code>url()</code> en ligne. Ce qui se gagne au passage est plus grand que le chevron&nbsp;:
-      le menu natif, sa recherche au clavier, son rendu en plein écran sur mobile. Le liseré, la
-      hauteur (<code>--target-min</code>, 44&nbsp;px) et le rayon sont ceux d’
+      Une liste déroulante <strong>native</strong>, chevron du système compris : la librairie
+      s’interdit toute ressource, même une <code>url()</code> en ligne. Le liseré, la hauteur (
+      <code>--target-min</code>, 44&nbsp;px) et le rayon sont ceux d’
       <a className="tc-doc-link" href={hrefFor('composants/input')}>
         Input
       </a>
@@ -74,7 +70,7 @@ export const selectPage: DocPage = {
 
       <Specimen
         title="Les états de la liste déroulante"
-        note="Repos, en erreur, désactivé. Comme pour Input, l’erreur n’est pas déclarée sur le Select mais sur le Field qui l’enveloppe : c’est lui qui pose aria-invalid, et lui qui annonce le message."
+        note="L’erreur n’est pas déclarée sur le Select mais sur le Field qui l’enveloppe : c’est lui qui pose aria-invalid et qui annonce le message."
       >
         <div className="tc-doc-form">
           <Field
@@ -127,7 +123,7 @@ export const selectPage: DocPage = {
           fausse liste en `<div>` ne l'annonce pas. */}
       <Specimen
         title="Les options groupées"
-        note="optgroup est rendu tel quel, et son libellé est annoncé par le lecteur d’écran comme le nom du groupe. C’est ce que ne sait faire aucune fausse liste déroulante bâtie en <div> : elle doit le reconstruire à l’ARIA, et se tromper."
+        note="Le libellé d’un optgroup est annoncé par le lecteur d’écran comme le nom du groupe, ce qu’aucune fausse liste bâtie en <div> ne sait faire sans le reconstruire à l’ARIA."
       >
         <div className="tc-doc-form">
           <Field id="select-demo-etape" label="Étape de départ">
@@ -149,7 +145,7 @@ export const selectPage: DocPage = {
 
       <Specimen
         title="Le focus de la liste"
-        note="Tabulez dans le cadre. Le double anneau se pose sur le contrôle fermé ; le menu ouvert, lui, est peint par le système et la librairie n’y touche pas — c’est le prix, et l’intérêt, du natif."
+        note="Tabulez dans le cadre : le double anneau se pose sur le contrôle fermé, le menu ouvert étant peint par le système."
       >
         <div className="tc-doc-focusdemo">
           <Field id="select-demo-focus" label="Une liste">
@@ -168,28 +164,18 @@ export const selectPage: DocPage = {
         note={
           <>
             Le type étend <code>ComponentPropsWithoutRef&lt;&apos;select&apos;&gt;</code> sans rien
-            retirer et sans rien ajouter : <code>name</code>, <code>value</code>,{' '}
-            <code>defaultValue</code>, <code>required</code>, <code>disabled</code>,{' '}
-            <code>multiple</code>, <code>size</code>, <code>onChange</code> et tous les autres
-            attributs natifs traversent jusqu’à l’élément. Le composant pose une classe, rien de
-            plus.
+            retirer ni rien ajouter : tous les attributs natifs traversent jusqu’à l’élément.
           </>
         }
         rows={PROPS}
       />
 
       <p className="tc-doc-prose tc-doc-aside">
-        <strong>
-          Un <code>Select</code> a besoin d’un nom accessible, et il ne le fabrique pas.
-        </strong>{' '}
-        Montez-le dans un{' '}
+        Un <code>Select</code> ne fabrique pas son nom accessible : montez-le dans un{' '}
         <a className="tc-doc-link" href={hrefFor('composants/field')}>
           Field
         </a>
-        , qui câble le <code>&lt;label for&gt;</code>. Et donnez-lui une option vide explicite
-        («&nbsp;Choisir un voyage…&nbsp;») quand aucune valeur n’est présélectionnée&nbsp;: sans
-        elle, le navigateur affiche la première option, ce qui fait passer un choix jamais fait pour
-        un choix par défaut.
+        , qui câble le <code>&lt;label for&gt;</code>.
       </p>
     </PageBody>
   ),

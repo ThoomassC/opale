@@ -17,12 +17,8 @@ const PROPS: readonly PropRow[] = [
     name: 'rows',
     type: 'number',
     defaultValue: '4',
-    description: (
-      <>
-        La hauteur initiale, en lignes. Quatre est un défaut, pas une limite : la zone reste
-        redimensionnable à la main, et un champ dont on attend dix lignes doit en montrer dix.
-      </>
-    ),
+    description:
+      'La hauteur initiale, en lignes — un défaut, pas une limite : la zone reste redimensionnable.',
   },
   {
     name: 'className',
@@ -52,9 +48,8 @@ export const textareaPage: DocPage = {
   lede: (
     <>
       Une zone de saisie multiligne, redimensionnable <strong>en hauteur seulement</strong> (
-      <code>resize: vertical</code>) : un élargissement libre ferait déborder la grille et casserait
-      la largeur de ligne bornée du formulaire — celle qui rend un paragraphe lisible. Le liseré, le
-      rayon et l’état d’erreur sont ceux d’
+      <code>resize: vertical</code>) : un élargissement libre casserait la largeur de ligne bornée
+      du formulaire. Le liseré, le rayon et l’état d’erreur sont ceux d’
       <a className="tc-doc-link" href={hrefFor('composants/input')}>
         Input
       </a>
@@ -67,7 +62,7 @@ export const textareaPage: DocPage = {
 
       <Specimen
         title="Les états de la zone multiligne"
-        note="Repos, plus haute, en erreur, désactivée. Attrapez le coin inférieur droit : la zone s’étire vers le bas et jamais vers la droite — un élargissement libre casserait la largeur de ligne bornée du formulaire. Comme pour Input, l’erreur est déclarée sur le Field qui enveloppe, pas sur la zone."
+        note="Attrapez le coin inférieur droit — la zone s’étire vers le bas, jamais vers la droite — et notez que l’erreur est déclarée sur le Field qui enveloppe, pas sur la zone."
       >
         <div className="tc-doc-form">
           <Field
@@ -127,7 +122,7 @@ export const textareaPage: DocPage = {
 
       <Specimen
         title="Le focus de la zone"
-        note="Tabulez dans le cadre. Le double anneau suit le contour de la zone, y compris quand elle a été redimensionnée : l’anneau est peint par outline et box-shadow, donc il épouse la boîte réelle et non une taille figée."
+        note="Tabulez dans le cadre : l’anneau est peint par outline et box-shadow, donc il épouse la boîte réelle même après un redimensionnement."
       >
         <div className="tc-doc-focusdemo">
           <Field id="textarea-demo-focus" label="Une zone de texte">
@@ -141,28 +136,20 @@ export const textareaPage: DocPage = {
         note={
           <>
             Le type étend <code>ComponentPropsWithoutRef&lt;&apos;textarea&apos;&gt;</code> sans
-            rien retirer : <code>name</code>, <code>value</code>, <code>defaultValue</code>,{' '}
-            <code>placeholder</code>, <code>maxLength</code>, <code>required</code>,{' '}
-            <code>disabled</code>, <code>readOnly</code>, <code>onChange</code> et tous les autres
-            attributs natifs traversent jusqu’à l’élément. Le composant pose un défaut et une
-            classe, rien de plus.
+            rien retirer : tous les attributs natifs traversent jusqu’à l’élément.
           </>
         }
         rows={PROPS}
       />
 
       <p className="tc-doc-prose tc-doc-aside">
-        <strong>
-          Ni <code>rows</code> ni <code>maxLength</code> ne remplacent un compteur.
-        </strong>{' '}
-        <code>maxLength</code> tronque la frappe en silence : quelqu’un qui colle un texte trop long
-        voit la fin disparaître sans qu’aucun message ne l’explique. Annoncez la limite dans le{' '}
+        <code>maxLength</code> tronque la frappe en silence : annoncez la limite dans le{' '}
         <code>hint</code> du{' '}
         <a className="tc-doc-link" href={hrefFor('composants/field')}>
           Field
         </a>
-        , et refusez l’envoi par un <code>error</code> — qui, lui, porte{' '}
-        <code>role=&quot;alert&quot;</code> et se fait entendre.
+        , et refusez l’envoi par un <code>error</code>, qui porte{' '}
+        <code>role=&quot;alert&quot;</code>.
       </p>
     </PageBody>
   ),

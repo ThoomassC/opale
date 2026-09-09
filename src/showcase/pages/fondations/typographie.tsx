@@ -37,7 +37,7 @@ const FAMILIES: readonly FontFamily[] = [
   {
     token: '--font-display',
     name: 'Iowan Old Style, Palatino, Georgia',
-    note: 'Les titres. Une serif de système, donc zéro requête et zéro décalage au chargement.',
+    note: 'Les titres — serif de système, donc zéro requête.',
   },
   {
     token: '--font-sans',
@@ -58,18 +58,13 @@ export const typographiePage: DocPage = {
   title: 'Typographie',
   lede: (
     <>
-      Huit pas, rapports 1,15 en bas d’échelle et 1,20 en haut : l’échelle n’est pas géométrique, et
-      c’est voulu — les petits pas doivent rester distinguables sans que les grands deviennent
-      grotesques. Trois familles, toutes systèmes : la librairie ne fait aucune requête hors
-      origine.
+      Huit pas, rapports 1,15 en bas d’échelle et 1,20 en haut. Trois familles, toutes systèmes :
+      aucune requête hors origine.
     </>
   ),
   render: () => (
     <PageBody>
-      <Specimen
-        title="Les huit pas"
-        note="Le texte courant est borné à --measure (66 caractères), quelle que soit la largeur de la fenêtre."
-      >
+      <Specimen title="Les huit pas" note="Le texte courant est borné à --measure (66 caractères).">
         <ul className="tc-doc-scale">
           {TYPE_STEPS.map((step) => (
             <li className="tc-doc-scale__row" key={step.token}>
