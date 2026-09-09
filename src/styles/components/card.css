@@ -37,7 +37,7 @@
      (`card.tsx` : `'tc-card'` puis la variante) — cette ligne couvre donc la
      carte de verre sans toucher à son bloc, qui est un déplacement verbatim.
 
-     Ce qu'elle répare : `.tc-card--glass` porte `overflow: hidden`, si bien
+     Ce qu'elle répare : `.tc-card--glass` porte `overflow: clip`, si bien
      qu'une URL non coupable, un identifiant long ou un extrait de code plus
      large que la carte perdait sa fin — sans barre de défilement (`hidden`
      n'en montre pas) et sans accès clavier (un conteneur `overflow: hidden`
@@ -195,7 +195,7 @@
   z-index: 1;
 }
 
-/* Sans backdrop-filter, un verre à alpha 0.14 laisserait le texte à même le halo :
+/* Sans backdrop-filter, un verre à alpha 0,40 laisserait le texte à même le halo :
    le remplissage doit alors devenir opaque. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .tc-card--glass {
