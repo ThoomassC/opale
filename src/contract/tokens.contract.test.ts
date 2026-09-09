@@ -675,15 +675,16 @@ describe('16. Les pastilles d’état tiennent leur seuil sur LEUR PROPRE aplat'
    */
   const STATES = ['done', 'progress', 'upcoming'] as const;
 
-  it.each(
-    perTheme(STATES).map(({ theme, item }) => ({ theme, state: item })),
-  )('--status-$state-text sur --status-$state-surface — $theme', ({ theme, state }) => {
-    expectRatio(
-      ratioOf(theme, `--status-${state}-text`, `--status-${state}-surface`),
-      AA_TEXT,
-      `--status-${state}-text / --status-${state}-surface en ${theme}`,
-    );
-  });
+  it.each(perTheme(STATES).map(({ theme, item }) => ({ theme, state: item })))(
+    '--status-$state-text sur --status-$state-surface — $theme',
+    ({ theme, state }) => {
+      expectRatio(
+        ratioOf(theme, `--status-${state}-text`, `--status-${state}-surface`),
+        AA_TEXT,
+        `--status-${state}-text / --status-${state}-surface en ${theme}`,
+      );
+    },
+  );
 
   /*
    * « Acquis » EST « en direct » : `roles.css` déclare les deux jetons d'état

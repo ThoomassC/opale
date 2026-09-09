@@ -163,7 +163,7 @@
   border-radius: calc(var(--liquid-radius) - var(--glass-edge-width));
   corner-shape: inherit;
   background: var(--glass-highlight);
-  content: "";
+  content: '';
   pointer-events: none;
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
@@ -178,7 +178,7 @@
   border-radius: inherit;
   corner-shape: inherit;
   background: var(--glass-specular);
-  content: "";
+  content: '';
   pointer-events: none;
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
