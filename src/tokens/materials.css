@@ -60,6 +60,53 @@
   /* Filtres et géométrie — pas des couleurs, et NON THÉMÉS : le portfolio ne
      les redéclare pas en sombre, un flou n'a pas de thème. */
   --glass-blur: 32px;
+
+  /* LE FLOU DES CONTRÔLES, ET IL EST PLUS PETIT PARCE QUE LES CONTRÔLES SONT
+     PLUS PETITS. Un `backdrop-filter: blur(r)` échantillonne au-DELÀ des bords
+     de l'élément puis découpe le résultat à sa boîte : quand le rayon approche
+     la taille de l'élément, l'intérieur visible n'est plus une image de son
+     arrière-plan, c'est la MOYENNE de la bande qui l'entoure. Le matériau cesse
+     alors de répondre à ce qui passe derrière lui, ce qui est toute la raison
+     d'être d'un verre.
+
+     La plus petite surface verrée est un contrôle à `--target-min`, 44 px :
+     c'est le plancher de `.tc-input`, `.tc-select`, `.tc-textarea` et le format
+     exact de la tuile d'action. Le noyau gaussien de `blur(r)` a pour écart-type
+     r, donc :
+
+         r = 32 px  →  ±1σ couvre 64 px, soit 1,45 × la hauteur du contrôle
+         r = 12 px  →  ±1σ couvre 24 px, soit 0,55 × la hauteur du contrôle
+
+     ET C'EST MESURÉ, pas seulement calculé. Sonde chrome-headless-shell, thème
+     clair : un `.tc-input` réel de 160 × 44 px posé à cheval sur le BORD d'un
+     disque du décor — un aplat à opacity 0,9, donc une arête franche, et
+     localement horizontale à son sommet, c'est-à-dire dans l'axe COURT du
+     contrôle. On lit le profil de luminance ligne par ligne à l'intérieur du
+     contrôle, sur six rayons, le reste de la chaîne de filtres inchangé
+     (`saturate` compris, r = 0 servant de témoin) :
+
+         r =  0 px   amplitude du profil 10,05   (le fond tel qu'il est)
+         r =  8 px                        4,01   (40 % conservés)
+         r = 12 px                        1,61   (16 %)
+         r = 16 px                        0,88   ( 9 %)
+         r = 24 px                        0,26   ( 3 %)
+         r = 32 px                        0,08   ( 1 %)
+
+     À 32 px le contrôle est PLAT : il ne reste 0,8 % de la modulation du fond,
+     soit un écart de luminance de 0,08 sur 255 — invisible, et un verre qui ne
+     montre plus rien de ce qui passe derrière lui n'est plus qu'un panneau
+     teinté. À 12 px il en garde vingt fois plus.
+
+     CE QUE LA MESURE NE DIT PAS, et il faut l'écrire : elle départage 12 de 32,
+     elle ne départage pas 12 de 8, qui conserve encore 2,5 fois plus. Le choix
+     de 12 est un arbitrage d'APPARENCE — sous 10 px le fond se lit à travers
+     presque net et la surface cesse de se lire comme du verre — et il est
+     assumé comme tel. Ce qui est mesuré, c'est que 32 est faux.
+
+     NON THÉMÉ, comme les autres filtres de ce paragraphe : un flou n'a pas de
+     thème. Le § 13 du contrat le sait par son nom, il ne le devine pas. */
+  --glass-blur-control: 12px;
+
   --glass-saturate: 1.6;
   /* Ménisque : la bande de bord filtre son arrière-plan autrement que le
      centre. C'est ce qui distingue ce verre d'un simple fond flouté. */

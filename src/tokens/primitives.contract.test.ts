@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import glassSource from '../styles/glass.css?raw';
 import materialsSource from './materials.css?raw';
 import primitivesSource from './primitives.css?raw';
 import rolesSource from './roles.css?raw';
@@ -151,23 +152,31 @@ describe('la direction de dépendance entre couches', () => {
    * retirés d'abord, donc les ratios et les valeurs mesurées qui y sont cités
    * restent parfaitement autorisés.
    */
+  /*
+   * `styles/glass.css` REJOINT LA LISTE, et ce n'est pas la même couche que les
+   * deux autres : c'est une feuille de MATIÈRE, qui ne cite que des jetons de
+   * matériau. Elle y est parce qu'elle est le seul endroit de la librairie où
+   * un hexadécimal passerait pour de la plomberie plutôt que pour une couleur —
+   * `card.css` écrit `linear-gradient(#000 0 0)` dans son masque de liseré, et
+   * rien ne le voit. Le masque de `glass.css` peint donc en `currentColor` : un
+   * masque ne lit que le canal alpha, la teinte y est arbitraire, et une valeur
+   * arbitraire n'a aucune raison d'être écrite en dur.
+   */
   it.each([
     ['roles.css', rolesSource],
     ['materials.css', materialsSource],
-  ])(
-    '%s ne contient aucun hexadécimal : cette couche ne cite que des primitives',
-    (file, source) => {
-      const declarations = stripComments(source);
-      const offenders = [...declarations.matchAll(HEX_ANYWHERE)].map((match) => {
-        const at = match.index ?? 0;
-        return `${match[0]} — « …${declarations.slice(Math.max(0, at - 48), at + match[0].length)}… »`;
-      });
+    ['styles/glass.css', glassSource],
+  ])('%s ne contient aucun hexadécimal : toute couleur y passe par un jeton', (file, source) => {
+    const declarations = stripComments(source);
+    const offenders = [...declarations.matchAll(HEX_ANYWHERE)].map((match) => {
+      const at = match.index ?? 0;
+      return `${match[0]} — « …${declarations.slice(Math.max(0, at - 48), at + match[0].length)}… »`;
+    });
 
-      expect(offenders, `hexadécimaux trouvés dans ${file} :\n  ${offenders.join('\n  ')}`).toEqual(
-        [],
-      );
-    },
-  );
+    expect(offenders, `hexadécimaux trouvés dans ${file} :\n  ${offenders.join('\n  ')}`).toEqual(
+      [],
+    );
+  });
 
   it('primitives.css ne cite aucun jeton de rôle ni de matériau : la dépendance ne remonte pas', () => {
     const upperLayerPrefixes = [

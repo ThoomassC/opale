@@ -490,6 +490,11 @@ describe('13. Tout jeton coloré thémé est redéclaré dans les DEUX blocs som
    */
   const THEME_INVARIANT = new Map<string, string>([
     ['--glass-blur', 'un rayon de flou n’a pas de thème'],
+    [
+      '--glass-blur-control',
+      'un rayon de flou n’a pas de thème — celui-ci est dimensionné par la ' +
+        'TAILLE du contrôle (44 px, `--target-min`), une géométrie, pas par la palette',
+    ],
     ['--glass-saturate', 'un facteur de saturation n’a pas de thème'],
     ['--glass-edge-width', 'géométrie du ménisque'],
     ['--glass-edge-blur', 'géométrie du ménisque'],
