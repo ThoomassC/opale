@@ -43,6 +43,66 @@ html {
   scroll-padding-block-start: var(--doc-topbar-size);
 }
 
+/* =============================================================================
+   LE SOL DE LA VITRINE — BLANC EN CLAIR, ET SANS TOUCHER AU JETON PUBLIÉ.
+
+   `--site-background` reste `--tc-mist-936` (#deedf0) : c'est un jeton PUBLIÉ,
+   consommé par `portfolio` et `travels_in_world`, et c'est le sol contre lequel
+   tout `src/contract/` mesure. Le redéclarer ici — même localement — ferait
+   deux dégâts : la vitrine annoncerait dans ses propres plaques un sol qu'elle
+   ne peint pas, et un lecteur qui inspecte `--site-background` dans son
+   navigateur lirait #ffffff pour un paquet qui livre #deedf0.
+
+   Le blanc est donc un JETON DE VITRINE, `--doc-ground`, et il ne sort pas
+   d'ici : `build:css` retire `doc.css` du paquet. Il est déclaré sur `:root` et
+   non sur `.tc-doc`, pour la même raison que `--doc-topbar-size` — c'est `body`
+   qui peint le sol (`tokens/tokens.css`), et `body` est un ancêtre de `.tc-doc`.
+
+   `--tc-white` et jamais `#fff` : la primitive existe (`primitives.css`).
+
+   TROIS BLOCS, dans l'ordre de `roles.css`, et pour la même raison : le thème
+   sombre reste sombre, y compris quand aucun choix n'est mémorisé (le script
+   d'`index.html` ne pose `data-theme` que s'il l'a lu dans le stockage — sans
+   quoi c'est `prefers-color-scheme` qui décide, donc le bloc du milieu).
+   `--site-background` en sombre, et pas une seconde valeur : il n'y a rien à
+   changer là-bas, le sol sombre est déjà le bon.
+   ========================================================================== */
+
+:root {
+  --doc-ground: var(--tc-white);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --doc-ground: var(--site-background);
+  }
+}
+
+:root[data-theme='dark'] {
+  --doc-ground: var(--site-background);
+}
+
+/* `tokens.css` pose `body { background: var(--site-background) }`. Même
+   spécificité (0,0,1), mais `doc.css` est importé APRÈS dans `main.tsx` : c'est
+   l'ordre du document qui donne le blanc, sans `!important` et sans toucher à la
+   feuille publiée.
+
+   CE QUI CHANGE DE RATIO SUR UN SOL BLANC, mesuré (script jeté, contrat de
+   couleur, thème clair) : toutes les encres GAGNENT — `--text-body` 8,39 →
+   10,08:1, `--text-muted` 6,76 → 8,12:1, `--text-strong` 10,28 → 12,35:1,
+   `--text-accent` 6,60 → 7,93:1, `--accent-secondary` 7,13 → 8,57:1.
+   Ce qui PERD est ce qui était déjà sous le seuil et décoratif : `--rule`
+   1,40 → 1,41:1 (le chiffre monte, l'écart perçu baisse — le filet est un
+   mist-blue sur blanc), `--border-subtle` 1,34:1, et l'anneau INTÉRIEUR du
+   focus tombe de 1,16 à 1,04:1 contre le sol, parce qu'il est quasi blanc
+   (`--tc-citron-985`). Aucune règle ne casse : l'anneau intérieur n'a jamais
+   été mesuré que contre l'aplat accent (5,26:1, inchangé), et c'est l'anneau
+   EXTÉRIEUR qui porte l'indicateur — 17,48 → 21,00:1 sur le sol. Le détail
+   complet est dans le rapport. */
+body {
+  background: var(--doc-ground);
+}
+
 .tc-doc {
   color: var(--text-body);
   font-family: var(--font-sans);
@@ -118,8 +178,8 @@ html {
    sa colonne de gauche, parce qu'elle doit rester visible quand le contenu
    défile — c'est le seul repère de retour à l'accueil.
 
-   Son fond est OPAQUE (`--site-background`) et non transparent : le contenu
-   passe dessous en défilant, et un fond translucide laisserait deux textes se
+   Son fond est OPAQUE (`--doc-ground`) et non transparent : le contenu passe
+   dessous en défilant, et un fond translucide laisserait deux textes se
    superposer. `z-index: 1` la met au-dessus de ce contenu et sous le lien
    d'évitement, qui est à 2.
    -------------------------------------------------------------------------- */
@@ -135,7 +195,7 @@ html {
   min-block-size: var(--doc-topbar-size);
   padding-inline: var(--space-5);
   border-block-end: 1px solid var(--rule);
-  background: var(--site-background);
+  background: var(--doc-ground);
 }
 
 .tc-doc-topbar__brand {
@@ -296,7 +356,8 @@ html {
   font-size: var(--text-sm);
 }
 
-/* `--text-muted` (6,76:1 en clair, 8,47:1 en sombre) et non `--text-strong` :
+/* `--text-muted` (8,12:1 sur le sol blanc de la vitrine — 6,76:1 sur le sol
+   publié —, 8,47:1 en sombre) et non `--text-strong` :
    capitales + interlettrage + demi-gras faisaient des trois titres de groupe
    les marques les plus noires de la colonne, en concurrence avec l'entrée
    courante. L'ordre de lecture voulu est : page courante, entrées, groupes,
@@ -369,13 +430,20 @@ html {
 }
 
 /* LE SURVOL PASSE SOUS LE LAVIS DE LA PAGE COURANTE, et c'est un ordre
-   mesuré : composés sur `--site-background`, `--panel-surface-hover` donnait
-   1,229:1 en clair et 1,359:1 en sombre, contre 1,135:1 et 1,156:1 pour
-   l'`--accent-quiet` de la page courante. Un état TRANSITOIRE battait donc un
-   état PERMANENT — tant que la souris traînait dans la colonne, la page
-   affichait deux entrées courantes. `--panel-surface` (1,108:1 / 1,116:1)
-   rétablit l'ordre, et le survol reste lisible parce qu'il gagne aussi son
-   filet teal. */
+   mesuré : `--panel-surface-hover` donnait 1,229:1 en clair et 1,359:1 en
+   sombre, contre 1,135:1 et 1,156:1 pour l'`--accent-quiet` de la page
+   courante. Un état TRANSITOIRE battait donc un état PERMANENT — tant que la
+   souris traînait dans la colonne, la page affichait deux entrées courantes.
+   `--panel-surface` (1,108:1 / 1,116:1) rétablit l'ordre, et le survol reste
+   lisible parce qu'il gagne aussi son filet teal.
+
+   REMESURÉ SUR LE SOL DE LA VITRINE, qui est désormais BLANC en clair — les
+   quatre chiffres du thème clair bougent, la conclusion non : survol
+   1,234:1, entrée courante 1,150:1, `--panel-surface` 1,108:1. L'écart entre
+   le lavis retenu et celui de la page courante passe de 0,027 à 0,042, donc
+   l'ordre est même un peu plus franc qu'avant. Le verre du panneau ne change
+   rien à ces trois valeurs : composé sur du blanc, il mesure 1,000:1 contre
+   le sol — les lavis se composent sur le même pixel. */
 .tc-doc-nav__link:hover {
   border-inline-start-color: var(--accent-quiet-border);
   background: var(--panel-surface);
@@ -477,7 +545,9 @@ html {
   border-radius: var(--radius-pill);
   /* `none` et non un jeton : un `<button>` porte un fond d'agent utilisateur
      (`buttonface`) qu'il faut retirer pour que le sol de la page revienne — le
-     sol sur lequel `--text-accent` est mesuré à 6,60:1. */
+     sol sur lequel `--text-accent` est mesuré à 7,93:1 dans la vitrine, dont le
+     sol clair est blanc, et à 6,60:1 chez un consommateur, qui reçoit
+     `--site-background`. */
   background: none;
   color: var(--text-accent);
   font: inherit;

@@ -18,11 +18,20 @@
       et `tokens/primitives.css`). Le clair et non le sombre : c'est le thème que
       la page sert quand rien n'est mémorisé et que l'OS ne demande rien.
 
-      Ensuite elle ne se recopie plus. `useTheme` relit `--site-background` dans
-      la feuille — jamais une constante TypeScript — et réécrit le `content` à
-      chaque bascule. Sans cette balise le hook sort proprement sur `null` : la
-      bascule marche, et la barre d'adresse reste au thème clair en thème sombre,
-      panne muette que rien ne signale.
+      Ensuite elle ne se recopie plus. `useTheme` relit LE FOND RÉELLEMENT PEINT
+      — la valeur calculée de `background-color` sur `body`, jamais une constante
+      TypeScript, et plus le jeton `--site-background` — et réécrit le `content` à
+      chaque bascule. La distinction n'est pas théorique : la vitrine a un sol
+      BLANC (`--doc-ground` dans `doc.css`) alors que le jeton publié vaut
+      toujours #deedf0, si bien que lire le jeton annonçait du mist sur une page
+      blanche. Dès le premier passage de l'effet, cette valeur écrite ici est donc
+      remplacée par le blanc ; elle ne couvre que l'avant-premier-rendu, où le
+      mist reste le meilleur aveu disponible d'un attribut qui ne sait pas lire
+      une feuille.
+
+      Sans cette balise le hook sort proprement sur `null` : la bascule marche, et
+      la barre d'adresse reste au thème clair en thème sombre, panne muette que
+      rien ne signale.
     -->
     <meta name="theme-color" content="#deedf0" />
     <!--
