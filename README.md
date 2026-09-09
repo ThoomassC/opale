@@ -24,7 +24,7 @@ Ce dépôt est ce garde. Il publie, dans cet ordre de valeur :
 ## Installation
 
 ```bash
-npm i "@thomascaron/ui@github:ThoomassC/ui-commune#v0.3.0"
+npm i "@thomascaron/ui@github:ThoomassC/ui-commune#v1.0.0"
 ```
 
 Le paquet se compile à l'installation (`prepare`). Trois points d'entrée :
@@ -163,6 +163,12 @@ Une règle qu'on ne peut pas citer de mémoire n'est pas appliquée.
    ne contient que des succès est une charte qu'on n'a pas éprouvée.
 
 ## Le contrat teal & cuivre
+
+> **v1.0.0 — l'API se fige, et la vitrine devient un site.** Le vocabulaire décrit
+> ci-dessous est celui que la 1.0 publie : rien n'a bougé depuis la v0.3.0, ce qui est la
+> seule raison acceptable de promettre une stabilité. Ce que la 1.0 ajoute n'est pas un
+> composant mais une lecture — une page par composant, une entrée de navigation par entrée
+> publiée, et deux tests qui gardent cette correspondance.
 
 > **v0.3.0 — le portfolio reprend la main, et ça casse six choses.** Pré-1.0, une
 > rupture va dans le mineur : passer à `1.0.0` promettrait une stabilité que la
