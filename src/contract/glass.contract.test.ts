@@ -6,6 +6,7 @@ import {
   GLASS_LAYERS,
   SEMANTIC_WASHES,
   STATE_WASHES,
+  nested,
   resolveBackdrop,
   withWash,
 } from './backdrop';
@@ -699,6 +700,498 @@ describe('9. Une encre sémantique tient AA sur SON PROPRE lavis, verre et halos
       }).reduce((worse, candidate) => (candidate.ratio < worse.ratio ? candidate : worse));
 
       expectRatio(worst.ratio, AA_TEXT, `--${tone} sur ${worst.label} en ${theme}`);
+    },
+  );
+});
+
+/* ============================================================================
+   § 10 — LA MONOTONIE DE L'IMBRICATION.
+
+   C'EST LE § QUI AUTORISE LES §§ 4 À 7 À NE PAS ÉCRIRE VINGT SUPPORTS DE PLUS.
+
+   Sous le thème verre, un contrôle de verre posé dans une carte de verre met son
+   encre sur `page → halo → remplissage → remplissage → lavis` : une couche de
+   plus que le pire cas de `GLASS_BACKDROPS`. Naïvement, il faudrait donc rouvrir
+   la liste fermée des cinq supports, la doubler pour l'imbrication simple, la
+   tripler pour la double — et remesurer les neuf encres sur chacun.
+
+   LE THÉORÈME QUI L'ÉVITE. Chaque remplissage de verre supplémentaire ÉLOIGNE le
+   support de l'encre de lecture : en clair `--glass-fill` est un voile blanc,
+   donc le support blanchit ; en sombre c'est un lavis d'encre, donc il creuse ;
+   et dans les deux cas l'encre de lecture est de l'AUTRE côté. Le ratio est donc
+   croissant en profondeur, la profondeur 1 est le PLANCHER, et l'enveloppe déjà
+   publiée par le § 7 reste l'enveloppe en mode verre.
+
+   SI CE BLOC ROUGIT, IL N'Y A PLUS RIEN À DÉDUIRE. L'enveloppe du § 7 ne borne
+   alors plus les supports imbriqués, et il faut réellement les écrire : deux
+   halos × trois profondeurs × quatre états de lavis, remesurés pour les neuf
+   encres. C'est la valeur exacte de ce §, et c'est pourquoi il mesure la chaîne
+   entière au lieu de faire confiance au sens de `--glass-fill`.
+
+   ================== CE QUE CE § NE MESURE PAS, ET NE PEUT PAS ================
+
+   Les limites du modèle sont en tête de `backdrop.ts` ; l'imbrication en ajoute
+   trois, et la première est la plus grave de tout le contrat :
+
+    1. LE RAYON DE FLOU EXCÈDE L'ÉLÉMENT SUR UN CONTRÔLE. `--glass-blur` vaut
+       32 px, un `<input>` fait 44 px de haut : le filtre échantillonne au-DELÀ
+       du contrôle. Son arrière-plan effectif est une moyenne de voisinage qui
+       inclut ce qui est À CÔTÉ, pas seulement ce qui est DERRIÈRE. Pour une
+       carte de 300 px, « la carte est entièrement posée sur un halo » reste un
+       pire cas défendable ; pour un contrôle, aucune arithmétique de couches ne
+       peut l'exprimer. Les piles de ce § bornent l'empilement des `background`,
+       pas ce qu'un moteur mélange.
+    2. DEUX `backdrop-filter` IMBRIQUÉS. Selon le moteur, l'enfant échantillonne
+       la sortie DÉJÀ FILTRÉE du parent, ou la page brute. Le modèle suppose
+       l'empilement des fonds, ce qui ne décrit exactement ni l'un ni l'autre.
+    3. `blur() saturate() brightness()` reste hors du domaine mesuré — la tête de
+       ce fichier le dit déjà, et les chiffres ci-dessous sont donc des
+       ESTIMATIONS, au sens exact où le dépôt emploie ce mot. Un thème qui pousse
+       le `saturate()` déplace la couleur reçue sans qu'aucun test bouge.
+   ========================================================================== */
+
+/**
+ * LA PORTÉE DU § 10, DÉCLARÉE — les neuf encres de l'enveloppe du § 7.
+ *
+ * Ce sont les encres de LECTURE (les cinq rôles de texte de la carte, les trois
+ * encres sémantiques) et le liseré de contrôle. Pas une commodité : c'est le
+ * domaine exact où le théorème est vrai, et l'exclusion est nommée juste en
+ * dessous.
+ */
+const NESTED_INKS: readonly string[] = [...TEXT_INKS, '--control-border'];
+
+/**
+ * L'EXCLUSION, NOMMÉE ET JUSTIFIÉE — comme `THEME_INVARIANT` le fait ailleurs.
+ *
+ * La monotonie ne vaut que pour les encres de lecture. Une encre dont la clarté
+ * est du MÊME côté que le remplissage est au contraire DÉGRADÉE par
+ * l'imbrication : `--focus-inner` est un citron quasi blanc en clair
+ * (`#f6ffde`), donc un verre qui blanchit le support le rapproche d'elle.
+ * Mesuré sur la carte au halo froid sous le lavis d'appui : 1,74:1 à la
+ * profondeur 1, 1,53:1 à 2, 1,42:1 à 3 — et 2,31:1 → 2,08:1 → 1,92:1 en sombre.
+ *
+ * CE N'EST PAS UN MANQUEMENT. Cette encre n'est jamais mesurée contre une carte :
+ * c'est le disque INTÉRIEUR de l'anneau de focus, qui se pose sur l'aplat
+ * `--accent` et sur `--focus-outer`, et le § 7 de `tokens.contract.test.ts` la
+ * mesure là — aux deux seuls endroits où un navigateur la peint. Le contre-
+ * exemple est rejoué ci-dessous plutôt que caché : un théorème dont le domaine
+ * n'est pas éprouvé est une généralisation qui attend de se faire prendre.
+ */
+const NESTING_EXCLUDED_INK = '--focus-inner';
+
+/** Les profondeurs mesurées : le nombre TOTAL de remplissages de verre. */
+const NESTING_DEPTHS = [1, 2, 3] as const;
+
+/**
+ * Les deux sols halotés, `page → halo`, SANS remplissage.
+ *
+ * C'est la base sur laquelle `nested` empile : `nested(sol, n)` vaut donc
+ * `page → halo → n remplissages`, et `n` se lit comme le nombre de verres
+ * traversés. La profondeur 1 doit rendre la pile de carte DÉJÀ publiée dans
+ * `GLASS_BACKDROPS`, ce que le premier test de ce § vérifie — sans quoi ce bloc
+ * mesurerait une chaîne voisine de celle du § 7 et en déduirait des bornes pour
+ * elle.
+ */
+const HALOED_GROUNDS = [
+  {
+    label: 'le halo froid',
+    ground: { label: 'le halo froid', layers: [GLASS_LAYERS.page, GLASS_LAYERS.coolHalo] },
+    card: CARD_ON_COOL,
+  },
+  {
+    label: 'le halo chaud',
+    ground: { label: 'le halo chaud', layers: [GLASS_LAYERS.page, GLASS_LAYERS.warmHalo] },
+    card: CARD_ON_WARM,
+  },
+] as const satisfies readonly {
+  label: string;
+  ground: BackdropSpec;
+  card: BackdropSpec;
+}[];
+
+/**
+ * Le sol du support que le § 7 publie comme pire cas — la bulle FROIDE — et le
+ * lavis d'APPUI qui le complète. La table de l'échelle ci-dessous est mesurée
+ * là, et nulle part ailleurs : c'est ce qui fait que sa colonne `n=1` doit
+ * retomber sur les chiffres de `WORST_CASES`.
+ */
+const WORST_GROUND: BackdropSpec = HALOED_GROUNDS[0].ground;
+const WORST_WASH = '--panel-surface-active';
+
+/** `page → halo → depth remplissages → lavis`, la chaîne complète du §. */
+function nestedSupport(ground: BackdropSpec, depth: number, wash: string): BackdropSpec {
+  return withWash(nested(ground, depth), wash);
+}
+
+/**
+ * L'échelle des trois profondeurs, DÉCLARÉE et recalculée — à la manière du
+ * § 7, sur le support que la table du § 7 publie déjà : la carte au halo FROID
+ * sous le lavis d'APPUI.
+ *
+ * La colonne `n=1` de `--control-border`, `--text-body` et `--text-strong`
+ * reprend donc, au centième près, les trois pires cas de `WORST_CASES` — c'est
+ * la preuve que les deux blocs mesurent bien la même chaîne, et le dernier test
+ * du § l'exige explicitement.
+ */
+interface NestingLadder {
+  readonly ink: string;
+  /** Ratios aux profondeurs 1, 2 et 3, thème clair. */
+  readonly light: readonly [number, number, number];
+  /** Les mêmes en sombre — identiques dans `dark-os` et `dark-explicit` (§ 1). */
+  readonly dark: readonly [number, number, number];
+}
+
+const NESTING_LADDER: readonly NestingLadder[] = [
+  { ink: '--control-border', light: [3.18, 3.61, 3.89], dark: [3.27, 3.63, 3.93] },
+  { ink: '--text-body', light: [5.59, 6.35, 6.85], dark: [5.14, 5.71, 6.2] },
+  { ink: '--text-strong', light: [6.85, 7.78, 8.39], dark: [6.12, 6.79, 7.37] },
+];
+
+describe('10. Chaque verre de plus ÉLOIGNE le support de l’encre de lecture', () => {
+  it.each(HALOED_GROUNDS.map(({ label, ground, card }) => ({ label, ground, card })))(
+    'la profondeur 1 rend la pile de carte déjà publiée — « $label »',
+    ({ ground, card }) => {
+      /*
+       * LE PONT AVEC LE § 7, et la condition de validité de tout ce bloc. Si
+       * `nested(sol, 1)` cessait d'être la carte de `GLASS_BACKDROPS`, le § 10
+       * mesurerait une chaîne voisine et en déduirait des bornes pour une autre.
+       */
+      expect(nested(ground, 1).layers).toStrictEqual(card.layers);
+    },
+  );
+
+  it.each(
+    THEME_NAMES.flatMap((theme) =>
+      HALOED_GROUNDS.flatMap(({ label, ground }) =>
+        STATE_WASHES.flatMap((wash) =>
+          NESTED_INKS.map((ink) => ({ theme, label, ground, wash, ink })),
+        ),
+      ),
+    ),
+  )(
+    '$ink croît avec la profondeur sur « $label », lavis $wash — $theme',
+    ({ theme, ground, wash, ink }) => {
+      const [first, second, third] = NESTING_DEPTHS.map((depth) => ({
+        depth,
+        ratio: ratioOn(theme, ink, nestedSupport(ground, depth, wash)),
+      }));
+
+      const explain = (lower: typeof first, higher: typeof first): string =>
+        `${ink} en ${theme} sur ${nestedSupport(ground, higher.depth, wash).label} — ` +
+        `${higher.ratio.toFixed(3)}:1 à la profondeur ${higher.depth} contre ` +
+        `${lower.ratio.toFixed(3)}:1 à la profondeur ${lower.depth}. Un remplissage de verre ` +
+        'de plus vient de RAPPROCHER le support de cette encre : la profondeur 1 n’est plus ' +
+        'le plancher, l’enveloppe du § 7 ne borne plus les supports imbriqués, et il faut ' +
+        'écrire les vingt supports de plus au lieu de les déduire.';
+
+      expect(second.ratio, explain(first, second)).toBeGreaterThan(first.ratio);
+      expect(third.ratio, explain(second, third)).toBeGreaterThan(second.ratio);
+    },
+  );
+
+  it.each(
+    THEME_NAMES.flatMap((theme) =>
+      NESTING_LADDER.flatMap((ladder) =>
+        NESTING_DEPTHS.map((depth) => ({ theme, depth, ...ladder })),
+      ),
+    ),
+  )(
+    '$ink vaut le ratio déclaré à la profondeur $depth — $theme',
+    ({ theme, depth, ink, light, dark }) => {
+      const declared = (theme === 'light' ? light : dark)[depth - 1];
+      const support = nestedSupport(WORST_GROUND, depth, WORST_WASH);
+      const measured = ratioOn(theme, ink, support);
+
+      expect(
+        Math.abs(measured - declared),
+        `${ink} en ${theme} sur ${support.label} — mesuré ${measured.toFixed(3)}:1, ` +
+          `déclaré ${declared.toFixed(2)}:1. Écrivez la mesure, ne déplacez pas la tolérance.`,
+      ).toBeLessThanOrEqual(MAX_RATIO_DRIFT);
+    },
+  );
+
+  it.each(
+    THEME_NAMES.flatMap((theme) => WORST_CASES.map((worstCase) => ({ theme, ...worstCase }))),
+  )(
+    'l’enveloppe du § 7 borne encore $ink sous imbrication — $theme',
+    ({ theme, ink, light, dark }) => {
+      /*
+       * LA CONCLUSION DU §, ÉNONCÉE COMME UNE ASSERTION. Le pire des dix-huit
+       * supports imbriqués (deux halos × trois profondeurs × trois lavis) ne
+       * descend jamais sous le pire cas que le § 7 publie déjà. Le cas d'égalité
+       * est attendu et voulu : pour une encre dont le pire cas est la carte au
+       * halo froid sous le lavis d'appui, la profondeur 1 EST ce support.
+       */
+      const declared = theme === 'light' ? light : dark;
+      const worst = HALOED_GROUNDS.flatMap(({ ground }) =>
+        STATE_WASHES.flatMap((wash) =>
+          NESTING_DEPTHS.map((depth) => {
+            const support = nestedSupport(ground, depth, wash);
+
+            return { label: support.label, ratio: ratioOn(theme, ink, support) };
+          }),
+        ),
+      ).reduce((worse, candidate) => (candidate.ratio < worse.ratio ? candidate : worse));
+
+      expect(
+        worst.ratio,
+        `${ink} en ${theme} tombe à ${worst.ratio.toFixed(3)}:1 sur ${worst.label}, sous le ` +
+          `pire cas de ${declared.toFixed(2)}:1 que le § 7 publie pour les vingt supports NON ` +
+          'imbriqués. L’enveloppe ne borne plus le mode verre : ajoutez ces supports à la ' +
+          'table du § 7 au lieu de la laisser annoncer un plafond qu’elle ne tient pas.',
+      ).toBeGreaterThanOrEqual(declared - MAX_RATIO_DRIFT);
+    },
+  );
+
+  it('déclare sa portée : les neuf encres de l’enveloppe, et l’exclusion nommée', () => {
+    // Sans cette garde, retirer une encre de la portée serait invisible en
+    // revue : le produit rétrécirait et le bloc resterait vert.
+    expect(NESTED_INKS).toStrictEqual([...TEXT_INKS, '--control-border']);
+    expect(NESTED_INKS).not.toContain(NESTING_EXCLUDED_INK);
+  });
+
+  it.each(THEME_NAMES)(
+    `${NESTING_EXCLUDED_INK} est au contraire DÉGRADÉ par l’imbrication — %s`,
+    (theme) => {
+      /*
+       * LE CONTRE-EXEMPLE, ÉCRIT ET REJOUÉ. Il borne le théorème par le bas :
+       * si cette encre se mettait à CROÎTRE avec la profondeur, c'est que
+       * `--glass-fill` aurait changé de polarité, et la portée du § 10 devrait
+       * être rouverte plutôt qu'élargie en silence.
+       *
+       * Mesures sur la carte au halo froid, lavis d'appui posé : 1,741 → 1,532
+       * → 1,422 en clair, 2,309 → 2,081 → 1,918 en sombre. Aucune n'atteint
+       * 3:1, et aucune n'a à l'atteindre : le § 7 de `tokens.contract.test.ts`
+       * mesure cette encre contre l'aplat `--accent` et contre `--focus-outer`,
+       * les deux seuls endroits où un navigateur la peint.
+       */
+      const [first, second, third] = NESTING_DEPTHS.map((depth) =>
+        ratioOn(theme, NESTING_EXCLUDED_INK, nestedSupport(WORST_GROUND, depth, WORST_WASH)),
+      );
+
+      const measured = `${first.toFixed(3)} → ${second.toFixed(3)} → ${third.toFixed(3)}`;
+      const explain =
+        `${NESTING_EXCLUDED_INK} en ${theme} mesure ${measured} aux profondeurs 1, 2 et 3. ` +
+        'Il DÉCROISSAIT, ce qui est la raison de son exclusion de la portée du § 10 ; s’il ' +
+        'croît désormais, `--glass-fill` a changé de polarité et la portée doit être ' +
+        'rouverte, pas élargie en silence.';
+
+      expect(second, explain).toBeLessThan(first);
+      expect(third, explain).toBeLessThan(second);
+    },
+  );
+
+  it('le citron de focus vaut 1,741:1 en clair et 2,309:1 en sombre à la profondeur 1', () => {
+    // Les deux chiffres du commentaire ci-dessus, rejoués — un ratio écrit et
+    // non mesuré est une affirmation qui se lit comme une vérification.
+    const support = nestedSupport(WORST_GROUND, 1, WORST_WASH);
+
+    expect(ratioOn('light', NESTING_EXCLUDED_INK, support)).toBeCloseTo(1.741, 3);
+    expect(ratioOn('dark-os', NESTING_EXCLUDED_INK, support)).toBeCloseTo(2.309, 3);
+  });
+});
+
+/* ============================================================================
+   § 11 — L'APLAT ACCENT COMME FRONTIÈRE (WCAG 1.4.11).
+
+   ET IL RÉVÈLE UN TROU PRÉEXISTANT, QUE LE THÈME VERRE N'A PAS CRÉÉ.
+
+   `.tc-btn--primary` déclare `background: var(--accent)` ET
+   `border-color: var(--accent)` : son APLAT EST SA FORME. C'est donc lui, et non
+   une encre posée dessus, qui porte « l'information visuelle nécessaire pour
+   identifier le composant » au sens de WCAG 1.4.11 — d'où un plancher de 3:1
+   contre les couleurs ADJACENTES, c'est-à-dire contre son substrat.
+
+   AUCUN TEST DE CE DÉPÔT NE LE MESURAIT LÀ. Trois blocs s'en approchaient et
+   regardaient tous ailleurs :
+
+    - le § 2 de `tokens.contract.test.ts` mesure l'encre POSÉE SUR l'accent dans
+      les trois états du contrôle. C'est le contraste du libellé, pas celui de la
+      forme ;
+    - le § 7 de `tokens.contract.test.ts` mesure `--focus-inner` contre l'aplat
+      `--accent`. C'est l'anneau de focus contre le bouton, pas le bouton contre
+      la page ;
+    - le § 3 de `tokens.contract.test.ts` mesure `--control-border` sur ses trois
+      supports. C'est le liseré du bouton SECONDAIRE ; le primaire n'en a pas
+      d'autre que son propre aplat.
+
+   Résultat : le teal du bouton primaire n'a jamais été mesuré contre ce sur quoi
+   il est posé. Mesuré ici, DEUX cellules sur dix passent sous 3:1, toutes deux
+   en thème SOMBRE, et sans le thème verre — c'est le rendu d'aujourd'hui, celui
+   que la page `#/compositions/verre-et-frise` produit en sombre.
+
+   LES DIX CHIFFRES SONT DÉCLARÉS, RECALCULÉS, ET VÉRIFIÉS DANS LES DEUX SENS,
+   à la manière du § 7 : une exemption dont la palette n'a plus besoin fait
+   ROUGIR la suite au lieu de survivre à sa raison.
+   ========================================================================== */
+
+/**
+ * Le pire cas de `--accent` sur un support de `GLASS_BACKDROPS`.
+ *
+ * `shortfall` est renseigné SEULEMENT quand l'un des deux thèmes passe sous
+ * 3:1, et il dit alors ce qu'un composant doit faire à la place. Même mécanisme
+ * et même contrepartie qu'au § 7 : la note est nommée, et elle rougit dès que la
+ * palette la rend inutile.
+ */
+interface AccentBoundary {
+  /** Le libellé du support, tel que `GLASS_BACKDROPS` le porte. */
+  readonly label: string;
+  readonly light: number;
+  /** Le même en sombre — identique dans `dark-os` et `dark-explicit` (§ 1). */
+  readonly dark: number;
+  readonly shortfall?: string;
+}
+
+const ACCENT_BOUNDARIES: readonly AccentBoundary[] = [
+  { label: 'la page nue', light: 4.53, dark: 3.28 },
+  { label: 'la carte sur la page nue', light: 4.88, dark: 3.4 },
+  {
+    label: 'la carte sur le halo froid',
+    light: 3.93,
+    dark: 2.59,
+    shortfall:
+      'en sombre, l’aplat du bouton primaire ne se détache PAS d’une carte posée sur le halo ' +
+      'froid : 2,59:1 contre les 3:1 de WCAG 1.4.11, soit 0,41 de manque. Le teal n’est pas en ' +
+      'cause — il tient 3,40:1 sur la même carte sans halo et 3,28:1 sur la page nue —, c’est ' +
+      'le HALO qui remonte le substrat vers lui : la bulle froide sombre est un teal (#004452) ' +
+      'de la même famille que l’accent. Ce qu’un composant fait à la place : `.tc-btn--primary` ' +
+      'a besoin d’un liseré propre dès qu’il peut être posé sur un halo — `--control-border` ' +
+      'tient 3,27:1 au même endroit —, ou le halo doit rester hors de la boîte du bouton. ' +
+      'CE MANQUEMENT EST ANTÉRIEUR AU THÈME VERRE : il ne dépend que de `--halo-tint` et de ' +
+      '`--glass-fill`, tous deux servis sans `data-material="glass"`.',
+  },
+  {
+    label: 'la carte sur le halo chaud',
+    light: 3.96,
+    dark: 2.78,
+    shortfall:
+      'même manquement sur la bulle chaude, et il est plus étroit : 2,78:1 en sombre, soit ' +
+      '0,22 de manque. La cause diffère — le brun chaud (#58281c) n’est pas de la famille du ' +
+      'teal, il est simplement plus clair que le sol —, la conséquence est la même, et le ' +
+      'remède aussi. Les deux bulles sont tenues à parité de présence (§ 14 de ' +
+      '`tokens.contract.test.ts`) : corriger l’une sans l’autre déplacerait le pire cas sans ' +
+      'le supprimer.',
+  },
+  { label: 'la carte en repli opaque', light: 4.87, dark: 3.4 },
+];
+
+describe('11. L’aplat --accent tient 3:1 contre son substrat — sa forme EST sa couleur', () => {
+  /** Le support de `GLASS_BACKDROPS` que ce libellé nomme. */
+  function backdropLabelled(label: string): BackdropSpec {
+    const found = GLASS_BACKDROPS.find((backdrop) => backdrop.label === label);
+
+    if (found === undefined) {
+      throw new Error(
+        `aucun support de GLASS_BACKDROPS ne porte le libellé « ${label} » — reçus : ` +
+          GLASS_BACKDROPS.map((backdrop) => backdrop.label).join(', '),
+      );
+    }
+
+    return found;
+  }
+
+  it('mesure les CINQ supports de carte, dans leur ordre de déclaration', () => {
+    // La table est indexée par libellé : sans cette garde, un support ajouté à
+    // `GLASS_BACKDROPS` resterait hors de la mesure et le bloc resterait vert.
+    expect(ACCENT_BOUNDARIES.map((boundary) => boundary.label)).toStrictEqual(
+      GLASS_BACKDROPS.map((backdrop) => backdrop.label),
+    );
+  });
+
+  it.each(
+    THEME_NAMES.flatMap((theme) => ACCENT_BOUNDARIES.map((boundary) => ({ theme, ...boundary }))),
+  )('« $label » — $theme', ({ theme, label, light, dark, shortfall }) => {
+    const backdrop = backdropLabelled(label);
+    const declared = theme === 'light' ? light : dark;
+    const measured = ratioOn(theme, '--accent', backdrop);
+
+    // (a) LE NOMBRE. Les dix chiffres publiés sont recalculés, y compris les
+    //     huit qui passent : c'est ce qui fait qu'un teal retouché déplace la
+    //     table au lieu de la laisser mentir.
+    expect(
+      Math.abs(measured - declared),
+      `--accent sur ${label} (${backdropOf(theme, backdrop)}) en ${theme} — mesuré ` +
+        `${measured.toFixed(3)}:1, déclaré ${declared.toFixed(2)}:1. Écrivez la mesure, ne ` +
+        'déplacez pas la tolérance.',
+    ).toBeLessThanOrEqual(MAX_RATIO_DRIFT);
+
+    // (b) LE VERDICT, DANS LES DEUX SENS — le mécanisme du § 7, non affaibli.
+    if (shortfall === undefined) {
+      expectRatio(
+        measured,
+        AA_NON_TEXT,
+        `--accent EN TANT QUE FORME sur ${label} (${backdropOf(theme, backdrop)}) en ${theme}`,
+      );
+    } else {
+      const worstOfBoth = Math.min(light, dark);
+
+      expect(
+        worstOfBoth,
+        `« ${label} » porte une note de manquement alors que son pire cas des deux thèmes vaut ` +
+          `${worstOfBoth.toFixed(2)}:1, au-dessus du plancher de ${AA_NON_TEXT}:1. La palette a ` +
+          'progressé : retirez le `shortfall` au lieu de le laisser exempter un support qui ' +
+          'n’en a plus besoin.',
+      ).toBeLessThan(AA_NON_TEXT);
+    }
+  });
+
+  it('n’exempte que ce qui est nommé — deux supports, et ces deux-là', () => {
+    expect(
+      ACCENT_BOUNDARIES.filter((boundary) => boundary.shortfall !== undefined).map(
+        (boundary) => boundary.label,
+      ),
+    ).toStrictEqual(['la carte sur le halo froid', 'la carte sur le halo chaud']);
+  });
+
+  it('les deux seules cellules sous 3:1 sont les halos en SOMBRE', () => {
+    /*
+     * LA GARDE EXHAUSTIVE, et celle qui rend le (b) infalsifiable. Le (b) ne
+     * regarde que les nombres DÉCLARÉS ; ce test parcourt les quinze mesures
+     * réelles et épingle exactement lesquelles tombent. Une cellule qui se met à
+     * tomber ailleurs rougit ici, et une cellule réparée rougit aussi.
+     */
+    const failing = THEME_NAMES.flatMap((theme) =>
+      ACCENT_BOUNDARIES.filter(
+        (boundary) => ratioOn(theme, '--accent', backdropLabelled(boundary.label)) < AA_NON_TEXT,
+      ).map((boundary) => `${boundary.label} — ${theme}`),
+    );
+
+    expect(
+      failing,
+      'la liste des cellules sous 3:1 a changé. Si une cellule a été RÉPARÉE, retirez-la ici ' +
+        'et retirez son `shortfall` ; si une NOUVELLE est tombée, elle doit être nommée avant ' +
+        'd’être ajoutée.',
+    ).toStrictEqual([
+      'la carte sur le halo froid — dark-os',
+      'la carte sur le halo chaud — dark-os',
+      'la carte sur le halo froid — dark-explicit',
+      'la carte sur le halo chaud — dark-explicit',
+    ]);
+  });
+
+  /*
+   * LA PHRASE QUI COMPTE, RENDUE VÉRIFIABLE. Le thème verre ajoute un attribut
+   * `data-material="glass"` et un `backdrop-filter` ; il n'introduit AUCUN des
+   * jetons de la chaîne mesurée ci-dessus. `parseThemes` ne lit que les trois
+   * blocs de thème — `:root`, le `@media` sombre, `[data-theme='dark']` — donc
+   * une couche qui ne vivrait que sous un sélecteur de matériau ferait échouer
+   * `resolveToken` ici. Que les quatre se résolvent EST la preuve que ce
+   * manquement est servi sans le moindre attribut : il existait avant la V2, et
+   * le verre n'en est pas l'alibi.
+   */
+  it.each(
+    ['--accent', '--site-background', '--halo-tint', '--halo-tint-warm', '--glass-fill'].flatMap(
+      (token) => THEME_NAMES.map((theme) => ({ theme, token })),
+    ),
+  )(
+    '$token de la chaîne fautive vit dans les blocs de thème ordinaires — $theme',
+    ({ theme, token }) => {
+      expect(
+        () => tokenOf(theme, token),
+        `${token} ne se résout pas dans le thème \`${theme}\` : s’il a migré sous un sélecteur ` +
+          'de matériau, la note du § 11 ne peut plus dire que le manquement est antérieur au ' +
+          'thème verre — remesurez avant de réécrire la note.',
+      ).not.toThrow();
     },
   );
 });
