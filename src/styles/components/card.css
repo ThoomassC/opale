@@ -244,7 +244,16 @@
    révéler. Le retirer serait un écart avec le portfolio sans gain mesuré.
    -------------------------------------------------------------------------- */
 
-@media (prefers-reduced-transparency: reduce) {
+/* `(prefers-contrast: more)` EN SECONDE CONDITION, et ce n'est pas une
+   ceinture de plus : `prefers-reduced-transparency` n'est implémenté que par
+   Chromium — Safari ne l'a pas, Firefox le tient derrière une préférence
+   désactivée. `prefers-contrast: more`, lui, est partout. `materials.css`
+   portait déjà les deux conditions pour la tuile d'icône ; ces deux fichiers
+   n'avaient que la première, si bien qu'un utilisateur Safari qui demandait
+   plus de contraste voyait sa tuile s'aplatir tandis que la carte gardait son
+   `backdrop-filter` et le décor ses six halos. Les trois fichiers énoncent
+   maintenant la même condition, et `glass.structure.test.ts` l'épingle. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
   .tc-card--glass {
     background: var(--glass-fill-solid);
     backdrop-filter: none;

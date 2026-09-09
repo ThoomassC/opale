@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import backdropSource from './components/backdrop.css?raw';
 import cardSource from './components/card.css?raw';
+import materialsSource from '../tokens/materials.css?raw';
 import { ruleBodies, stripComments } from '../contract/stylesheet';
 
 /* ============================================================================
@@ -438,6 +439,55 @@ describe('le mouvement des halos', () => {
 
 describe('la transparence réduite', () => {
   const REDUCED = 'prefers-reduced-transparency';
+
+  /* LA CONDITION D'APLATISSEMENT, ÉPINGLÉE SUR LES TROIS FICHIERS.
+
+     `prefers-reduced-transparency` n'est implémenté que par Chromium : Safari
+     ne l'a pas, Firefox le tient derrière une préférence désactivée. Le seul
+     réglage d'accessibilité universel de cette famille est
+     `prefers-contrast: more`. `materials.css` portait les deux conditions ;
+     `card.css` et `backdrop.css` n'avaient que la première — si bien qu'un
+     utilisateur Safari qui demandait plus de contraste voyait sa tuile d'icône
+     s'aplatir tandis que la carte gardait son `backdrop-filter` et le décor ses
+     six halos. Trois fichiers, deux doctrines, et le levier qui marche partout
+     absent des deux plus visibles.
+
+     Ce test-ci est le garde de la COHÉRENCE, pas d'une valeur : il exige que
+     les trois fichiers énoncent la même condition. Ajouter demain un quatrième
+     fichier qui aplatit sans reprendre les deux conditions le fera rougir. */
+  it('devrait énoncer la même condition dans les trois fichiers qui aplatissent', () => {
+    const CONDITIONS = ['prefers-reduced-transparency: reduce', 'prefers-contrast: more'];
+
+    const sheets: readonly [name: string, source: string][] = [
+      ['tokens/materials.css', materialsSource],
+      ['styles/components/card.css', cardSource],
+      ['styles/components/backdrop.css', backdropSource],
+    ];
+
+    for (const [name, source] of sheets) {
+      const preludes = [...stripComments(source).matchAll(/@media[^{]*/g)].map((match) =>
+        match[0].replace(/\s+/g, ' ').trim(),
+      );
+      const flattening = preludes.filter((prelude) => prelude.includes(REDUCED));
+
+      expect(
+        flattening,
+        `${name} ne déclare aucun @media contenant ${REDUCED} : ` +
+          'ce fichier est censé aplatir le verre quand la transparence réduite est demandée.',
+      ).not.toHaveLength(0);
+
+      for (const prelude of flattening) {
+        for (const condition of CONDITIONS) {
+          expect(
+            prelude,
+            `${name} déclare « ${prelude} » sans « ${condition} » — ` +
+              'et `prefers-reduced-transparency` est du Chromium seul, donc un utilisateur ' +
+              'Safari ou Firefox en contraste élevé n’obtiendrait aucun aplatissement.',
+          ).toContain(condition);
+        }
+      }
+    }
+  });
 
   it('devrait rendre le verre opaque et lui retirer son filtre', () => {
     const flattened = atRuleOf(
