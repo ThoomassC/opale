@@ -24,7 +24,7 @@ Ce dépôt est ce garde. Il publie, dans cet ordre de valeur :
 ## Installation
 
 ```bash
-npm i "@thomascaron/ui@github:ThoomassC/ui-commune#v0.3.0"
+npm i "@thomascaron/ui@github:ThoomassC/ui-commune#v1.0.0"
 ```
 
 Le paquet se compile à l'installation (`prepare`). Trois points d'entrée :
@@ -133,16 +133,28 @@ techniquement rien — deux points d'entrée — mais un consommateur qui mesure
 palette importe volontiers les deux dans le même fichier de test, et devait alors aliaser
 l'un des deux.
 
-## La charte graphique
+## La vitrine
 
 ```bash
 npm install
 npm run dev        # http://127.0.0.1:5173
 ```
 
-La page rendue est la charte : la palette avec ses ratios mesurés, les échelles, et un
-spécimen de chaque composant dans chacun de ses états. Elle est rendue **dans la palette
-qu'elle documente** — le document est une instance de lui-même.
+Ce qui se rend est un **site de documentation** : barre de navigation à gauche, une page par
+sujet, et **une entrée par composant publié** — la palette avec ses ratios mesurés, les quatre
+échelles, le contrat d'accessibilité, une page par composant (spécimens rendus et tableau de
+props tiré des types réels), et une page de compositions pour ce qui ne se juge qu'assemblé.
+Le site est rendu **dans la palette qu'il documente** : le document est une instance de
+lui-même, et si une règle est fausse il se dégrade avec elle.
+
+Le routage passe par le fragment (`#/composants/button`) parce que la vitrine se construit en
+statique dans `dist-showcase/`, sans serveur capable de réécrire une URL profonde vers
+`index.html`.
+
+Deux promesses de ce site sont **exécutables**, dans `src/showcase/registry.test.tsx` : chaque
+composant exporté par `src/index.ts` a sa page — un composant publié sans page fait rougir la
+suite — et chacune des vingt-trois pages se rend sans jeter, sans second `<h1>` et sans saut
+de niveau de titre.
 
 ## Les règles, en sept lignes
 
@@ -163,6 +175,12 @@ Une règle qu'on ne peut pas citer de mémoire n'est pas appliquée.
    ne contient que des succès est une charte qu'on n'a pas éprouvée.
 
 ## Le contrat teal & cuivre
+
+> **v1.0.0 — l'API se fige, et la vitrine devient un site.** Le vocabulaire décrit
+> ci-dessous est celui que la 1.0 publie : rien n'a bougé depuis la v0.3.0, ce qui est la
+> seule raison acceptable de promettre une stabilité. Ce que la 1.0 ajoute n'est pas un
+> composant mais une lecture — une page par composant, une entrée de navigation par entrée
+> publiée, et deux tests qui gardent cette correspondance.
 
 > **v0.3.0 — le portfolio reprend la main, et ça casse six choses.** Pré-1.0, une
 > rupture va dans le mineur : passer à `1.0.0` promettrait une stabilité que la

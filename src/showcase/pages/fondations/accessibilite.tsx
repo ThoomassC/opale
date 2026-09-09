@@ -1,24 +1,27 @@
-import { Button } from '../components/button';
-import { Field } from '../components/field';
-import { Input } from '../components/input';
-import { Pill } from '../components/pill';
-import { Tag } from '../components/tag';
-import { Section, Specimen } from './section';
+import { Button } from '../../../components/button';
+import { Field } from '../../../components/field';
+import { Input } from '../../../components/input';
+import { Pill } from '../../../components/pill';
+import { Tag } from '../../../components/tag';
+import type { DocPage } from '../../doc-model';
+import { hrefFor } from '../../doc-model';
+import { Specimen } from '../../section';
+import { PageBody } from '../api';
 
-export function AccessibilitySection() {
-  return (
-    <Section
-      id="accessibilite"
-      index="07"
-      title="Le contrat d’accessibilité"
-      lede={
-        <>
-          Trois engagements, vérifiables à l’œil sur cette page même : le focus se voit
-          sur n’importe quel fond, la couleur n’est jamais le seul porteur de sens, et
-          rien de cliquable ne descend sous la taille du doigt.
-        </>
-      }
-    >
+export const accessibilitePage: DocPage = {
+  slug: 'accessibilite',
+  label: 'Accessibilité',
+  group: 'fondations',
+  title: 'Le contrat d’accessibilité',
+  lede: (
+    <>
+      Trois engagements, vérifiables à l’œil sur cette page même : le focus se voit sur n’importe
+      quel fond, la couleur n’est jamais le seul porteur de sens, et rien de cliquable ne descend
+      sous la taille du doigt.
+    </>
+  ),
+  render: () => (
+    <PageBody>
       <Specimen
         title="Le double anneau de focus"
         note="Tabulez dans le cadre ci-dessous. Deux anneaux : l’intérieur (--focus-inner) et l’extérieur (--focus-outer) s’inversent entre les thèmes, si bien que l’un des deux contraste toujours avec le fond local — y compris sur l’aplat teal d’un bouton primaire, où un anneau unique disparaîtrait."
@@ -27,16 +30,16 @@ export function AccessibilitySection() {
           <Button variant="primary">Bouton primaire</Button>
           <Button variant="secondary">Bouton secondaire</Button>
           <Button variant="danger">Supprimer l’étape</Button>
-          <a className="tc-doc-link" href="#palette">
+          <a className="tc-doc-link" href={hrefFor('palette')}>
             Un lien vers la palette
           </a>
           <Field id="demo-focus" label="Un champ">
             {(control) => <Input {...control} placeholder="Tabulez jusqu’ici" />}
           </Field>
         </div>
-        {/* Même raison que le tableau de la section 02 : un bloc de code qui
-            défile doit être atteignable au clavier (WCAG 2.1.1), et la règle
-            jsx-a11y ne modélise pas ce cas. */}
+        {/* Même raison que le tableau de la page palette : un bloc de code qui
+            défile doit être atteignable au clavier (WCAG 2.1.1), et la liste
+            blanche par défaut de la règle jsx-a11y ne modélise pas ce cas. */}
         <pre
           className="tc-doc-code"
           tabIndex={0}
@@ -50,12 +53,11 @@ box-shadow:
   0 0 0 5px var(--focus-outer);`}</code>
         </pre>
         <p className="tc-doc-prose tc-doc-aside">
-          L’<code>outline</code> porte l’anneau <strong>extérieur</strong>, et non
-          l’intérieur comme dans la recette d’origine : il est peint au-dessus du{' '}
-          <code>box-shadow</code>, si bien qu’un outline intérieur repeignait la bande
-          2–4 px et ne laissait qu’un filet de 1 px d’anneau extérieur. Or l’anneau
-          intérieur ne contraste avec rien d’autre que l’aplat teal — 1,08:1 sur la
-          carte, 1,16:1 sur le sol.
+          L’<code>outline</code> porte l’anneau <strong>extérieur</strong>, et non l’intérieur comme
+          dans la recette d’origine : il est peint au-dessus du <code>box-shadow</code>, si bien
+          qu’un outline intérieur repeignait la bande 2–4 px et ne laissait qu’un filet de 1 px
+          d’anneau extérieur. Or l’anneau intérieur ne contraste avec rien d’autre que l’aplat teal
+          — 1,08:1 sur la carte, 1,16:1 sur le sol.
         </p>
       </Specimen>
 
@@ -107,8 +109,7 @@ box-shadow:
             <figcaption className="tc-doc-target__caption">
               <code className="tc-doc-scale__token">--target-min</code>
               <span className="tc-doc-scale__usage">
-                Contrôle en liste ou en navigation : champ, ligne de case à cocher, entrée
-                de menu.
+                Contrôle en liste ou en navigation : champ, ligne de case à cocher, entrée de menu.
               </span>
             </figcaption>
           </figure>
@@ -119,8 +120,7 @@ box-shadow:
             <figcaption className="tc-doc-target__caption">
               <code className="tc-doc-scale__token">--target-button</code>
               <span className="tc-doc-scale__usage">
-                Bouton : 48 px de haut, bordure en pilule. C’est un plancher, pas une
-                hauteur fixe.
+                Bouton : 48 px de haut, bordure en pilule. C’est un plancher, pas une hauteur fixe.
               </span>
             </figcaption>
           </figure>
@@ -130,27 +130,26 @@ box-shadow:
       <Specimen title="Ce que la librairie promet, en clair">
         <ul className="tc-doc-checklist">
           <li>
-            Sémantique native d’abord : <code>&lt;button&gt;</code>,{' '}
-            <code>&lt;a href&gt;</code>, <code>&lt;label for&gt;</code>. ARIA ne vient
-            qu’après, et jamais pour rattraper un <code>&lt;div&gt;</code>.
+            Sémantique native d’abord : <code>&lt;button&gt;</code>, <code>&lt;a href&gt;</code>,{' '}
+            <code>&lt;label for&gt;</code>. ARIA ne vient qu’après, et jamais pour rattraper un{' '}
+            <code>&lt;div&gt;</code>.
           </li>
           <li>
-            Aucun état visuel porté par du JavaScript : survol, appui, focus, erreur et
-            attente sont des sélecteurs CSS.
+            Aucun état visuel porté par du JavaScript : survol, appui, focus, erreur et attente sont
+            des sélecteurs CSS.
           </li>
           <li>
-            <code>prefers-reduced-motion</code> restreint la liste des propriétés
-            animables aux couleurs et garde les 160 ms. On ne coupe pas la transition :
-            supprimer le fondu qui confirme un survol, c’est retirer un retour
-            d’information à quelqu’un qui demandait moins de mouvement, pas moins
-            d’interface.
+            <code>prefers-reduced-motion</code> restreint la liste des propriétés animables aux
+            couleurs et garde les 160 ms. On ne coupe pas la transition : supprimer le fondu qui
+            confirme un survol, c’est retirer un retour d’information à quelqu’un qui demandait
+            moins de mouvement, pas moins d’interface.
           </li>
           <li>
-            Zéro requête hors origine : pas de police distante, pas de{' '}
-            <code>@font-face</code>, pas même un <code>preconnect</code>.
+            Zéro requête hors origine : pas de police distante, pas de <code>@font-face</code>, pas
+            même un <code>preconnect</code>.
           </li>
         </ul>
       </Specimen>
-    </Section>
-  );
-}
+    </PageBody>
+  ),
+};
