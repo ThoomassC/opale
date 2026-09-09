@@ -1,32 +1,5 @@
 import type { ReactNode } from 'react';
 
-export interface SectionProps {
-  id: string;
-  /** Numéro de section, affiché en filet cuivre. */
-  index: string;
-  title: string;
-  lede?: ReactNode;
-  children: ReactNode;
-}
-
-/** Une section de la charte : numéro, titre, chapeau, contenu. */
-export function Section({ id, index, title, lede, children }: SectionProps) {
-  return (
-    <section className="tc-doc-section" id={id} aria-labelledby={`${id}-title`}>
-      <header className="tc-doc-section__head">
-        <p className="tc-doc-section__index" aria-hidden="true">
-          {index}
-        </p>
-        <h2 className="tc-doc-section__title" id={`${id}-title`}>
-          {title}
-        </h2>
-        {lede ? <p className="tc-doc-prose tc-doc-section__lede">{lede}</p> : null}
-      </header>
-      <div className="tc-doc-section__body">{children}</div>
-    </section>
-  );
-}
-
 export interface SpecimenProps {
   title: string;
   note?: ReactNode;
