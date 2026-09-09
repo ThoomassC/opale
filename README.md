@@ -213,10 +213,10 @@ nécessaire parce que — mesuré, contre l'intuition — **`forced-colors: acti
 
 ### Ce qu'elle coûte
 
-Mesuré sur `dist/glass.css` : **23 007 octets bruts, 8 251 gzippés**. Mais `build:css` copie
+Mesuré sur `dist/glass.css` : **24 489 octets bruts, 8 963 gzippés**. Mais `build:css` copie
 les feuilles **verbatim, commentaires compris** — il n'y a pas de minifieur dans ce dépôt, et
-c'est un choix assumé pour toutes ses feuilles. La CSS utile, elle, pèse **4 205 octets
-bruts, 663 gzippés** : c'est ce qu'un consommateur qui minifie paiera réellement. C'est aussi
+c'est un choix assumé pour toutes ses feuilles. La CSS utile, elle, pèse **4 204 octets
+bruts, 685 gzippés** : c'est ce qu'un consommateur qui minifie paiera réellement. C'est aussi
 pourquoi l'entrée est **optionnelle** plutôt qu'incluse dans `ui.css` : `travels_in_world` est
 un non-consommateur plausible et durable de ce thème.
 
@@ -596,8 +596,8 @@ Par coût de retour en arrière décroissant.
    des décisions d'apparence sur le composant le plus visible de la librairie : elles
    appartiennent au propriétaire de la palette, pas à un chantier de thème.
 4. **Minifier le CSS publié dans `build:css`.** `build:css` est un `cp` : tous les
-   commentaires partent chez le consommateur. Mesuré — le socle livré passerait de **45,5 à
-   6,0 kB gzippés (−86 %)**, et le coût marginal de `glass.css` de **7 074 à 215 octets**.
+   commentaires partent chez le consommateur. Mesuré — le socle livré passerait de **46,3 à
+   5,7 kB gzippés (−88 %)**, et le coût marginal de `glass.css` de **7 597 à 222 octets**.
    Les commentaires sont la valeur du dépôt dans `src/` ; ils n'ont aucune raison d'être
    téléchargés. À faire dans le script, jamais en appauvrissant la source.
 5. La bascule du fond de `travels_in_world` vers `#deedf0`, et le remesurage de sa carte.
