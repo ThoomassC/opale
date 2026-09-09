@@ -578,6 +578,25 @@ html {
     color: HighlightText;
   }
 
+  /* LE SURVOL ET L'APPUI DOIVENT ÊTRE REPRIS EUX AUSSI, et c'est une question de
+     spécificité, pas de zèle. Les deux règles d'état de l'état enfoncé pèsent
+     (0,3,0) ; la règle ci-dessus, (0,2,0). Sans ces deux sélecteurs, les règles
+     d'état gagnent — et comme `forced-color-adjust: none` continue de
+     s'appliquer, le teal d'AUTEUR est peint sous une encre SYSTÈME.
+
+     Mesuré (Chromium 151, `forced-colors: active`) : au survol le fond valait
+     `--accent-hover` et à l'appui `--accent-active`, sous `HighlightText`. Avec
+     le blanc de l'émulation la paire tenait, mais `HighlightText` appartient au
+     thème de l'utilisateur : sur un thème à encre de surbrillance sombre, elle
+     tombe à 3,27:1 au survol et 2,80:1 à l'appui, sous les 4,5:1 de WCAG 1.4.3.
+     Le libellé de la bascule disparaissait donc tant que le pointeur ou la
+     touche restait dessus. */
+  .tc-doc-themetoggle[aria-pressed='true']:hover,
+  .tc-doc-themetoggle[aria-pressed='true']:active {
+    border-color: Highlight;
+    background: Highlight;
+  }
+
   .tc-doc-themetoggle[aria-pressed='true']:focus-visible {
     outline-color: CanvasText;
     box-shadow: none;
