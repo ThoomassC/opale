@@ -12,23 +12,24 @@ interface ButtonSpec {
   readonly note: string;
 }
 
-/* Les trois variantes, avec la prose de la charte — elle dit ce qu'aucun
-   tableau ne dit : combien de fois par vue on a le droit de s'en servir. */
+/* Les trois variantes, avec la règle de dosage de la charte — elle dit ce
+   qu'aucun tableau ne dit : combien de fois par vue on a le droit de s'en
+   servir. */
 const BUTTON_SPECS: readonly ButtonSpec[] = [
   {
     variant: 'primary',
     title: 'Primary — l’aplat teal',
-    note: 'Un seul par vue. C’est la sortie attendue de l’écran, et il n’y en a qu’une.',
+    note: 'Un seul par vue : c’est la sortie attendue de l’écran.',
   },
   {
     variant: 'secondary',
     title: 'Secondary — le liseré teal',
-    note: 'Toutes les autres actions. Fond transparent, liseré discret qui s’affirme au survol.',
+    note: 'Toutes les autres actions.',
   },
   {
     variant: 'danger',
     title: 'Danger — le liseré rouge',
-    note: 'Jamais un aplat : l’aplat plein est le monopole du teal. Une suppression se signale, elle ne se peint pas en rouge pour attirer le clic.',
+    note: 'Jamais un aplat : l’aplat plein est le monopole du teal.',
   },
 ];
 
@@ -64,11 +65,7 @@ const PROPS: readonly PropRow[] = [
     name: 'variant',
     type: "'primary' | 'secondary' | 'danger'",
     defaultValue: "'primary'",
-    description: (
-      <>
-        L’aplat teal, le liseré teal, ou le liseré rouge. <code>danger</code> n’est jamais un aplat.
-      </>
-    ),
+    description: <>L’aplat teal, le liseré teal, ou le liseré rouge.</>,
   },
   {
     name: 'href',
@@ -76,8 +73,8 @@ const PROPS: readonly PropRow[] = [
     description: (
       <>
         Présent et non vide, le composant rend un <code>&lt;a&gt;</code> au lieu d’un{' '}
-        <code>&lt;button&gt;</code>. C’est lui qui discrimine l’union : sur la branche bouton il est
-        typé <code>undefined</code>.
+        <code>&lt;button&gt;</code> ; vide, il retombe sur le bouton et le signale en{' '}
+        <code>console.error</code>.
       </>
     ),
   },
@@ -87,9 +84,8 @@ const PROPS: readonly PropRow[] = [
     defaultValue: "'button'",
     description: (
       <>
-        Branche <code>&lt;button&gt;</code> seulement — le type refuse <code>type</code> dès qu’un{' '}
-        <code>href</code> est présent, parce que le <code>type</code> d’une ancre est un indice de
-        type MIME et accepterait <code>&quot;submit&quot;</code> sans protester.
+        Branche <code>&lt;button&gt;</code> seulement : refusé dès qu’un <code>href</code> est
+        présent.
       </>
     ),
   },
@@ -98,9 +94,7 @@ const PROPS: readonly PropRow[] = [
     type: 'boolean',
     description: (
       <>
-        Branche <code>&lt;button&gt;</code> seulement, et refusé à la compilation sur une ancre.
-        Retire le bouton de l’ordre de tabulation : préférez <code>aria-disabled</code> là où le
-        bouton est la sortie attendue de l’écran.
+        Branche <code>&lt;button&gt;</code> seulement, et retire le bouton de l’ordre de tabulation.
       </>
     ),
   },
@@ -109,9 +103,8 @@ const PROPS: readonly PropRow[] = [
     type: "boolean | 'true' | 'false'",
     description: (
       <>
-        Rend le contrôle inerte <em>sans</em> le retirer du clavier : le composant intercepte le
-        clic, appelle <code>preventDefault()</code> et <code>stopPropagation()</code>, et n’émet
-        plus <code>href</code> du tout sur une ancre.
+        Rend le contrôle inerte <em>sans</em> le retirer du clavier ; sur une ancre, plus aucun{' '}
+        <code>href</code> n’est émis.
       </>
     ),
   },
@@ -120,9 +113,8 @@ const PROPS: readonly PropRow[] = [
     type: "boolean | 'true' | 'false'",
     description: (
       <>
-        Marque l’attente, et ne neutralise <em>rien</em> : pour refuser le second clic, posez aussi{' '}
-        <code>aria-disabled</code>. Donnez un libellé de substitution («&nbsp;Envoi…&nbsp;») plutôt
-        que de vider le texte.
+        Marque l’attente, et ne neutralise <em>rien</em> : posez aussi <code>aria-disabled</code>{' '}
+        pour refuser le second clic.
       </>
     ),
   },
@@ -150,22 +142,15 @@ export const buttonPage: DocPage = {
   lede: (
     <>
       Le bouton de la charte : hauteur plancher <code>--target-button</code> (48&nbsp;px), bordure
-      en pilule, aucun état React et aucun hook — survol, appui, focus, attente et désactivation
-      sont des sélecteurs CSS. Deux décisions structurent son interface : <code>href</code>{' '}
-      discrimine une union, parce qu’une navigation doit être un lien et non un bouton qui appelle{' '}
-      <code>router.push</code> ; et <code>aria-disabled</code> est recommandé plutôt que{' '}
-      <code>disabled</code> partout où l’utilisateur au clavier doit encore pouvoir atteindre le
-      contrôle pour apprendre pourquoi il est inerte.
+      en pilule, aucun état React — survol, appui, focus, attente et désactivation sont des
+      sélecteurs CSS. <code>href</code> discrimine une union, parce qu’une navigation doit être un
+      lien, et <code>aria-disabled</code> est préféré à <code>disabled</code> pour que le contrôle
+      reste atteignable au clavier.
     </>
   ),
   render: () => (
     <PageBody>
       <UsageBlock label="Import et appels représentatifs de Button" code={USAGE} />
-
-      <p className="tc-doc-prose tc-doc-aside">
-        Cette page déroge sciemment à sa propre règle « un seul bouton primaire par vue » : un
-        catalogue montre des spécimens, pas une interface.
-      </p>
 
       {/* `<figure>` / `<figcaption>` plutôt qu'un `<span>` frère : quinze
           boutons nommés « Enregistrer » sont rigoureusement indiscernables
@@ -193,11 +178,7 @@ export const buttonPage: DocPage = {
         </Specimen>
       ))}
 
-      <Specimen
-        title="Les boutons — et le bouton qui est un lien"
-        note="href fait basculer l’élément rendu de <button> à <a> : une navigation doit être un lien, sinon elle perd l’ouverture en nouvel onglet, la copie d’adresse et l’annonce « lien » du lecteur d’écran. aria-disabled plutôt que disabled : l’élément reste focusable, donc atteignable au clavier, et le composant neutralise le clic lui-même."
-        inline
-      >
+      <Specimen title="Les boutons — et le bouton qui est un lien" inline>
         <Button>Publier l’étape</Button>
         <Button variant="secondary">Enregistrer le brouillon</Button>
         <Button variant="danger">Supprimer l’étape</Button>
@@ -212,7 +193,7 @@ export const buttonPage: DocPage = {
           l'identique, et une seule des deux est encore un lien. */}
       <Specimen
         title="Le lien inerte — sous aria-disabled, le href n’est plus émis"
-        note='Intercepter onClick ne suffisait pas, et ne pouvait pas : le clic du milieu passe par auxclick, « ouvrir dans un nouvel onglet » et le glisser vers la barre d’adresse ne passent par aucun événement. Un lien peint inerte s’ouvrait donc par trois chemins. Sous aria-disabled, le composant n’émet plus href du tout — il n’y a plus rien à ouvrir, copier ni glisser — et rétablit role="link" et tabIndex=0, sans quoi l’élément retomberait sur generic et le lecteur d’écran n’annoncerait plus ni « lien » ni son indisponibilité.'
+        note='Intercepter onClick ne pouvait pas suffire — le clic du milieu, « ouvrir dans un nouvel onglet » et le glisser vers la barre d’adresse n’émettent pas de clic — donc sous aria-disabled le composant n’émet plus href du tout, et rétablit role="link" et tabIndex=0.'
       >
         <div className="tc-doc-states">
           <figure className="tc-doc-states__cell">
@@ -239,35 +220,26 @@ export const buttonPage: DocPage = {
         id="button"
         note={
           <>
-            L’interface est une{' '}
             <strong>
-              union discriminée sur <code>href</code>
-            </strong>
-            . Sans <code>href</code>, le composant est un <code>&lt;button&gt;</code> et accepte
-            tout <code>ComponentPropsWithoutRef&lt;&apos;button&apos;&gt;</code>. Avec{' '}
-            <code>href</code>, c’est un <code>&lt;a&gt;</code> et il accepte{' '}
+              Union discriminée sur <code>href</code>
+            </strong>{' '}
+            : sans lui, <code>ComponentPropsWithoutRef&lt;&apos;button&apos;&gt;</code> ; avec lui,{' '}
             <code>
               Omit&lt;ComponentPropsWithoutRef&lt;&apos;a&apos;&gt;, &apos;href&apos; |
               &apos;type&apos;&gt;
             </code>{' '}
-            — donc ni <code>type</code> ni <code>disabled</code>, refusés à la compilation. Les
-            lignes ci-dessous ne listent que les props propres au composant et les attributs natifs
-            dont il change le traitement ; tous les autres traversent jusqu’à l’élément rendu.
+            — donc ni <code>type</code> ni <code>disabled</code>.
           </>
         }
         rows={PROPS}
       />
 
-      <p className="tc-doc-prose tc-doc-aside">
-        Un <code>href</code> vide n’est pas une erreur de type — l’appel est légitime, c’est la
-        donnée qui manque. Le composant retombe alors sur un <code>&lt;button&gt;</code>, n’émet
-        aucun <code>href</code>, et signale la faute en <code>console.error</code> : un{' '}
-        <code>&lt;a href=&quot;&quot;&gt;</code> pointe vers l’adresse courante, donc le clic
-        rechargerait la page. Il ne lève jamais — voir{' '}
+      <p className="tc-doc-prose">
+        <code>Pill</code> applique la même politique sur un <code>href</code> vide —{' '}
         <a className="tc-doc-link" href={hrefFor('composants/pill')}>
-          Pill
-        </a>{' '}
-        pour la même politique et le défaut qui l’a imposée.
+          voir sa page
+        </a>
+        .
       </p>
     </PageBody>
   ),

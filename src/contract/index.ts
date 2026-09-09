@@ -56,6 +56,7 @@ export {
   GLASS_LAYERS,
   SEMANTIC_WASHES,
   STATE_WASHES,
+  nested,
   resolveBackdrop,
   withWash,
 } from './backdrop.js';

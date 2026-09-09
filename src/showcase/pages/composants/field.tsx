@@ -34,9 +34,9 @@ const PROPS: readonly PropRow[] = [
     required: true,
     description: (
       <>
-        Identifiant du contrôle, et <strong>requis volontairement</strong> : <code>useId</code> est
-        un hook, l’appeler ici interdirait le rendu en Server Component. Deux identifiants en sont
-        dérivés — <code>{'${id}-hint'}</code> et <code>{'${id}-error'}</code>.
+        Identifiant du contrôle, <strong>requis</strong> faute de <code>useId</code> ;{' '}
+        <code>{'${id}-hint'}</code> et <code>{'${id}-error'}</code> en sont dérivés, donc
+        collisionnables.
       </>
     ),
   },
@@ -55,8 +55,7 @@ const PROPS: readonly PropRow[] = [
     type: 'ReactNode',
     description: (
       <>
-        Aide permanente, référencée par <code>aria-describedby</code>. Elle n’est <em>jamais</em>{' '}
-        annoncée d’elle-même : ce n’est pas une région dynamique.
+        Aide permanente, référencée par <code>aria-describedby</code>.
       </>
     ),
   },
@@ -65,9 +64,8 @@ const PROPS: readonly PropRow[] = [
     type: 'ReactNode',
     description: (
       <>
-        Message d’erreur. Sa présence pose <code>aria-invalid</code> sur le contrôle, ajoute le
-        message à <code>aria-describedby</code>, et <strong>l’annonce</strong> : le paragraphe porte{' '}
-        <code>role=&quot;alert&quot;</code>.
+        Message d’erreur : sa présence pose <code>aria-invalid</code>, complète{' '}
+        <code>aria-describedby</code>, et <strong>annonce</strong> le message.
       </>
     ),
   },
@@ -75,13 +73,7 @@ const PROPS: readonly PropRow[] = [
     name: 'children',
     type: '(control: FieldControlProps) => ReactNode',
     required: true,
-    description: (
-      <>
-        Fonction-enfant recevant les attributs calculés. Choix assumé contre{' '}
-        <code>cloneElement</code>, qui devine la forme de l’enfant, écrase silencieusement un{' '}
-        <code>aria-describedby</code> déjà posé, et casse dès qu’on interpose un fragment.
-      </>
-    ),
+    description: <>Fonction-enfant recevant les attributs calculés.</>,
   },
   {
     name: 'className',
@@ -116,9 +108,8 @@ const CONTROL_PROPS: readonly PropRow[] = [
     required: true,
     description: (
       <>
-        Les identifiants de l’aide puis de l’erreur, dans cet ordre, séparés par une espace.{' '}
-        <code>undefined</code> quand il n’y a ni l’une ni l’autre — et la clé disparaît alors du
-        DOM.
+        Les identifiants de l’aide puis de l’erreur, séparés par une espace ; <code>undefined</code>{' '}
+        s’il n’y en a aucun.
       </>
     ),
   },
@@ -128,9 +119,8 @@ const CONTROL_PROPS: readonly PropRow[] = [
     required: true,
     description: (
       <>
-        <code>true</code> dès qu’une erreur est présente, <code>undefined</code> sinon. Jamais{' '}
-        <code>&quot;false&quot;</code> : un <code>aria-invalid=&quot;false&quot;</code> parasite
-        n’apporte rien.
+        <code>true</code> dès qu’une erreur est présente, <code>undefined</code> sinon — jamais{' '}
+        <code>&quot;false&quot;</code>.
       </>
     ),
   },
@@ -144,21 +134,16 @@ export const fieldPage: DocPage = {
   lede: (
     <>
       L’enveloppe d’un contrôle de formulaire : libellé, aide, message d’erreur, et le câblage ARIA
-      entre les trois. Aucun état, aucun hook — et c’est ce qui explique sa seule prop surprenante :{' '}
-      <code>id</code> est <strong>requise</strong>, parce que <code>useId</code> est un hook et
-      qu’un hook interdirait le rendu en Server Component. Les attributs calculés sont remis à une
-      fonction-enfant plutôt qu’injectés par <code>cloneElement</code>, pour que le câblage soit
-      visible à la lecture.
+      entre les trois. <code>id</code> est <strong>requise</strong> — <code>useId</code> est un hook
+      et interdirait le rendu en Server Component — et les attributs calculés sont remis à une
+      fonction-enfant plutôt qu’injectés par <code>cloneElement</code>.
     </>
   ),
   render: () => (
     <PageBody>
       <UsageBlock label="Import et appel représentatif de Field" code={USAGE} />
 
-      <Specimen
-        title="Champs — les six états"
-        note="Field ne génère aucun identifiant : useId est un hook, et un hook interdirait le rendu serveur. L’id est donc une prop requise, et Field câble lui-même htmlFor et aria-describedby."
-      >
+      <Specimen title="Champs — les six états">
         <div className="tc-doc-form">
           <Field id="field-demo-nom" label="Nom de l’étape">
             {(control) => <Input {...control} defaultValue="Col du Galibier" />}
@@ -225,7 +210,7 @@ export const fieldPage: DocPage = {
           pas l'autre. */}
       <Specimen
         title="Le focus du contrôle"
-        note="Tabulez dans le cadre. Le double anneau — --focus-inner et --focus-outer — se pose SUR le contrôle, jamais sur l’enveloppe : c’est le contrôle qui reçoit le focus, et le libellé n’est pas focusable. Les deux anneaux s’inversent entre les thèmes, si bien que l’un des deux contraste toujours avec le fond local."
+        note="Tabulez dans le cadre : le double anneau se pose sur le contrôle, et ses deux couches s’inversent entre les thèmes pour que l’une contraste toujours avec le fond local."
       >
         <div className="tc-doc-focusdemo">
           <Field id="field-demo-focus" label="Un champ" hint="L’aide reste lisible sous l’anneau.">
@@ -239,8 +224,8 @@ export const fieldPage: DocPage = {
         note={
           <>
             Le reste de <code>ComponentPropsWithoutRef&lt;&apos;div&apos;&gt;</code> traverse
-            jusqu’à l’enveloppe, à l’exception de <code>children</code> et <code>id</code> — tous
-            deux redéfinis ci-dessous.
+            jusqu’à l’enveloppe, sauf <code>children</code> et <code>id</code>, redéfinis
+            ci-dessous.
           </>
         }
         rows={PROPS}
@@ -251,12 +236,9 @@ export const fieldPage: DocPage = {
         title="Ce que la fonction-enfant reçoit"
         note={
           <>
-            Le type <code>FieldControlProps</code>, conçu pour être <strong>étalé tel quel</strong>{' '}
-            sur l’élément de formulaire. Étalez-le en dernier et ne posez pas votre propre{' '}
-            <code>aria-describedby</code> après : le faire écrase la valeur calculée sans que rien
-            ne le signale — l’aide reste affichée, garde son <code>id</code>, et n’est plus
-            référencée par personne. C’est le revers du choix de la fonction-enfant : elle rend le
-            câblage visible plutôt que magique, au prix de pouvoir le défaire.
+            <code>FieldControlProps</code> est conçu pour être <strong>étalé tel quel</strong>, en
+            dernier : poser son propre <code>aria-describedby</code> après écrase la valeur calculée
+            sans que rien ne le signale.
           </>
         }
         rows={CONTROL_PROPS}
@@ -269,34 +251,14 @@ export const fieldPage: DocPage = {
 
       <p className="tc-doc-prose tc-doc-aside">
         <strong>
-          L’erreur est annoncée, et le rôle est en dur : <code>role=&quot;alert&quot;</code>.
+          L’erreur est annoncée, et le rôle est en dur : <code>role=&quot;alert&quot;</code>
         </strong>{' '}
-        Sans lui, le composant avait deux des trois pieds du trépied — <code>aria-describedby</code>{' '}
-        pour la relation, <code>scroll-margin-block-start</code> pour l’atteinte au défilement — et
-        pas le troisième : après un envoi refusé par le serveur, le glyphe apparaissait, le libellé
-        rougissait, et le lecteur d’écran ne disait <em>rien</em>. Le nœud d’erreur étant monté à l’
-        <em>apparition</em> de l’erreur, un <code>aria-live</code> y serait posé sur un nœud qui
-        arrive déjà rempli — le cas que les lecteurs d’écran annoncent le moins fiablement ;{' '}
-        <code>role=&quot;alert&quot;</code> est précisément l’exception documentée. Ce que ce choix
-        coûte : une validation déclenchée à chaque frappe interrompt le lecteur d’écran à chaque
-        frappe. Validez à la perte de focus ou à l’envoi. Le glyphe <code>▲</code>, lui, est{' '}
-        <code>aria-hidden</code> : seul le texte de l’erreur est entendu — voir{' '}
+        — le nœud d’erreur arrive déjà rempli, le cas qu’un <code>aria-live</code> annonce le moins
+        fiablement, donc validez à la perte de focus ou à l’envoi et non à chaque frappe (voir{' '}
         <a className="tc-doc-link" href={hrefFor('accessibilite')}>
           Le contrat d’accessibilité
         </a>
-        .
-      </p>
-
-      <p className="tc-doc-prose tc-doc-aside">
-        <strong>
-          Les deux identifiants dérivés sont collisionnables, et aucun garde n’est possible ici.
-        </strong>{' '}
-        Un champ nommé <code>date</code> et un second nommé <code>date-hint</code> produisent deux
-        éléments portant <code>id=&quot;date-hint&quot;</code> ; le <code>&lt;label for&gt;</code>{' '}
-        du second désigne alors le paragraphe d’aide du premier — libellé plus cliquable, contrôle
-        sans nom accessible. Sans <code>useId</code>, c’est à l’appelant de ne pas nommer un champ
-        d’après un autre. En contrepartie, <code>{'${id}-error'}</code> est une adresse{' '}
-        <em>stable</em>&nbsp;: un formulaire peut y poser le focus après un envoi refusé.
+        ).
       </p>
     </PageBody>
   ),

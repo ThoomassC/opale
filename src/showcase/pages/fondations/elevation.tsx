@@ -17,16 +17,15 @@ export const elevationPage: DocPage = {
   title: 'Élévation',
   lede: (
     <>
-      Quatre crans, et une inversion de polarité qu’il faut connaître :{' '}
+      Quatre crans, et une inversion de polarité :{' '}
       <strong>en clair, c’est l’ombre qui sépare</strong> la carte du sol (ΔE 20,6 ; un liseré blanc
-      y plafonne à ΔE 4,0), <strong>en sombre, c’est le liseré</strong> — une ombre composée y
-      mesure ΔE 2,2, sous le seuil de perceptibilité. Une échelle d’ombres seule ne suffit jamais :
-      les deux sont toujours posés ensemble.
+      y plafonne à ΔE 4,0), <strong>en sombre, c’est le liseré</strong> (une ombre composée y mesure
+      ΔE 2,2). Les deux sont donc toujours posés ensemble.
     </>
   ),
   render: () => (
     <PageBody>
-      <Specimen title="Les quatre crans" note="Basculez le thème pour voir la polarité s’inverser.">
+      <Specimen title="Les quatre crans">
         <div className="tc-doc-grid tc-doc-grid--elev">
           {ELEVATIONS.map((elevation) => (
             <Card elevation={elevation.level} key={elevation.token}>

@@ -36,12 +36,9 @@ export const sectionHeadingPage: DocPage = {
   title: 'SectionHeading',
   lede: (
     <>
-      Sourcil, titre, chapô. Le <strong>niveau du titre est choisi par l’appelant</strong>, parce
-      qu’un composant ne connaît pas sa profondeur dans le document : la même en-tête vit sous le{' '}
-      <code>h1</code> d’une page — elle est donc un <code>h2</code> — comme à l’intérieur d’un
-      panneau déjà titré, où elle est un <code>h3</code>. Deviner produirait un plan de document
-      faux une fois sur deux, et un plan faux est exactement ce sur quoi un lecteur d’écran navigue.
-      La <strong>taille</strong>, elle, se déduit du niveau.
+      Sourcil, titre, chapô. Le <strong>niveau du titre est choisi par l’appelant</strong> — un
+      composant ne connaît pas sa profondeur dans le document — et la <strong>taille</strong> se
+      déduit du niveau.
     </>
   ),
   render: () => (
@@ -52,12 +49,10 @@ export const sectionHeadingPage: DocPage = {
         title="Le bloc de titre — le sourcil est en cuivre, l’échelle suit le niveau"
         note={
           <>
-            Le sourcil est rendu en <code>--accent-secondary</code>, la couche éditoriale du contrat
-            de couleur : jamais l’accent teal, qui est réservé à ce qui s’actionne. Le niveau est
-            une prop parce qu’un composant ne peut pas connaître sa profondeur dans le plan du
-            document — mais la taille, elle, se déduit du niveau. Les trois blocs ci-dessous ne
-            diffèrent que par leur prop <code>level</code>, et un titre plus profond ne doit jamais
-            se peindre plus gros que le titre qui le contient.
+            Les trois tailles sont épinglées par un test qui lit la feuille —{' '}
+            <code>--text-display-md</code> au niveau 2, <code>--text-display-sm</code> au niveau 3,{' '}
+            <code>--text-lg</code> au niveau 4 — et le sourcil est rendu en{' '}
+            <code>--accent-secondary</code>, la couche éditoriale du contrat de couleur.
           </>
         }
       >
@@ -83,28 +78,13 @@ export const sectionHeadingPage: DocPage = {
         </div>
       </Specimen>
 
-      <p className="tc-doc-prose tc-doc-aside">
-        Les trois tailles sont épinglées par un test qui lit la feuille :{' '}
-        <code>--text-display-md</code> au niveau 2, <code>--text-display-sm</code> au niveau 3,{' '}
-        <code>--text-lg</code> au niveau 4. Le choix n’est pas gratuit — <code>--text-xl</code> (28
-        px fixe) dépasserait <code>--text-display-sm</code> (24 → 34 px) entre 923 et 1077 px de
-        fenêtre, et le niveau 4 repasserait devant le niveau 3 dans cette bande. Le quatrième niveau
-        quitte d’ailleurs l’échelle d’affichage : à 23 px, le resserrage de −0,02 em et
-        l’interlignage de 1,08 d’un grand titre cognent les jambages. C’est un intertitre, il se
-        compose comme tel.
-      </p>
-
       <Specimen
         title="La variante compacte, et le titre qui nomme sa section"
         note={
           <>
-            <code>compact</code> annule la marge, centre le bloc dans sa boîte parente et le sort de
-            la mise en deux colonnes du grand écran : il est fait pour vivre dans une grille qui lui
-            est propre. <code>headingId</code>, lui, pose l’identifiant{' '}
-            <strong>sur le titre</strong> et non sur le conteneur — c’est ce qui permet à la{' '}
-            <code>&lt;section&gt;</code> englobante de se nommer par <code>aria-labelledby</code>,
-            le conteneur gardant son <code>id</code> propre pour l’ancre de navigation. Les deux ne
-            peuvent pas être le même attribut, d’où la prop.
+            <code>headingId</code> pose l’identifiant <strong>sur le titre</strong> et non sur le
+            conteneur : c’est ce qui permet à la <code>&lt;section&gt;</code> englobante de se
+            nommer par <code>aria-labelledby</code>.
           </>
         }
       >
@@ -128,10 +108,8 @@ export const sectionHeadingPage: DocPage = {
               Omit&lt;ComponentPropsWithoutRef&lt;&apos;div&apos;&gt;, &apos;children&apos; |
               &apos;title&apos;&gt;
             </code>{' '}
-            : le composant rend son contenu à partir de ses props — il n’y a pas de place pour des{' '}
-            <code>children</code> — et sa prop <code>title</code> remplace l’attribut HTML du même
-            nom, qui n’aurait rien à faire ici : une infobulle au survol d’un bloc de titre n’est ni
-            atteignable au clavier ni lisible au toucher.
+            : le composant rend son contenu à partir de ses props, et sa prop <code>title</code>{' '}
+            remplace l’attribut HTML du même nom.
           </>
         }
         rows={[
@@ -141,8 +119,7 @@ export const sectionHeadingPage: DocPage = {
             required: true,
             description: (
               <>
-                Le titre de la section, rendu dans la balise dictée par <code>level</code> avec la
-                classe <code>tc-section-heading__title</code>.
+                Le titre, rendu dans la balise dictée par <code>level</code>.
               </>
             ),
           },
@@ -152,9 +129,7 @@ export const sectionHeadingPage: DocPage = {
             defaultValue: '2',
             description: (
               <>
-                La balise rendue, et donc la taille. <code>1</code> est{' '}
-                <strong>volontairement absent</strong> : le titre de premier niveau est celui de la
-                page, il n’appartient pas à une section.
+                La balise rendue, et donc la taille ; <code>1</code> est volontairement absent.
               </>
             ),
           },
@@ -163,40 +138,29 @@ export const sectionHeadingPage: DocPage = {
             type: 'ReactNode',
             description: (
               <>
-                Le mot de catégorie posé au-dessus du titre, en cuivre. Absent, aucun{' '}
-                <code>&lt;p&gt;</code> n’est rendu — et ce n’est jamais un titre : il ne doit pas
-                entrer dans le plan du document.
+                Le mot de catégorie au-dessus du titre, en cuivre — jamais un titre, il n’entre pas
+                dans le plan du document.
               </>
             ),
           },
           {
             name: 'lede',
             type: 'ReactNode',
-            description: (
-              <>
-                Une phrase sous le titre. Passe en seconde colonne au-delà de 62 rem, sauf en
-                variante compacte.
-              </>
-            ),
+            description: 'Une phrase sous le titre ; passe en seconde colonne au-delà de 62 rem.',
           },
           {
             name: 'compact',
             type: 'boolean',
             defaultValue: 'false',
-            description: (
-              <>
-                Marge nulle, alignement centré, hors de la mise en deux colonnes. Ajoute{' '}
-                <code>tc-section-heading--compact</code>.
-              </>
-            ),
+            description: 'Marge nulle, alignement centré, hors de la mise en deux colonnes.',
           },
           {
             name: 'headingId',
             type: 'string',
             description: (
               <>
-                Identifiant posé sur le <strong>titre</strong>. Le <code>id</code> ordinaire, lui,
-                part sur le conteneur avec le reste des attributs de <code>&lt;div&gt;</code>.
+                Identifiant posé sur le <strong>titre</strong> ; le <code>id</code> ordinaire part
+                sur le conteneur.
               </>
             ),
           },
@@ -222,13 +186,11 @@ export const sectionHeadingPage: DocPage = {
       />
 
       <p className="tc-doc-prose">
-        Le même raisonnement — un composant ne devine pas sa profondeur — est ce qui a donné son{' '}
-        <code>level</code> à{' '}
+        Le même raisonnement a donné son <code>level</code> à{' '}
         <a className="tc-doc-link" href={hrefFor('composants/timeline')}>
           TimelineItem
         </a>
-        , à ceci près que la frise, elle, <em>vérifie</em> le niveau réellement écrit dans son
-        contenu.
+        , qui <em>vérifie</em> en plus le niveau réellement écrit.
       </p>
     </PageBody>
   ),

@@ -30,6 +30,11 @@ import { PageBody, UsageBlock } from '../api';
    Pas de `PropsTable` sur cette page : aucune des trois scènes ne documente un
    composant, elles documentent un ASSEMBLAGE. Les interfaces sont sur les pages
    des composants, qui sont liées depuis ici.
+
+   À savoir avant de comparer les deux scènes : les disques du décor sont
+   positionnés en POURCENTAGE de la boîte de l'hôte, donc une scène plus haute
+   les répartit autrement. Les deux images ne sont pas deux photographies du
+   même décor — seule la composition de l'entrée s'y compare.
    ========================================================================== */
 
 const USAGE = `import { Backdrop, IconTile, Timeline, TimelineItem } from '@thomascaron/ui';
@@ -149,11 +154,9 @@ export const verreEtFrisePage: DocPage = {
   lede: (
     <>
       Les pages de composants les <em>mesurent</em> ; celle-ci les <em>rend</em>, parce qu’un
-      matériau translucide ne se juge pas sur un tableau de ratios. Le contrat de couleur mesure des
-      couches de <code>background</code> ; il ne dit rien du <code>backdrop-filter</code>, du
-      ménisque, ni de ce qu’un navigateur peint vraiment. jsdom ne peint pas, et il n’y a aucun
-      harnais navigateur dans ce dépôt : <strong>cette page est le seul garde qui reste</strong>, et
-      c’est un garde humain.
+      matériau translucide ne se juge pas sur un tableau de ratios. jsdom ne peint pas et il n’y a
+      aucun harnais navigateur dans ce dépôt :{' '}
+      <strong>cette page est le seul garde qui reste</strong>, et il est humain.
     </>
   ),
   render: () => (
@@ -162,7 +165,7 @@ export const verreEtFrisePage: DocPage = {
 
       <Specimen
         title="Le verre sur son décor — et l’aplat juste à côté"
-        note="Trois cartes de verre et une carte opaque dans le MÊME Backdrop, pour que la comparaison porte sur le matériau et non sur le fond. Le verre n’exige rien de son arrière-plan : le halo dégrade le contraste, il ne le fournit pas — le meilleur cas est le halo absent. Ce qu’un fond nu ne montre pas, en revanche, c’est le matériau : sans rien à filtrer, un verre ne se lit pas comme du verre."
+        note="Trois cartes de verre et une carte opaque dans le MÊME Backdrop : l’intérieur de la carte opaque doit rester net, sans voile coloré au travers."
       >
         <Backdrop className="tc-doc-scene">
           <div className="tc-doc-scene__grid">
@@ -177,15 +180,15 @@ export const verreEtFrisePage: DocPage = {
             {/* La carte qui a fait bouger le décor. `flat` ne pose ni
                 `position` ni `isolation` : à `z-index: 0`, les disques du
                 Backdrop se peignaient PAR-DESSUS ce texte, sur un fond
-                pourtant opaque. Si vous lisez ces trois lignes sans voile
-                coloré au travers, la mesure tient. */}
+                pourtant opaque. Si vous le lisez sans voile coloré au
+                travers, la mesure tient. */}
             <Card variant="flat" elevation={1}>
               <h3 className="tc-doc-cardtitle">Aplat opaque</h3>
               <p className="tc-doc-cardmeta">variant=&quot;flat&quot; · elevation=1</p>
               <p className="tc-doc-cardtext">
                 Même carte, matériau opaque. Elle ne porte ni <code>position</code> ni{' '}
-                <code>isolation</code> : c’est elle que les halos recouvraient tant qu’ils étaient à{' '}
-                <code>z-index: 0</code>. Son intérieur doit rester net.
+                <code>isolation</code> : c’est elle que les halos recouvraient à{' '}
+                <code>z-index: 0</code>.
               </p>
             </Card>
           </div>
@@ -194,7 +197,7 @@ export const verreEtFrisePage: DocPage = {
 
       <Specimen
         title="La frise — l’entrée NUE, sans matériau"
-        note="Une entrée de frise n’est pas une carte : elle ne porte que la géométrie à deux colonnes et la typographie de ce qu’on y met. Son contenu est libre, parce que la même frise sert une chronologie professionnelle et un carnet d’étapes ; fixer « poste » et « entreprise » en props aurait figé le vocabulaire de l’un des deux usages. C’est cet état-là qu’il faut regarder pour juger le RYTHME : date, titre et ligne de lieu doivent former un seul bloc serré, puis le texte se détacher."
+        note="C’est cet état-là qu’il faut regarder pour juger le RYTHME : date, titre et ligne de lieu doivent former un seul bloc serré, puis le texte se détacher."
       >
         <Timeline label="Expériences professionnelles, entrées nues">
           {ENTRIES.map((entry) => renderEntry(entry))}
@@ -217,7 +220,7 @@ export const verreEtFrisePage: DocPage = {
           l'autre est le matériau, et rien d'autre. */}
       <Specimen
         title="La même frise, empilée sur le verre — la composition du portfolio"
-        note='TimelineItem className="tc-card tc-card--glass", dans un Backdrop. C’est mot pour mot ce que fait le portfolio, et la seule façon de vérifier que la géométrie de l’entrée survit au matériau de la carte : la tuile doit rester dans sa colonne, le coussin valoir 24 px des deux côtés, et les deux pseudo-éléments du verre ne prendre aucune cellule de la grille.'
+        note="La géométrie de l’entrée doit survivre au matériau de la carte : la tuile doit rester dans sa colonne, le coussin valoir 24 px des deux côtés, et les deux pseudo-éléments du verre ne prendre aucune cellule de la grille."
       >
         <Backdrop className="tc-doc-scene">
           <div className="tc-doc-scene__stack">
@@ -227,14 +230,6 @@ export const verreEtFrisePage: DocPage = {
           </div>
         </Backdrop>
       </Specimen>
-
-      <p className="tc-doc-prose tc-doc-aside">
-        Ce que la scène empilée montre mieux que l’autre, et il faut le savoir avant de juger le
-        verre : les disques du décor sont positionnés en pourcentage de la boîte de l’hôte, donc une
-        scène plus haute les répartit autrement. Les deux images ne sont pas deux photographies du
-        même décor — elles sont deux décors de proportions différentes, et seule la{' '}
-        <em>composition</em> de l’entrée s’y compare.
-      </p>
 
       <p className="tc-doc-prose">
         Les interfaces sont sur les pages des composants —{' '}
@@ -253,7 +248,7 @@ export const verreEtFrisePage: DocPage = {
         <a className="tc-doc-link" href={hrefFor('composants/icon-tile')}>
           IconTile
         </a>{' '}
-        — et les quatre manquements AA publiés, avec leur pire support, sur la{' '}
+        — et les quatre manquements AA publiés sur la{' '}
         <a className="tc-doc-link" href={hrefFor('palette')}>
           page de la palette
         </a>

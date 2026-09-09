@@ -51,9 +51,7 @@ export const backdropPage: DocPage = {
     <>
       L’hôte du décor : positionné, isolé, clippé en <code>clip</code>, il peint{' '}
       <code>--site-background</code> puis six halos — trois froids, trois chauds — avant ses
-      enfants. La décision qui tient tout le composant est le nombre : il n’y a{' '}
-      <strong>ni prop de teinte ni prop de nombre</strong>, parce que le domaine mesuré est fermé et
-      qu’une teinte injectée par l’appelant serait une couleur non mesurée.
+      enfants. <strong>Ni prop de teinte ni prop de nombre</strong> : le domaine mesuré est fermé.
     </>
   ),
   render: () => (
@@ -64,12 +62,8 @@ export const backdropPage: DocPage = {
         title="Le décor seul, sous un contenu NON positionné"
         note={
           <>
-            Les positions, les tailles et la répartition des teintes vivent dans{' '}
-            <code>styles/components/backdrop.css</code> ; le composant ne fait que nommer les six
-            modificateurs dans l’ordre du document. La parité des deux teintes est épinglée par le
-            contrat de couleur : mesuré contre le sol de son thème, le disque froid est à ΔE OKLab
-            13,28 et le chaud à 13,36 en clair — 0,086 d’écart — puis 12,83 contre 12,89 en sombre.
-            La moitié chaude n’existe que pour que le teal des actions reste un signal.
+            Parité des deux teintes, mesurée contre le sol de son thème : ΔE OKLab 13,28 (froid)
+            contre 13,36 (chaud) en clair, 12,83 contre 12,89 en sombre.
           </>
         }
       >
@@ -81,10 +75,9 @@ export const backdropPage: DocPage = {
           <div className="tc-doc-scene__stack">
             <h3 className="tc-doc-cardtitle">Six disques, puis le contenu</h3>
             <p className="tc-doc-cardtext">
-              Les halos sont rendus <strong>avant</strong> les enfants : c’est l’ordre du document
-              qui met le contenu au-dessus. Et ils sont à <code>z-index: -1</code> dans un hôte
-              isolé, donc ils se peignent après le fond de l’hôte et avant tout contenu — positionné
-              ou pas. La garantie ne demande <em>rien</em> à vos enfants.
+              Les halos sont rendus <strong>avant</strong> les enfants, à <code>z-index: -1</code>{' '}
+              dans un hôte isolé : la garantie ne demande <em>rien</em> à vos enfants, positionnés
+              ou pas.
             </p>
           </div>
         </Backdrop>
@@ -94,12 +87,10 @@ export const backdropPage: DocPage = {
         title="L’aplat opaque — la carte qui a fait bouger le z-index"
         note={
           <>
-            La source du portfolio met ses halos à <code>z-index: 0</code>, ce qui ne tient que
-            parce que son contenu est fait de cartes <code>position: relative</code>. Mesuré
-            (Chromium 151, capture recadrée à l’intérieur d’une carte opaque), à{' '}
-            <code>z-index: 0</code> le décor se peint <strong>par-dessus</strong> une{' '}
-            <code>Card variant=&quot;flat&quot;</code> et son texte. C’est la seule divergence
-            assumée avec la source, et c’est ici qu’elle se vérifie à l’œil.
+            Mesuré (Chromium 151, capture recadrée à l’intérieur d’une carte opaque) : à{' '}
+            <code>z-index: 0</code>, le décor se peint <strong>par-dessus</strong> une{' '}
+            <code>Card variant=&quot;flat&quot;</code> et son texte — d’où le <code>-1</code> de ce
+            composant.
           </>
         }
       >
@@ -111,9 +102,8 @@ export const backdropPage: DocPage = {
               <h3 className="tc-doc-cardtitle">Aplat opaque</h3>
               <p className="tc-doc-cardmeta">variant=&quot;flat&quot; · elevation=1</p>
               <p className="tc-doc-cardtext">
-                Même carte, matériau opaque. Elle ne porte ni <code>position</code> ni{' '}
-                <code>isolation</code> : c’est elle que les halos recouvraient tant qu’ils étaient à{' '}
-                <code>z-index: 0</code>. Son intérieur doit rester net.
+                Ni <code>position</code> ni <code>isolation</code> : c’est elle que les halos
+                recouvraient à <code>z-index: 0</code>. Son intérieur doit rester net.
               </p>
             </Card>
           </div>
@@ -124,9 +114,8 @@ export const backdropPage: DocPage = {
         title="Le piège : n’enveloppez pas votre application entière"
         note={
           <>
-            L’hôte est clippé, et un clip interagit avec <code>position: sticky</code> à
-            l’intérieur. Mesuré en Chromium 151 headless, sonde de layout, trois positions de
-            défilement par cas.
+            Un <code>position: sticky</code> à l’intérieur d’un hôte clippé, mesuré en Chromium 151
+            headless, sonde de layout, trois positions de défilement par cas.
           </>
         }
       >
@@ -162,28 +151,16 @@ export const backdropPage: DocPage = {
             </tbody>
           </table>
         </div>
-        <p className="tc-doc-prose tc-doc-aside">
-          <code>overflow: hidden</code> crée un conteneur de défilement, qui devient le référentiel
-          du <code>sticky</code> : l’élément « colle » dans une boîte qui ne défile pas, donc il
-          défile avec la page. <code>overflow: clip</code> n’en crée pas — le référentiel reste la
-          fenêtre. <strong>La feuille dit donc « clip » et pas « hidden ».</strong> Cela reste une
-          bonne raison de garder l’en-tête collant <em>hors</em> du décor : le portfolio y échappe
-          comme ça, son en-tête est un frère de la page décorée, pas un enfant. Non mesuré : les
-          autres moteurs — la mesure ci-dessus ne vaut que pour Chromium 151.
-        </p>
       </Specimen>
 
       <p className="tc-doc-prose">
-        Le halo <strong>dégrade</strong> le contraste, il ne le fournit pas : il tire la carte vers
-        la mi-luminosité, et le texte fort passe de 9,02:1 sur page nue à 7,27:1 sur halo froid,
-        jusqu’à 3,01:1 dans le pire cas mesuré. Le meilleur cas est donc le halo{' '}
-        <strong>absent</strong> : <code>Card</code> n’exige aucun <code>Backdrop</code>, et{' '}
-        <code>Backdrop</code> n’exige aucune <code>Card</code> — aucun des deux ne prévient ni ne
-        lève quoi que ce soit. Les chiffres sont sur la{' '}
+        Le halo <strong>dégrade</strong> le contraste, il ne le fournit pas : le texte fort passe de
+        9,02:1 sur page nue à 7,27:1 sur halo froid, jusqu’à 3,01:1 dans le pire cas mesuré. Les
+        chiffres sont sur la{' '}
         <a className="tc-doc-link" href={hrefFor('palette')}>
           page de la palette
         </a>{' '}
-        ; le décor <em>composé</em> avec le verre et la frise est sur{' '}
+        ; le décor <em>composé</em> est sur{' '}
         <a className="tc-doc-link" href={hrefFor('compositions/verre-et-frise')}>
           Verre et frise
         </a>
@@ -195,10 +172,8 @@ export const backdropPage: DocPage = {
         note={
           <>
             <code>BackdropProps</code> étend{' '}
-            <code>ComponentPropsWithoutRef&lt;&apos;div&apos;&gt;</code> : tout attribut de{' '}
-            <code>&lt;div&gt;</code> non listé ici part sur l’hôte. Ce que le type{' '}
-            <strong>n’expose pas</strong> est la décision principale — ni teinte, ni nombre de
-            disques.
+            <code>ComponentPropsWithoutRef&lt;&apos;div&apos;&gt;</code> — et n’expose ni teinte ni
+            nombre de disques.
           </>
         }
         rows={[
@@ -207,10 +182,8 @@ export const backdropPage: DocPage = {
             type: 'ReactNode',
             description: (
               <>
-                Le contenu, rendu <strong>après</strong> les six halos. N’en faites pas un conteneur
-                de grille ou de flex : les disques sont des enfants directs, donc ils deviendraient
-                des items — et <code>.tc-backdrop &gt; :first-child</code> désigne un halo, pas
-                votre contenu.
+                Rendu <strong>après</strong> les six halos ; jamais un conteneur de grille ou de
+                flex — les disques sont des enfants directs.
               </>
             ),
           },
@@ -219,8 +192,7 @@ export const backdropPage: DocPage = {
             type: 'string',
             description: (
               <>
-                Fusionnée avec <code>tc-backdrop</code>, jamais écrasée. C’est par là que la vitrine
-                pose son rayon de scène.
+                Fusionnée avec <code>tc-backdrop</code>, jamais écrasée.
               </>
             ),
           },
@@ -229,8 +201,7 @@ export const backdropPage: DocPage = {
             type: 'Ref<HTMLDivElement>',
             description: (
               <>
-                Posée sur le <code>&lt;div&gt;</code> hôte. Prop et non <code>forwardRef</code> :
-                React 19 accepte <code>ref</code> comme une prop ordinaire.
+                Posée sur le <code>&lt;div&gt;</code> hôte.
               </>
             ),
           },

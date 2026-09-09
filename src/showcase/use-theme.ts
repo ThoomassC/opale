@@ -55,24 +55,65 @@ function readSystemPrefersDarkOnServer(): boolean {
 }
 
 /**
- * La couleur que la barre d'adresse mobile doit prendre, LUE DANS LA FEUILLE.
+ * La sérialisation de `transparent` — ce que rend `background-color` quand RIEN
+ * ne peint l'élément. CSSOM normalise ainsi la valeur initiale dans tous les
+ * moteurs, jsdom compris, où aucune feuille n'est appliquée : c'est donc la
+ * réponse par défaut sous test, et elle veut dire « je ne sais pas ».
+ */
+const UNPAINTED = 'rgba(0, 0, 0, 0)';
+
+/**
+ * La couleur que la barre d'adresse mobile doit prendre : LE FOND RÉELLEMENT
+ * PEINT, lu sur `body`.
  *
- * Le portfolio, dont cette bascule est reprise, code ses deux fonds en dur dans
- * du TypeScript, avec un commentaire qui reconnaît devoir « rester aligné » sur
- * `--site-background`. C'est précisément la dérive que ce dépôt existe pour
- * empêcher : une couleur écrite deux fois finit par diverger. On la lit donc là
- * où elle est déclarée, et il n'y a plus de seconde copie à tenir.
+ * CE N'EST PLUS `--site-background`, ET C'EST UNE CORRECTION. La vitrine a
+ * désormais un sol BLANC : `doc.css` déclare son propre jeton `--doc-ground` et
+ * peint `body` avec, sans toucher au jeton publié `--site-background` — qui
+ * reste `#deedf0`, mesuré, et sert les deux consommateurs. Lire le jeton faisait
+ * donc annoncer du mist par-dessus une page blanche : la barre d'adresse mentait
+ * d'exactement l'écart entre le paquet et son propre document.
+ *
+ * LE FOND PEINT PLUTÔT QU'UN AUTRE JETON, et le choix se défend. Lire
+ * `--doc-ground` aurait corrigé le symptôme en gardant la maladie : le hook
+ * saurait encore QUEL jeton peint le sol, donc il redeviendrait faux le jour où
+ * ce n'est plus celui-là — un renommage, une seconde couche, un consommateur qui
+ * ne charge pas `doc.css`. Le fond calculé de `body`, lui, est juste par
+ * construction : c'est la couleur que l'œil voit, quelle que soit la règle qui
+ * l'a posée. Aucun repli sur un jeton n'est donc gardé — il serait mort partout
+ * où il compte (dans un navigateur `body` est toujours peint ; sous jsdom
+ * `--doc-ground` ne résout pas plus que `--site-background`) et il rouvrirait la
+ * porte par laquelle le défaut est entré.
+ *
+ * ET RIEN N'EST RECOPIÉ EN CONSTANTE TYPESCRIPT : la valeur reste lue dans la
+ * feuille, ce que défendent l'en-tête d'`index.html` et celui de ce fichier. Le
+ * portfolio, dont cette bascule est reprise, code ses deux fonds en dur avec un
+ * commentaire qui reconnaît devoir « rester aligné » — c'est la dérive que ce
+ * dépôt existe pour empêcher, et le fond peint est la lecture qui n'a aucune
+ * seconde copie à tenir.
+ *
+ * `body` ET NON `documentElement` : c'est `body` que `tokens.css` puis `doc.css`
+ * peignent. La racine, elle, n'est peinte par personne et rend `transparent`.
  *
  * L'appelant doit avoir posé `data-theme` AVANT d'appeler : la valeur calculée
  * dépend du thème actif, lire d'abord rendrait la couleur du thème qu'on quitte.
  *
- * Une chaîne vide est un résultat normal, pas une anomalie : jsdom ne compose
- * pas les propriétés personnalisées héritées d'une feuille comme un navigateur.
- * L'appelant n'écrit alors rien du tout — ne pas annoncer de couleur est
- * toujours préférable à en annoncer une fausse.
+ * Une chaîne vide est un résultat normal, pas une anomalie — page non peinte,
+ * ou `var()` que jsdom ne substitue pas. L'appelant n'écrit alors rien du tout :
+ * ne pas annoncer de couleur est toujours préférable à en annoncer une fausse.
  */
-function readSiteBackground(): string {
-  return getComputedStyle(document.documentElement).getPropertyValue('--site-background').trim();
+function readPaintedGround(): string {
+  const painted = getComputedStyle(document.body).getPropertyValue('background-color').trim();
+
+  // Rien ne peint : ni la couleur du sol ni celle du thème n'est connue.
+  if (painted === '' || painted === 'transparent' || painted === UNPAINTED) return '';
+
+  /* Une substitution `var()` qui n'a pas eu lieu. Un navigateur résout toujours
+     `var()` dans une valeur calculée ; jsdom rend le littéral
+     `var(--doc-ground)`, et l'écrire dans `theme-color` serait exactement
+     annoncer une couleur fausse — celle-là ne serait même pas une couleur. */
+  if (painted.includes('var(')) return '';
+
+  return painted;
 }
 
 export interface ThemeControl {
@@ -128,10 +169,10 @@ export function useTheme(): ThemeControl {
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     if (meta === null) return;
 
-    const background = readSiteBackground();
-    if (background === '') return;
+    const ground = readPaintedGround();
+    if (ground === '') return;
 
-    meta.setAttribute('content', background);
+    meta.setAttribute('content', ground);
   }, [theme]);
 
   const toggleTheme = useCallback(() => {

@@ -15,16 +15,16 @@ export const accessibilitePage: DocPage = {
   title: 'Le contrat d’accessibilité',
   lede: (
     <>
-      Trois engagements, vérifiables à l’œil sur cette page même : le focus se voit sur n’importe
-      quel fond, la couleur n’est jamais le seul porteur de sens, et rien de cliquable ne descend
-      sous la taille du doigt.
+      Trois engagements, vérifiables sur cette page : le focus se voit sur n’importe quel fond, la
+      couleur n’est jamais le seul porteur de sens, et rien de cliquable ne descend sous la taille
+      du doigt.
     </>
   ),
   render: () => (
     <PageBody>
       <Specimen
         title="Le double anneau de focus"
-        note="Tabulez dans le cadre ci-dessous. Deux anneaux : l’intérieur (--focus-inner) et l’extérieur (--focus-outer) s’inversent entre les thèmes, si bien que l’un des deux contraste toujours avec le fond local — y compris sur l’aplat teal d’un bouton primaire, où un anneau unique disparaîtrait."
+        note="Tabulez dans le cadre : --focus-inner et --focus-outer s’inversent entre les thèmes, si bien que l’un des deux contraste toujours avec le fond local — y compris l’aplat teal, où un anneau unique disparaîtrait."
       >
         <div className="tc-doc-focusdemo">
           <Button variant="primary">Bouton primaire</Button>
@@ -53,17 +53,15 @@ box-shadow:
   0 0 0 5px var(--focus-outer);`}</code>
         </pre>
         <p className="tc-doc-prose tc-doc-aside">
-          L’<code>outline</code> porte l’anneau <strong>extérieur</strong>, et non l’intérieur comme
-          dans la recette d’origine : il est peint au-dessus du <code>box-shadow</code>, si bien
-          qu’un outline intérieur repeignait la bande 2–4 px et ne laissait qu’un filet de 1 px
-          d’anneau extérieur. Or l’anneau intérieur ne contraste avec rien d’autre que l’aplat teal
-          — 1,08:1 sur la carte, 1,16:1 sur le sol.
+          L’<code>outline</code> porte l’anneau <strong>extérieur</strong> parce qu’il est peint
+          au-dessus du <code>box-shadow</code> : l’intérieur ne contraste avec rien d’autre que
+          l’aplat teal — 1,08:1 sur la carte, 1,16:1 sur le sol.
         </p>
       </Specimen>
 
       <Specimen
         title="La couleur n’est qu’un renfort"
-        note="La même rangée, rendue en niveaux de gris. Si une information disparaît ici, c’est qu’elle reposait sur la couleur seule — et le composant est à corriger, pas la palette. Les trois pastilles d’avancement sont le cas mesuré : leurs aplats tombent à 1,16:1 l’un contre l’autre en simulation deutéranope, si bien que ce qui les sépare ici est le glyphe — plein, à moitié rempli, vide — et le libellé, jamais la teinte."
+        note="Les trois pastilles d’avancement tombent à 1,16:1 l’une contre l’autre en simulation deutéranope : ce qui les sépare est le glyphe et le libellé, jamais la teinte."
       >
         <div className="tc-doc-greyrow">
           <div className="tc-doc-greyrow__panel">
@@ -97,10 +95,7 @@ box-shadow:
         </div>
       </Specimen>
 
-      <Specimen
-        title="Les cibles : 44 et 48 px"
-        note="Deux valeurs hors de l’échelle d’espacement, et c’est légitime : elles répondent au doigt, pas à l’œil."
-      >
+      <Specimen title="Les cibles : 44 et 48 px">
         <div className="tc-doc-targets">
           <figure className="tc-doc-target">
             <div className="tc-doc-target__box tc-doc-target__box--min" aria-hidden="true">
@@ -109,7 +104,7 @@ box-shadow:
             <figcaption className="tc-doc-target__caption">
               <code className="tc-doc-scale__token">--target-min</code>
               <span className="tc-doc-scale__usage">
-                Contrôle en liste ou en navigation : champ, ligne de case à cocher, entrée de menu.
+                Champ, ligne de case à cocher, entrée de menu.
               </span>
             </figcaption>
           </figure>
@@ -120,7 +115,7 @@ box-shadow:
             <figcaption className="tc-doc-target__caption">
               <code className="tc-doc-scale__token">--target-button</code>
               <span className="tc-doc-scale__usage">
-                Bouton : 48 px de haut, bordure en pilule. C’est un plancher, pas une hauteur fixe.
+                Bouton — un plancher, pas une hauteur fixe.
               </span>
             </figcaption>
           </figure>
@@ -131,18 +126,15 @@ box-shadow:
         <ul className="tc-doc-checklist">
           <li>
             Sémantique native d’abord : <code>&lt;button&gt;</code>, <code>&lt;a href&gt;</code>,{' '}
-            <code>&lt;label for&gt;</code>. ARIA ne vient qu’après, et jamais pour rattraper un{' '}
-            <code>&lt;div&gt;</code>.
+            <code>&lt;label for&gt;</code>. ARIA ne vient qu’après.
           </li>
           <li>
             Aucun état visuel porté par du JavaScript : survol, appui, focus, erreur et attente sont
             des sélecteurs CSS.
           </li>
           <li>
-            <code>prefers-reduced-motion</code> restreint la liste des propriétés animables aux
-            couleurs et garde les 160 ms. On ne coupe pas la transition : supprimer le fondu qui
-            confirme un survol, c’est retirer un retour d’information à quelqu’un qui demandait
-            moins de mouvement, pas moins d’interface.
+            <code>prefers-reduced-motion</code> restreint les propriétés animables aux couleurs et
+            garde les 160 ms — on ne coupe pas la transition.
           </li>
           <li>
             Zéro requête hors origine : pas de police distante, pas de <code>@font-face</code>, pas

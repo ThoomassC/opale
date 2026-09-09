@@ -7,6 +7,7 @@ import { elevationPage } from './fondations/elevation';
 import { espacementPage } from './fondations/espacement';
 import { palettePage } from './fondations/palette';
 import { typographiePage } from './fondations/typographie';
+import { verrePage } from './fondations/verre';
 
 import { backdropPage } from './composants/backdrop';
 import { buttonPage } from './composants/button';
@@ -53,6 +54,7 @@ export const PAGES: readonly DocPage[] = [
   typographiePage,
   espacementPage,
   elevationPage,
+  verrePage,
   accessibilitePage,
 
   backdropPage,

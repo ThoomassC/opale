@@ -38,10 +38,8 @@ export const iconTilePage: DocPage = {
     <>
       Une tuile en squircle portant une icône : géométrie fixe, matériau dégradé (
       <code>--icon-surface-start</code> → <code>--icon-surface-end</code>), liseré, ombre basse.
-      Elle est <strong>présentationnelle par défaut et sait rendre un lien</strong> quand un{' '}
-      <code>href</code> est fourni — parce que le rôle et l’encre sont liés par le contrat de
-      couleur, et qu’une tuile décorative enveloppée dans le <code>&lt;a&gt;</code> de l’appelant
-      serait exactement l’appariement que ce contrat interdit.
+      Elle est <strong>présentationnelle par défaut et rend un lien</strong> dès qu’un{' '}
+      <code>href</code> est fourni, parce que le contrat de couleur lie l’encre au rôle.
     </>
   ),
   render: () => (
@@ -52,15 +50,9 @@ export const iconTilePage: DocPage = {
         title="Les tuiles d’icône — deux encres, deux rôles, deux formats"
         note={
           <>
-            Même silhouette et même matériau dégradé, mais ni la même encre ni le même format : le
-            décor est en cuivre à 48 px, le contrôle en teal à 44 px — le plancher de cible tactile,
-            et la valeur du portfolio pour la même tuile. Les 4 px d’écart se voient dans cette
-            rangée alors qu’ils ne se voient jamais dans une page, où les deux ne se côtoient pas.
-            La tuile décorative est un <code>&lt;span&gt;</code> et reçoit <code>aria-hidden</code>{' '}
-            ; la tuile en lien est un <code>&lt;a&gt;</code>, ne le reçoit jamais — un élément
-            focusable masqué à l’arbre d’accessibilité est un piège au clavier — et son nom
-            accessible est <strong>exigé par le type</strong>, la prop <code>label</code> rendue en
-            texte masqué visuellement, l’icône étant son seul contenu visible.
+            Décor en cuivre à 48 px, contrôle en teal à 44 px — le plancher de cible tactile ; le{' '}
+            <code>&lt;span&gt;</code> reçoit <code>aria-hidden</code>, le <code>&lt;a&gt;</code>{' '}
+            jamais, et son nom accessible vient de la prop <code>label</code>.
           </>
         }
       >
@@ -90,19 +82,13 @@ export const iconTilePage: DocPage = {
         </div>
       </Specimen>
 
-      <p className="tc-doc-prose tc-doc-aside">
-        <strong>La tuile n’est pas un bouton.</strong> Pour une action qui n’est pas une navigation,
-        ou pour un contrôle à libellé visible, c’est{' '}
+      <p className="tc-doc-prose">
+        <strong>La tuile n’est pas un bouton</strong> : pour une action qui n’est pas une
+        navigation, c’est{' '}
         <a className="tc-doc-link" href={hrefFor('composants/button')}>
           Button
         </a>{' '}
-        qu’il faut : cette tuile ne porte ni la hauteur de cible d’un bouton (48 px) ni sa
-        silhouette en pilule. Le seul cas légitime d’une encre d’action sans lien — la tuile est
-        l’unique contenu visible d’un <code>&lt;button&gt;</code> rendu par l’appelant — passe par
-        la <strong>classe</strong> et non par la prop :{' '}
-        <code>&lt;IconTile className=&quot;tc-icontile--action&quot;&gt;</code>. Elle dit la même
-        chose de l’encre, à l’endroit où l’appelant assume aussi le rôle, le nom et la focusabilité
-        de son contrôle.
+        qu’il faut.
       </p>
 
       <PropsTable
@@ -111,8 +97,8 @@ export const iconTilePage: DocPage = {
         note={
           <>
             La branche par défaut : <code>ComponentPropsWithoutRef&lt;&apos;span&apos;&gt;</code>{' '}
-            plus les trois props ci-dessous. Le composant pose lui-même{' '}
-            <code>aria-hidden=&quot;true&quot;</code> — c’est du décor, l’annoncer n’ajoute rien.
+            plus les trois props ci-dessous, et le composant pose lui-même{' '}
+            <code>aria-hidden=&quot;true&quot;</code>.
           </>
         }
         rows={[
@@ -122,11 +108,7 @@ export const iconTilePage: DocPage = {
             defaultValue: "'decor'",
             description: (
               <>
-                <strong>Figé.</strong> Le type l’acceptait librement, et{' '}
-                <code>&lt;IconTile tone=&quot;action&quot;&gt;</code> sans <code>href</code> était
-                légal : un carré de 44 px à l’encre des actions, sans rôle, sans nom, sans{' '}
-                <code>aria-hidden</code>, non focusable, et qui prenait même le film de survol. Un
-                objet qui promet une action à l’œil et n’en offre aucune au clavier.
+                <strong>Figé</strong> : une tuile sans lien n’emprunte pas l’encre des actions.
               </>
             ),
           },
@@ -135,36 +117,28 @@ export const iconTilePage: DocPage = {
             type: 'never',
             description: (
               <>
-                Interdit sur cette branche — sa présence <em>fait</em> l’autre branche. Il est
-                néanmoins extrait du reste au rendu :{' '}
-                <code>&lt;IconTile href=&#123;p.url&#125;&gt;</code> avec une URL vide est un appel
-                légitime qui atterrit ici à l’exécution, et React poserait sinon l’attribut tel quel
-                sur le <code>&lt;span&gt;</code>.
+                Interdit sur cette branche — sa présence <em>fait</em> l’autre branche.
               </>
             ),
           },
           {
             name: 'label',
             type: 'never',
-            description: (
-              <>
-                Interdit ici : il n’y a rien à nommer. Même extraction du reste, et pour la même
-                raison — <code>label</code> n’existe pas comme attribut HTML.
-              </>
-            ),
+            description: <>Interdit ici : il n’y a rien à nommer.</>,
           },
           {
             name: 'children',
             type: 'ReactNode',
-            description: <>Le glyphe. Il est déjà masqué avec la tuile, qui porte l’attribut.</>,
+            description: <>Le glyphe, déjà masqué par la tuile.</>,
           },
           {
             name: 'className',
             type: 'string',
             description: (
               <>
-                Fusionnée avec <code>tc-icontile tc-icontile--decor</code>. C’est aussi
-                l’échappatoire de l’encre d’action décrite ci-dessus.
+                Fusionnée avec <code>tc-icontile tc-icontile--decor</code> ; c’est aussi
+                l’échappatoire de l’encre d’action (<code>tc-icontile--action</code>) pour une tuile
+                posée dans un <code>&lt;button&gt;</code>.
               </>
             ),
           },
@@ -188,11 +162,9 @@ export const iconTilePage: DocPage = {
             <code>
               Omit&lt;ComponentPropsWithoutRef&lt;&apos;a&apos;&gt;, &apos;aria-label&apos;&gt;
             </code>{' '}
-            plus les trois props ci-dessous. <code>aria-label</code> est <strong>retiré</strong> du
-            type : deux noms pour un même lien, dont un seul gagne, est une divergence silencieuse —
-            et le nom accessible d’un lien doit correspondre à son libellé (WCAG 2.5.3), ce qui n’a
-            de sens qu’à un seul nom. <code>aria-labelledby</code> reste disponible pour désigner un
-            titre visible ; il gagne alors sur le texte masqué, comme le veut la spécification.
+            plus les trois props ci-dessous : <code>aria-label</code> est <strong>retiré</strong> du
+            type pour qu’un lien n’ait qu’un seul nom (WCAG 2.5.3), <code>aria-labelledby</code>{' '}
+            restant disponible pour désigner un titre visible.
           </>
         }
         rows={[
@@ -202,12 +174,9 @@ export const iconTilePage: DocPage = {
             required: true,
             description: (
               <>
-                Sa présence fait de la tuile un <code>&lt;a&gt;</code>.{' '}
-                <strong>La chaîne vide compte pour absente</strong> : la branche est choisie sur une
-                chaîne non vide, parce que <code>&lt;a href=&quot;&quot;&gt;</code> est un lien vers
-                l’adresse courante — cliquer rechargeait la page. Dans ce cas la tuile retombe sur
-                son <code>&lt;span&gt;</code> décoratif et le signale en <code>console.error</code>,
-                sans jamais lever.
+                Sa présence fait de la tuile un <code>&lt;a&gt;</code>, et{' '}
+                <strong>la chaîne vide compte pour absente</strong> : la tuile retombe alors sur son{' '}
+                <code>&lt;span&gt;</code> décoratif et le signale en <code>console.error</code>.
               </>
             ),
           },
@@ -217,13 +186,8 @@ export const iconTilePage: DocPage = {
             required: true,
             description: (
               <>
-                Le nom accessible du lien, rendu en <code>.tc-visually-hidden</code>. L’icône étant
-                le seul contenu <em>visible</em>, sans lui le lien n’a aucun nom : VoiceOver annonce
-                « lien, losange noir », ou rien (WCAG 4.1.2 et 2.4.4). Une <strong>prop</strong> et
-                non l’exigence d’un <code>aria-label</code> — un <code>aria-*</code> est un attribut
-                parmi cent, qu’on peut oublier ou mal orthographier sans que rien ne le dise, alors
-                qu’une prop nommée est refusée à la compilation. Nommez la destination, et signalez
-                une nouvelle fenêtre.
+                Le nom accessible du lien, rendu en <code>.tc-visually-hidden</code> — l’icône est
+                son seul contenu visible (WCAG 4.1.2 et 2.4.4).
               </>
             ),
           },
@@ -233,9 +197,7 @@ export const iconTilePage: DocPage = {
             defaultValue: "'action'",
             description: (
               <>
-                <strong>Figé.</strong> Une tuile qui <em>est</em> le lien est le seul contenu
-                visible d’un contrôle : son encre porte du sens, elle ne peut pas retomber sur la
-                couche décorative. Un cuivre sur un contrôle efface la promesse d’action.
+                <strong>Figé</strong> : l’encre du seul contenu visible d’un contrôle porte du sens.
               </>
             ),
           },
@@ -244,11 +206,7 @@ export const iconTilePage: DocPage = {
             type: 'ReactNode',
             description: (
               <>
-                Le glyphe, à masquer vous-même (<code>aria-hidden=&quot;true&quot;</code>) : le nom
-                du lien vient de <code>label</code>, et le composant n’a aucun moyen de toucher à
-                votre nœud. Extrait explicitement du reste au rendu — un <code>&lt;a&gt;</code> dont
-                le contenu n’arrive que par un étalement de props est indistinguable d’un lien vide,
-                pour le linter comme pour le relecteur.
+                Le glyphe, à masquer vous-même (<code>aria-hidden=&quot;true&quot;</code>).
               </>
             ),
           },
@@ -274,11 +232,11 @@ export const iconTilePage: DocPage = {
       />
 
       <p className="tc-doc-prose">
-        La tuile est la première colonne d’une entrée de frise : elle se voit à sa place sur{' '}
+        La tuile est la première colonne d’une entrée de{' '}
         <a className="tc-doc-link" href={hrefFor('composants/timeline')}>
           Timeline
         </a>
-        . Les deux encres et leur interdiction croisée sont sur la{' '}
+        , et ses deux encres sont sur la{' '}
         <a className="tc-doc-link" href={hrefFor('palette')}>
           page de la palette
         </a>

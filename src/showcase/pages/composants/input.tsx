@@ -19,13 +19,7 @@ const PROPS: readonly PropRow[] = [
     name: 'type',
     type: 'HTMLInputTypeAttribute',
     defaultValue: "'text'",
-    description: (
-      <>
-        Le type natif, avec un défaut posé par le composant. Un <code>type</code> mal choisi coûte
-        le clavier adapté sur mobile : <code>email</code>, <code>tel</code>, <code>url</code>,{' '}
-        <code>search</code> existent, servez-vous en.
-      </>
-    ),
+    description: <>Le type natif, avec un défaut posé par le composant.</>,
   },
   {
     name: 'className',
@@ -54,7 +48,7 @@ export const inputPage: DocPage = {
   title: 'Input',
   lede: (
     <>
-      Un champ de saisie sur une ligne. Même liseré, même hauteur (<code>--target-min</code>,
+      Un champ de saisie sur une ligne : même liseré, même hauteur (<code>--target-min</code>,
       44&nbsp;px) et même rayon (<code>--radius-sm</code>) que{' '}
       <a className="tc-doc-link" href={hrefFor('composants/select')}>
         Select
@@ -62,10 +56,9 @@ export const inputPage: DocPage = {
       et{' '}
       <a className="tc-doc-link" href={hrefFor('composants/textarea')}>
         Textarea
-      </a>{' '}
-      : les trois se posent dans le même formulaire et doivent s’aligner au pixel. L’état d’erreur
-      se déclare par <code>aria-invalid</code> — posé automatiquement quand le champ est monté dans
-      un{' '}
+      </a>
+      , pour qu’ils s’alignent au pixel dans un même formulaire. L’état d’erreur se déclare par{' '}
+      <code>aria-invalid</code>, posé automatiquement quand le champ est monté dans un{' '}
       <a className="tc-doc-link" href={hrefFor('composants/field')}>
         Field
       </a>{' '}
@@ -82,7 +75,7 @@ export const inputPage: DocPage = {
           appels nus se documentent par le bloc de code ci-dessus. */}
       <Specimen
         title="Les états de la saisie"
-        note="Repos, avec aide, en erreur, désactivé, en lecture seule. Aucun n’est porté par du JavaScript : ce sont des sélecteurs CSS — :hover, :focus-visible, [aria-invalid], :disabled, [readonly]. L’erreur, ici, n’est pas déclarée sur l’Input mais sur le Field qui l’enveloppe : c’est lui qui pose aria-invalid."
+        note="L’erreur n’est pas déclarée sur l’Input mais sur le Field qui l’enveloppe : c’est lui qui pose aria-invalid."
       >
         <div className="tc-doc-form">
           <Field id="input-demo-nom" label="Nom de l’étape">
@@ -126,7 +119,7 @@ export const inputPage: DocPage = {
 
       <Specimen
         title="Les types qui changent le clavier"
-        note="Le composant ne fait rien de spécial de ces valeurs — il les transmet — mais elles sont la moitié de l’ergonomie d’un formulaire mobile : type et inputMode décident du clavier affiché, et un champ numérique servi avec le clavier alphabétique est un champ qu’on remplit deux fois."
+        note="type et inputMode décident du clavier affiché sur mobile ; le composant ne fait que les transmettre."
       >
         <div className="tc-doc-form">
           <Field id="input-demo-email" label="Adresse e-mail" hint='type="email"'>
@@ -145,7 +138,7 @@ export const inputPage: DocPage = {
 
       <Specimen
         title="Le focus du champ"
-        note="Tabulez dans le cadre. Le double anneau se peint SUR le liseré du champ sans le remplacer : le liseré dit « ceci est un champ », l’anneau dit « c’est ici que vous êtes »."
+        note="Tabulez dans le cadre : le double anneau se peint sur le liseré du champ sans le remplacer."
       >
         <div className="tc-doc-focusdemo">
           <Field id="input-demo-focus" label="Un champ">
@@ -159,22 +152,17 @@ export const inputPage: DocPage = {
         note={
           <>
             Le type étend <code>ComponentPropsWithoutRef&lt;&apos;input&apos;&gt;</code> sans rien
-            retirer : <code>name</code>, <code>value</code>, <code>defaultValue</code>,{' '}
-            <code>placeholder</code>, <code>required</code>, <code>disabled</code>,{' '}
-            <code>readOnly</code>, <code>inputMode</code>, <code>autoComplete</code>,{' '}
-            <code>onChange</code> et tous les autres attributs natifs traversent jusqu’à l’élément.
-            Le composant n’ajoute aucune prop propre — il pose un défaut et une classe.
+            retirer : tous les attributs natifs traversent, et le composant ne pose qu’un défaut et
+            une classe.
           </>
         }
         rows={PROPS}
       />
 
       <p className="tc-doc-prose tc-doc-aside">
-        <strong>Un Input a besoin d’un nom accessible, et il ne le fabrique pas.</strong> Montez-le
-        dans un <code>Field</code>, qui câble le <code>&lt;label for&gt;</code> ; à défaut — une
-        barre de recherche sans libellé visible, par exemple — posez un <code>aria-label</code>. Un{' '}
-        <code>placeholder</code> n’est <em>pas</em> un libellé : il disparaît à la première frappe,
-        et ce qui reste alors à l’écran ne dit plus ce que le champ attend.
+        <strong>Un Input a besoin d’un nom accessible et ne le fabrique pas</strong> : montez-le
+        dans un <code>Field</code>, ou à défaut posez un <code>aria-label</code> — un{' '}
+        <code>placeholder</code> n’est <em>pas</em> un libellé.
       </p>
     </PageBody>
   ),

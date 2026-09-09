@@ -378,3 +378,74 @@ export function withWash(backdrop: BackdropSpec, washToken: string): BackdropSpe
     layers: [...backdrop.layers, { token: washToken }],
   };
 }
+
+/**
+ * Le même support, avec `depth` remplissages de verre EN PLUS — le support
+ * IMBRIQUÉ, que `GLASS_BACKDROPS` ne contient pas et ne peut pas contenir.
+ *
+ * Sous le thème verre, un contrôle de verre posé dans une carte de verre met son
+ * encre sur `page → halo → remplissage → remplissage → lavis d'état` : une
+ * couche de plus que le pire cas des cinq supports publiés. Écrire cette pile à
+ * la main dans chaque test la remettrait exactement là d'où `backdrop.ts` l'a
+ * sortie — dans le fichier de test de chaque consommateur, en autant de copies
+ * qui dérivent.
+ *
+ * `depth` compte les remplissages AJOUTÉS, pas le total. `nested(carte, 1)` est
+ * donc le contrôle dans la carte, et `nested(carte, 0)` est refusé plutôt que
+ * rendu tel quel : un support sans remplissage supplémentaire EST le support
+ * lui-même, et le laisser passer rendrait une ligne rouge qui annonce une
+ * imbrication qui n'a jamais eu lieu.
+ *
+ * ================== CE QUE L'IMBRICATION MESURÉE ICI NE PROUVE PAS ==========
+ *
+ * Les quatre limites de tête de fichier valent toujours, et l'imbrication en
+ * ajoute trois — dont la première est la plus grave du modèle :
+ *
+ *  1. LE NOYAU DE FLOU ÉCHANTILLONNE HORS DE L'ÉLÉMENT. Le thème verre sert les
+ *     contrôles à `--glass-blur-control`, 12 px, et non aux 32 px de
+ *     `--glass-blur` qui restent ceux de `Card` — ce jeton existe précisément
+ *     pour cette raison, et sa valeur a été mesurée sur un profil de luminance.
+ *     Le rayon n'excède donc plus la boîte d'un `<input>` de 44 px, mais la
+ *     limite tient : la première déviation standard vaut encore 24 px, soit
+ *     55 % du contrôle, et le noyau prélève au-delà de la boîte avant découpe.
+ *     L'arrière-plan effectif reste une moyenne de voisinage qui inclut ce qui
+ *     est À CÔTÉ, pas seulement ce qui est DERRIÈRE. Pour une carte de 300 px,
+ *     « la carte est entièrement posée sur un halo » reste un pire cas
+ *     défendable ; pour un contrôle, aucune arithmétique de couches ne peut
+ *     exprimer ce que le moteur mélange. Les piles imbriquées sont donc des
+ *     bornes de l'empilement de `background`, pas de ce qui est peint.
+ *  2. DEUX `backdrop-filter` IMBRIQUÉS ne sont pas spécifiés de la même façon
+ *     partout : selon le moteur, l'enfant échantillonne la sortie DÉJÀ FILTRÉE
+ *     du parent ou la page brute. Le modèle suppose l'empilement des fonds, ce
+ *     qui ne décrit ni l'un ni l'autre exactement.
+ *  3. `blur() saturate() brightness()` reste hors du domaine mesuré — c'est déjà
+ *     écrit plus haut, et l'imbrication le rend plus sensible : un thème qui
+ *     pousse le `saturate()` déplace la couleur reçue sans qu'aucun test bouge.
+ *
+ * ========================================================================== */
+export function nested(backdrop: BackdropSpec, depth: number): BackdropSpec {
+  if (!Number.isInteger(depth)) {
+    throw new Error(
+      `support « ${backdrop.label} » : profondeur d'imbrication attendue entière, reçu ` +
+        `« ${depth} ». Une couche de verre se peint ou ne se peint pas — il n'y a pas de ` +
+        'demi-remplissage.',
+    );
+  }
+
+  if (depth < 1) {
+    throw new Error(
+      `support « ${backdrop.label} » : profondeur d'imbrication attendue ≥ 1, reçu ${depth}. ` +
+        'Un support sans remplissage supplémentaire EST le support lui-même : passe-le tel ' +
+        'quel plutôt que de demander une imbrication vide, sans quoi une ligne rouge ' +
+        'annoncerait une imbrication qui n’a jamais eu lieu.',
+    );
+  }
+
+  const extra = Array.from({ length: depth }, (): LayerSpec => GLASS_FILL);
+  const plural = depth > 1 ? 's' : '';
+
+  return {
+    label: `${backdrop.label}, ${depth} remplissage${plural} de verre imbriqué${plural}`,
+    layers: [...backdrop.layers, ...extra],
+  };
+}

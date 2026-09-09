@@ -49,24 +49,24 @@ function stubSystemDarkPreference(initial: boolean) {
 }
 
 /**
- * Remplace la seule lecture qui compte — `--site-background` sur la racine — et
- * laisse passer tout le reste : Testing Library appelle `getComputedStyle` pour
- * ses propres contrôles de visibilité, un faux global le casserait.
+ * Peint le sol de la page POUR DE VRAI, avec une feuille et non un faux.
  *
- * `resolve` est un rappel et non une valeur : c'est ce qui permet d'épingler
- * l'ORDRE des deux écritures de l'effet, en faisant dépendre la couleur rendue
- * du `data-theme` déjà posé sur le document.
+ * L'ancienne version de ces tests remplaçait `getPropertyValue` pour rendre
+ * `--site-background` ; c'était le seul moyen de piloter une propriété
+ * personnalisée, que jsdom ne compose pas. Le hook lisant désormais la valeur
+ * calculée de `background-color` — une propriété que jsdom, lui, résout bien —
+ * un `<style>` injecté fait le travail sans aucun mock : la cascade est réelle,
+ * les sélecteurs sont réels, et un test peut donc faire dépendre la couleur du
+ * `data-theme` présent sur le document exactement comme `doc.css` le fait.
+ *
+ * `var()` reste l'exception : jsdom ne le substitue pas et rend le littéral.
+ * C'est ce qui rend le garde correspondant écrivable, plus bas.
  */
-function stubSiteBackground(resolve: () => string) {
-  const original = CSSStyleDeclaration.prototype.getPropertyValue;
-
-  vi.spyOn(CSSStyleDeclaration.prototype, 'getPropertyValue').mockImplementation(function (
-    this: CSSStyleDeclaration,
-    property: string,
-  ) {
-    if (property === '--site-background') return resolve();
-    return original.call(this, property);
-  });
+function paintGround(css: string): void {
+  const style = document.createElement('style');
+  style.dataset.testGround = '';
+  style.textContent = css;
+  document.head.append(style);
 }
 
 function addThemeColorMeta(initial = 'initial'): HTMLMetaElement {
@@ -79,9 +79,11 @@ function addThemeColorMeta(initial = 'initial'): HTMLMetaElement {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  document.head.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
-    meta.remove();
-  });
+  document.head
+    .querySelectorAll('meta[name="theme-color"], style[data-test-ground]')
+    .forEach((node) => {
+      node.remove();
+    });
 });
 
 describe('useTheme', () => {
@@ -288,13 +290,14 @@ describe('useTheme', () => {
   });
 
   describe('couleur de la barre d’adresse (meta theme-color)', () => {
-    it('ne devrait RIEN écrire quand la feuille ne résout pas --site-background', () => {
+    it('ne devrait RIEN écrire quand rien ne peint le sol de la page', () => {
       // C'EST LE GARDE, et il vaut son test. Le portfolio codait les deux fonds
       // en dur dans le TypeScript, à charge pour un humain de les tenir alignés
       // sur `--site-background` : c'est la dérive que ce dépôt existe pour
       // empêcher. La couleur est donc LUE dans la feuille — et là où la lecture
-      // ne donne rien (jsdom ne compose pas les propriétés personnalisées d'une
-      // feuille), ne rien annoncer vaut mieux qu'annoncer une couleur fausse.
+      // ne donne rien (aucune feuille appliquée : `background-color` rend la
+      // sérialisation de `transparent`), ne rien annoncer vaut mieux
+      // qu'annoncer une couleur fausse.
       const meta = addThemeColorMeta('intact');
       stubSystemDarkPreference(true);
 
@@ -303,50 +306,124 @@ describe('useTheme', () => {
       expect(meta).toHaveAttribute('content', 'intact');
     });
 
-    it('devrait écrire la valeur calculée de --site-background', () => {
+    it('devrait écrire le fond calculé de body', () => {
       const meta = addThemeColorMeta();
       stubSystemDarkPreference(false);
-      stubSiteBackground(() => '#deedf0');
+      paintGround(`body { background-color: rgb(255, 255, 255) }`);
 
       renderHook(() => useTheme());
 
-      expect(meta).toHaveAttribute('content', '#deedf0');
+      expect(meta).toHaveAttribute('content', 'rgb(255, 255, 255)');
     });
 
-    it('devrait ignorer une valeur calculée qui n’est que du blanc', () => {
+    /* ======================================================================
+       LA GARDE DU DÉFAUT, et elle aurait rougi sur la version d'avant.
+
+       La vitrine a un sol BLANC : `doc.css` déclare `--doc-ground` et peint
+       `body` avec, SANS toucher au jeton publié `--site-background`, qui reste
+       #deedf0 parce que c'est lui que reçoivent `portfolio` et
+       `travels_in_world` et lui que mesure `src/contract/`. Le hook lisait ce
+       jeton : la barre d'adresse mobile annonçait donc du mist sur une page
+       blanche, et l'écart était pile celui entre le paquet et son document.
+
+       Les deux valeurs sont ici DIFFÉRENTES ET PRÉSENTES dans la même feuille.
+       C'est ce qui distingue « lit le sol » de « lit le jeton » : un test qui
+       n'aurait déclaré que l'un des deux passerait des deux façons.
+       ====================================================================== */
+    it('devrait annoncer le sol PEINT et non le jeton publié --site-background', () => {
+      const meta = addThemeColorMeta();
+      stubSystemDarkPreference(false);
+      paintGround(`
+        :root { --site-background: rgb(222, 237, 240) }
+        body { background-color: rgb(255, 255, 255) }
+      `);
+
+      renderHook(() => useTheme());
+
+      expect(
+        meta.getAttribute('content'),
+        `la barre d'adresse annonce « ${meta.getAttribute('content')} » alors que ` +
+          `body est peint en rgb(255, 255, 255) — lire --site-background fait ` +
+          `annoncer le mist du paquet par-dessus le sol blanc de la vitrine`,
+      ).toBe('rgb(255, 255, 255)');
+    });
+
+    /* La seconde moitié de la même garde : c'est `body` que les deux feuilles
+       peignent, et la racine n'est peinte par personne. Un hook qui lirait
+       `documentElement` — l'élément que l'ancienne version interrogeait —
+       n'aurait plus jamais rien à annoncer. */
+    it('devrait lire le fond de body et non celui de la racine', () => {
       const meta = addThemeColorMeta('intact');
       stubSystemDarkPreference(false);
-      stubSiteBackground(() => '   ');
+      paintGround(`
+        :root { background-color: rgb(222, 237, 240) }
+        body { background-color: rgb(255, 255, 255) }
+      `);
+
+      renderHook(() => useTheme());
+
+      expect(
+        meta.getAttribute('content'),
+        `lu sur la racine au lieu de body : la vitrine peint body, et la racine ` +
+          `n'est peinte par personne`,
+      ).toBe('rgb(255, 255, 255)');
+    });
+
+    it('ne devrait rien écrire quand le sol est transparent', () => {
+      const meta = addThemeColorMeta('intact');
+      stubSystemDarkPreference(false);
+      paintGround(`body { background-color: transparent }`);
 
       renderHook(() => useTheme());
 
       expect(meta).toHaveAttribute('content', 'intact');
     });
 
+    it('ne devrait rien écrire quand la substitution de var() n’a pas eu lieu', () => {
+      // jsdom ne substitue pas `var()` et rend le littéral `var(--doc-ground)`
+      // ; un navigateur, lui, résout toujours. Écrire ce littéral dans
+      // `theme-color` ne serait pas annoncer une couleur fausse, ce serait
+      // annoncer quelque chose qui n'est pas une couleur.
+      const meta = addThemeColorMeta('intact');
+      stubSystemDarkPreference(false);
+      paintGround(`
+        :root { --doc-ground: rgb(255, 255, 255) }
+        body { background-color: var(--doc-ground) }
+      `);
+
+      renderHook(() => useTheme());
+
+      expect(
+        meta.getAttribute('content'),
+        `« ${meta.getAttribute('content')} » a été annoncé à la barre d'adresse`,
+      ).toBe('intact');
+    });
+
     it('devrait lire la feuille APRÈS avoir posé data-theme', () => {
-      // Lire avant, c'est lire la couleur du thème qu'on quitte. Le faux rend
-      // ici la couleur qui correspond au `data-theme` réellement présent sur le
-      // document, si bien qu'une inversion de l'ordre des deux écritures se
-      // trahit au premier basculement.
+      // Lire avant, c'est lire la couleur du thème qu'on quitte. La feuille
+      // fait ici dépendre le sol du `data-theme` réellement présent sur le
+      // document — comme `doc.css` — si bien qu'une inversion de l'ordre des
+      // deux écritures de l'effet se trahit au premier basculement.
       const meta = addThemeColorMeta();
       stubSystemDarkPreference(false);
-      stubSiteBackground(() =>
-        document.documentElement.dataset.theme === 'dark' ? '#0f191c' : '#deedf0',
-      );
+      paintGround(`
+        body { background-color: rgb(255, 255, 255) }
+        :root[data-theme='dark'] body { background-color: rgb(15, 25, 28) }
+      `);
       const { result } = renderHook(() => useTheme());
 
-      expect(meta).toHaveAttribute('content', '#deedf0');
+      expect(meta).toHaveAttribute('content', 'rgb(255, 255, 255)');
 
       act(() => {
         result.current.toggleTheme();
       });
 
-      expect(meta).toHaveAttribute('content', '#0f191c');
+      expect(meta).toHaveAttribute('content', 'rgb(15, 25, 28)');
     });
 
     it('devrait rester fonctionnel quand la page n’a pas de balise theme-color', () => {
       stubSystemDarkPreference(true);
-      stubSiteBackground(() => '#0f191c');
+      paintGround(`body { background-color: rgb(15, 25, 28) }`);
 
       const { result } = renderHook(() => useTheme());
 

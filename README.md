@@ -24,17 +24,24 @@ Ce dépôt est ce garde. Il publie, dans cet ordre de valeur :
 ## Installation
 
 ```bash
-npm i "@thomascaron/ui@github:ThoomassC/ui-commune#v1.0.0"
+npm i "@thomascaron/ui@github:ThoomassC/ui-commune#v1.1.0"
 ```
 
-Le paquet se compile à l'installation (`prepare`). Trois points d'entrée :
+Le paquet se compile à l'installation (`prepare`). Quatre points d'entrée :
 
 ```ts
 import '@thomascaron/ui/tokens.css'; // la palette, les échelles, le focus, le mouvement
 import '@thomascaron/ui/ui.css'; // les styles de composants, une seule fois par app
+import '@thomascaron/ui/glass.css'; // OPTIONNEL — le thème verre, inerte sans l'attribut
 import { Button, Field, Input } from '@thomascaron/ui';
 import { contrastRatio, parseThemes } from '@thomascaron/ui/contract'; // dev only
 ```
+
+> **L'ordre de ces imports EST la cascade, et `glass.css` vient en dernier.** Son bloc de
+> jetons pèse `(0,2,0)` — exactement le poids de `:root[data-theme='dark']`. À égalité,
+> c'est l'ordre du document qui tranche : importée avant `tokens.css`, la feuille perd
+> contre le bloc sombre et le thème verre disparaît **en sombre seulement**. C'est le
+> genre de panne qui se voit un jour sur deux.
 
 > **Point de vigilance en déploiement.** Si l'hôte n'exécute pas le script `prepare`
 > (cache npm, image de build minimale), `dist/` sera absent et le build cassera en
@@ -133,6 +140,150 @@ techniquement rien — deux points d'entrée — mais un consommateur qui mesure
 palette importe volontiers les deux dans le même fichier de test, et devait alors aliaser
 l'un des deux.
 
+## Le thème verre liquide
+
+Un second axe, **orthogonal** au clair/sombre : un attribut sur la racine, et la feuille
+optionnelle `glass.css`. Quatre combinaisons — aplat clair, aplat sombre, verre clair, verre
+sombre — servies sans une ligne de JavaScript.
+
+```html
+<html data-theme="dark" data-material="glass">
+```
+
+`data-material` n'a **qu'une valeur écrite** : `glass`. L'absence de l'attribut est le mode
+aplat, et aucun sélecteur `[data-material='flat']` n'existe nulle part — `data-theme` a besoin
+de `"light"` parce que l'OS peut imposer le sombre, or il n'existe aucune `prefers-material` à
+contredire. La librairie **ne publie pas de sélecteur** : trois mécanismes de bascule
+incompatibles cohabitent entre les consommateurs, en publier un reviendrait à publier le
+mauvais deux fois. La bascule de la vitrine reste dans la vitrine.
+
+### Ce qui devient du verre, et ce qui n'en devient pas
+
+Le partage n'est pas esthétique. Il suit la doctrine d'Apple — **« Don't use Liquid Glass in
+the content layer »**, le matériau est la couche de navigation qui flotte au-dessus du
+contenu — et il est borné par la mesure.
+
+| | Composants | Ce qu'ils reçoivent |
+| --- | --- | --- |
+| **Flou + liseré** | `Button --secondary`, `Button --danger`, `Message`, `IconTile` | `backdrop-filter: blur(var(--glass-blur-control)) saturate(...)` et un liseré spéculaire sur `::before` |
+| **Flou seul** | `Input`, `Select`, `Textarea` | le flou. Pas de liseré : **un contrôle de formulaire ne génère pas de boîte de pseudo-élément** — sondé, le témoin `<span>` peint son anneau, les trois contrôles n'en peignent aucun pixel |
+| **Liseré seul, aplat conservé** | `Button --primary`, `Tag`, les trois `Pill` | le bord et le reflet, jamais la transparence de fond |
+| **Inchangés** | `Backdrop`, `Card`, `Checkbox`, `ChipList`, `DateRange`, `Field`, `SectionHeading`, `Timeline` | rien |
+
+**Pourquoi un aplat qui porte du texte ne devient pas translucide**, chiffré : `--accent` a
+besoin d'un alpha ≥ **0,892** pour que `--text-on-accent` tienne 4,5:1, et d'un alpha ≥
+**0,811** pour que `--focus-inner` garde ses 3:1 sur l'aplat. Le bouton primaire disposerait
+donc de 11 % de transparence, que personne ne voit. Une pastille tolère au mieux un alpha
+≈ 0,78 : `--status-progress-text` tombe à **4,48:1 dès l'alpha 0,70**, et le blanc de la
+pastille « acquis » à **3,74:1 à 0,60**.
+
+**Pourquoi `Tag` et `Pill` n'ont pas de flou** : un `backdrop-filter` coûte une passe de
+composition **par élément**, pas par composant. Une `ChipList` de vingt chips, c'est vingt
+couches promues. La contrainte de performance et la contrainte WCAG désignent ici le même
+coupable.
+
+**Pourquoi `Backdrop` et `Card` ne changent pas** : le décor est le **sol**, il n'a rien
+derrière lui à filtrer ; et `Card` a déjà son verre, dont `variant="flat"` est l'échappatoire
+opaque assumée — celle dont `travels_in_world` aura besoin photo par photo.
+
+**Pourquoi `Checkbox` est hors périmètre** : la case est dessinée par l'agent utilisateur. La
+verrer demanderait `appearance: none`, donc perdre la coche système, le mode contraste forcé
+et l'état indéterminé.
+
+### Les trois replis, tous obligatoires
+
+| Condition | Ce qui se passe |
+| --- | --- |
+| `@supports not (backdrop-filter)` | les liserés partent ; les sept surfaces retrouvent au pixel leur rendu de mode aplat — la feuille ne pose aucun fond, il n'y a donc rien à rendre opaque |
+| `prefers-reduced-transparency: reduce` **ou** `prefers-contrast: more` | tous les filtres à `none`, tous les liserés retirés |
+| `forced-colors: active` | les liserés **et** les filtres s'éteignent |
+
+Les deux conditions du deuxième cas ne sont pas une ceinture de plus :
+`prefers-reduced-transparency` n'est implémenté **que par Chromium**. Et le troisième cas est
+nécessaire parce que — mesuré, contre l'intuition — **`forced-colors: active` n'implique pas
+`prefers-contrast: more`**.
+
+> **Le trou résiduel, et rien en CSS ne peut le fermer.** Un utilisateur qui a activé
+> *seulement* « Réduire la transparence » (macOS) ou « Effets de transparence : désactivé »
+> (Windows), **sans** contraste élevé, ne déclenche aucune de ces trois requêtes sous Safari
+> ni sous Firefox : il garde le verre. Sans conséquence dans la vitrine, où le matériau est un
+> clic explicite — réel pour un consommateur qui poserait `data-material="glass"` par défaut.
+> Le contraste élevé de macOS, lui, passe bien par `prefers-contrast: more` (Safari 14.1+), et
+> celui de Windows par `forced-colors` (Firefox).
+
+### Ce qu'elle coûte
+
+Mesuré sur `dist/glass.css` : **24 489 octets bruts, 8 963 gzippés**. Mais `build:css` copie
+les feuilles **verbatim, commentaires compris** — il n'y a pas de minifieur dans ce dépôt, et
+c'est un choix assumé pour toutes ses feuilles. La CSS utile, elle, pèse **4 204 octets
+bruts, 685 gzippés** : c'est ce qu'un consommateur qui minifie paiera réellement. C'est aussi
+pourquoi l'entrée est **optionnelle** plutôt qu'incluse dans `ui.css` : `travels_in_world` est
+un non-consommateur plausible et durable de ce thème.
+
+### Ce qu'il coûte à peindre, mesuré
+
+Profilé au CDP (`Tracing`, durée de `Display::DrawAndSwap` par trame composée), A/B
+**entrelacé dans un même chargement** pour qu'aucune dérive de charge ne soit attribuée au
+matériau. Le rendu est **logiciel** — pas de GPU : les **rapports** et la **forme des
+courbes** valent, les millisecondes absolues non, et le comportement iOS reste inconnu.
+
+**Un `backdrop-filter` promeut exactement une couche de composition.** Mesuré au `LayerTree`
+et non déduit : `+15 / +15` sur la page `Button`, `+7 / +7` sur `Field`. Mais c'est le nombre
+**visible** qui coûte — à 300 puis 400 surfaces dont 216 seulement à l'écran, le coût ne bouge
+pas. **Le verre hors écran est gratuit.**
+
+| | ms / trame en aplat | en verre | écart |
+| --- | --- | --- | --- |
+| `#/composants/button` (15 surfaces) | 1,71 | 3,22 | **+1,51** |
+| `#/composants/field` (7 surfaces) | 1,68 | 3,73 | **+2,05** |
+| `#/compositions/verre-et-frise`, halos figés | 12,40 | 12,43 | **+0,03** |
+
+`field` coûte **plus** que `button` avec deux fois moins d'éléments : ce n'est pas le nombre,
+c'est l'**aire**. Le coût se lit à deux termes — environ **54 µs de forfait par élément** plus
+**19,4 µs par millier de pixels carrés visibles**. Le modèle prédit les trois pages à
+±0,34 ms sans réajustement.
+
+**Il n'y a pas de falaise. C'est une droite** : 92,77 µs par étiquette de 70×26, 147,77 µs par
+contrôle de 110×44, r² = 0,99999, coût unitaire constant de 5 à 400 éléments. Le décrochage
+n'est pas une propriété du filtre, c'est l'instant où la droite croise le budget de trame :
+**vers 168 étiquettes à 60 Hz, vers 105 contrôles**. Quarante `Tag` verrés coûteraient
+3,65 ms/trame — un impôt de 22 %, pas une falaise.
+
+**Le liseré spéculaire coûte zéro.** Entre −0,04 et +0,06 ms jusqu'à 400 éléments, dans le
+bruit d'une mesure à 0,05 ms d'écart-type ; −0,01 ms sur la page réelle. C'est **ça** qui
+justifie le rationnement : le flou se paie, le bord non.
+
+**`--glass-blur-control: 12px` est aussi un choix de performance.** À aire égale, 12 px coûte
+147 µs par surface contre 374 µs à 32 px — **2,54× moins**. La mesure de luminance et celle du
+compositeur pointent dans le même sens, indépendamment. À noter : `blur(0px)` coûte encore
+37 µs — la passe elle-même n'est jamais gratuite.
+
+**Le poste de dépense n'est pas le verre rationné, c'est celui qui en est exempté.** Sur
+`#/compositions/verre-et-frise`, `Card` pèse **11,08 ms sur 14,51 — 76 % du budget**, parce
+qu'elle est le seul objet de la librairie à porter **deux** `backdrop-filter` : le ménisque de
+2 px sur l'hôte (5,49 ms, il couvre toute l'aire de la carte) et le cœur de 32 px sur son
+`::before` (6,76 ms). Les sept familles rationnées, elles, coûtent 1,40 ms — **10 %**. Facteur
+huit entre l'exempté et les rationnées.
+
+**Et au repos, décor visible, personne ne touchant à rien** : les six halos animés forcent une
+composition continue à ~100 trames/s, soit **974 ms de composition par seconde — 97 % d'un
+cœur**. Les halos ne coûtent presque rien en eux-mêmes ; ils coûtent en rendant les trames
+**obligatoires**, et chacune réévalue tous les `backdrop-filter` au-dessus d'eux. Retirer le
+flou de `Card` en gardant les halos ramène la charge à 19 %. Hors écran, la charge est
+**nulle** — le décor ne coûte que visible — et tout est déjà derrière
+`prefers-reduced-motion: no-preference`.
+
+### Ce qui garde le thème
+
+`src/styles/glass-theme.structure.test.ts` lit la feuille en texte et épingle, entre autres :
+la liste des sélecteurs verrés **croisée avec les classes réellement émises par les
+composants** — un dix-huitième composant ajouté sans règle de verre ni exclusion motivée fait
+rougir la suite ; l'appariement de chaque `backdrop-filter` avec son doublet `-webkit-`, la
+cible d'un thème Liquid Glass étant Safari ; l'interdiction de cibler `::after`, où
+`button.css` tient le seul indicateur d'attente du bouton ; la présence **et l'ordre** des
+trois replis ; et l'absence de toute couleur hors des blocs de repli — la forme exécutable de
+« la couleur par le jeton, la matière par la feuille ».
+
 ## La vitrine
 
 ```bash
@@ -153,8 +304,20 @@ statique dans `dist-showcase/`, sans serveur capable de réécrire une URL profo
 
 Deux promesses de ce site sont **exécutables**, dans `src/showcase/registry.test.tsx` : chaque
 composant exporté par `src/index.ts` a sa page — un composant publié sans page fait rougir la
-suite — et chacune des vingt-trois pages se rend sans jeter, sans second `<h1>` et sans saut
-de niveau de titre.
+suite — et chacune des vingt-quatre pages se rend sans jeter, sans second `<h1>` et sans saut
+de niveau de titre. `doc-shell.test.tsx` tient les deux autres : la note de version est le
+premier élément du sommaire, et il y a une entrée de nav par page.
+
+Le sol de la vitrine est **blanc**, et c'est une décision de vitrine seulement : le jeton
+publié `--site-background` reste `#deedf0`, mesuré, servi aux deux consommateurs. Un sol
+blanc dans la librairie invaliderait les vingt supports du contrat et retournerait la
+décision « les sols clairs sont du papier, pas de l'écran ».
+
+La barre du haut porte **deux** bascules indépendantes — clair/sombre et aplat/verre — et
+tient sur une seule ligne de 320 px à 1440 px : sous 36 rem les libellés sont masqués
+visuellement, leur nom accessible conservé. Cette hauteur n'est pas cosmétique : le collant
+du sommaire et le `scroll-padding` qui empêche la barre de manger le focus (WCAG 2.4.11) s'en
+décalent tous les deux.
 
 ## Les règles, en sept lignes
 
@@ -175,6 +338,13 @@ Une règle qu'on ne peut pas citer de mémoire n'est pas appliquée.
    ne contient que des succès est une charte qu'on n'a pas éprouvée.
 
 ## Le contrat teal & cuivre
+
+> **v1.1.0 — un second thème, et rien qui casse.** Le verre liquide arrive en feuille
+> **optionnelle** (`./glass.css`) pilotée par un attribut : aucun jeton renommé, aucun rôle
+> dont le sens change, aucun composant, prop ou classe modifié. C'est donc un **mineur**, et
+> le raisonnement est le miroir de celui qui a refusé `1.0.0` à la v0.3.0 : appeler ceci
+> `2.0.0` promettrait une rupture qui n'a pas eu lieu, et brûlerait le seul numéro qui reste
+> pour une vraie. `2.0.0` attend le jour où `--surface` changera de sens.
 
 > **v1.0.0 — l'API se fige, et la vitrine devient un site.** Le vocabulaire décrit
 > ci-dessous est celui que la 1.0 publie : rien n'a bougé depuis la v0.3.0, ce qui est la
@@ -267,12 +437,15 @@ compatible avec un site entièrement prérendu. Une couleur dont la seule décla
 dans un `@media` ne s'applique jamais dans l'état non marqué : le contrat échoue si un
 jeton sombre manque au bloc clair.
 
-## Les quatre manquements AA, publiés
+## Les quatre manquements de contraste, publiés
 
 La règle n° 7 s'applique à la palette elle-même. Le contrat mesure chaque encre sur les
 **vingt supports** du produit « cinq supports × (nu + trois lavis d'état) », et quatre
-couples encre × support ne tiennent pas AA. Ils sont nommés plutôt que contournés, et
-chacun porte l'encre de remplacement qui tient au même endroit.
+couples ne tiennent pas leur seuil. Ils sont nommés plutôt que contournés, et chacun porte
+l'encre — ou la forme — de remplacement qui tient au même endroit.
+
+**Trois portent sur du TEXTE (WCAG 1.4.3, 4,5:1), le quatrième sur une FORME (WCAG 1.4.11,
+3:1)** : le titre ne dit donc plus « AA » tout court.
 
 Le pire support est toujours le même : **une carte posée sur le halo froid, avec le lavis
 d'appui `--panel-surface-active` par-dessus**.
@@ -282,7 +455,32 @@ d'appui `--panel-surface-active` par-dessus**.
 | `--accent-secondary` | **2,96:1** en sombre           | 4,5:1    | Le cuivre est ÉDITORIAL : il n'a rien à faire sur un lavis d'état, qui est une couche d'INTERACTION |
 | `--text-accent`      | **4,40:1** clair / **4,23:1** sombre | 4,5:1 | Un lavis d'appui ne porte que `--text-strong` — 6,85:1 clair, 6,12:1 sombre au même endroit |
 | `--text-muted`       | **4,31:1** en sombre           | 4,5:1    | `--text-body`, 5,15:1 au même endroit. C'est l'appui et lui seul : 7,00:1 au lavis de repos |
-| `--warning`          | **3,65:1** en clair            | 4,5:1    | Une mention d'avertissement se pose sur une carte NUE, où son pire cas est 4,75:1 |
+| `--accent` (l'aplat du bouton primaire) | **2,59:1** sur le halo froid / **2,78:1** sur le halo chaud, en sombre | 3:1 | `.tc-btn--primary` déclare `border-color: var(--accent)` : son aplat EST sa seule limite visible. Il lui faut un liseré propre dès qu'il peut être posé sur un halo — `--control-border` tient 3,27:1 au même endroit — ou le halo doit rester hors de sa boîte |
+
+> **`--warning` n'est plus de la série, et c'est le contrat qui l'en a sorti.** Son exemption
+> disait « une mention d'avertissement se pose sur une carte NUE, où son pire cas est
+> 4,75:1 » — une consigne que la librairie ne pouvait pas tenir : `.tc-message--warn` peint
+> son propre lavis, et `Backdrop` l'autorise à le faire au-dessus d'un halo sans carte du
+> tout. Mesurée, cette chaîne valait 3,35:1. L'ambre clair est passé à `--tc-amber-390`, et le
+> pire cas de l'encre remonte à **5,395:1** en clair, **5,38:1** en sombre.
+
+**Le quatrième ne porte pas sur une encre mais sur une FORME**, et son pire support n'est pas
+un lavis d'état : c'est le halo. Le § 11 de `glass.contract.test.ts` publie ses dix mesures.
+
+| substrat                   | clair  | sombre     |
+| -------------------------- | ------ | ---------- |
+| la page nue                | 4,53:1 | 3,28:1     |
+| la carte sur la page nue   | 4,88:1 | 3,40:1     |
+| la carte sur le halo froid | 3,93:1 | **2,59:1** |
+| la carte sur le halo chaud | 3,96:1 | **2,78:1** |
+| la carte en repli opaque   | 4,87:1 | 3,40:1     |
+
+Le teal n'est pas en cause : il tient 3,40:1 sur la carte sans halo. C'est le halo qui remonte
+le substrat vers lui — la bulle froide sombre est un teal de la même famille que l'accent, la
+bulle chaude est simplement plus claire que le sol. **Ce manquement est antérieur au thème
+verre** : il ne dépend que de `--halo-tint` et de `--glass-fill`, tous deux servis sans
+`data-material="glass"`, et c'est ce que rend la page `#/compositions/verre-et-frise` en
+sombre aujourd'hui.
 
 **Sur les cinq supports nus, toutes les encres tiennent AA — pire cas 4,58:1.** C'est le
 cuivre en sombre sur la carte posée sur le halo froid, soit 0,08 de marge.
@@ -315,6 +513,26 @@ domaine mesuré, et aucune assertion de ce dépôt ne doit prétendre le contrai
 4. **Ce qu'un navigateur peint vraiment sur un élément donné.** Le contrat prouve qu'une
    pile nommée est arithmétiquement juste ; l'appariement d'une pile avec une règle CSS
    reste une affirmation humaine.
+
+Le thème verre en ajoute trois, et la première est la plus grave :
+
+5. **Un rayon de flou excède l'élément qu'il filtre.** Pour une carte de 300 px,
+   « entièrement posée sur un halo » reste un pire cas défendable. Pour un contrôle de
+   44 px, `--glass-blur-control` vaut 12 px : son arrière-plan effectif est une moyenne de
+   voisinage qui inclut ce qui est **à côté** de lui, pas seulement **derrière**. Aucune
+   arithmétique de couches ne l'exprime. C'est ce qui a fait choisir 12 px et non 32 —
+   mesuré sur un profil de luminance, la modulation du fond survit à 16 % du rayon 12 contre
+   0,8 % du rayon 32.
+6. **Deux `backdrop-filter` imbriqués.** Selon le moteur, l'enfant échantillonne la sortie
+   déjà filtrée du parent ou la page brute. Le modèle suppose l'empilement des fonds, ce qui
+   ne décrit exactement ni l'un ni l'autre — et c'est précisément ce que `nested()` prétend
+   approcher.
+7. **La réfraction n'est pas reproductible, donc elle n'est pas promise.** Le « lensing » est
+   la signature du matériau d'Apple ; en CSS il demande `backdrop-filter: url(#...)`, qui est
+   **Chromium seul** et non spécifié. Pire, `@supports (backdrop-filter: url(#f))` rend `true`
+   dans les trois moteurs — c'est un test de syntaxe, pas de rendu — donc **aucune détection
+   CSS ne peut protéger un repli**. Ce dépôt s'en tient au ménisque à deux anneaux, qui est
+   la meilleure approximation atteignable partout.
 
 ### Il n'y a aucun harnais navigateur dans ce dépôt
 
@@ -357,15 +575,40 @@ la main, une fois. **Elles ne sont pas rejouées en CI**, et rien ne les surveil
 
 Par coût de retour en arrière décroissant.
 
-1. La bascule du fond de `travels_in_world` vers `#deedf0`, et le remesurage de sa carte.
-2. Les trois familles de caractères, et le budget de police qui va avec.
-3. La simulation de deutéranopie sur `--danger` / `--success` / `--warning` : elle n'a pas
+1. **Le harnais navigateur, et c'est désormais le premier de la liste.** Le thème verre
+   multiplie par neuf la surface de rendu qu'aucun test ne garde : les limites du contrat
+   listées plus haut ne sont pas des précautions de style, ce sont les trois choses que ce
+   dépôt affirme sans pouvoir les prouver. Une sonde qui capture les quatre combinaisons,
+   échantillonne le pixel réel derrière trois encres et recalcule le ratio est chiffrée à
+   environ une journée. C'est le premier chantier où la promesse d'honnêteté du dépôt
+   commence à coûter plus qu'elle ne rapporte.
+2. **Le liseré du bouton primaire en thème sombre** (2,59:1 sur le halo froid). Deux issues :
+   `border-color: var(--control-border)` sur `.tc-btn--primary`, qui tient 3,27:1 au même
+   endroit mais fait apparaître un filet gris visible sur le teal — donc change l'apparence
+   du portfolio —, ou la publication du manquement, qui est l'état actuel. C'est une décision
+   d'apparence, elle appartient au propriétaire de la palette et ne doit pas être prise en
+   passant dans un chantier de thème.
+3. **Le double `backdrop-filter` de `Card`, et le coût du décor animé au-dessus de lui.**
+   Mesuré : `Card` pèse 76 % du budget de composition de la page de compositions, et le décor
+   visible force 97 % d'un cœur au repos dont 80 % est le flou de `Card` réévalué. Deux
+   leviers séparés — ramener le cœur de 32 px à 12 px (−11 % du budget de la page) et le
+   ménisque de 2 px sur l'hôte (−38 % à lui seul, parce qu'il couvre toute l'aire). Ce sont
+   des décisions d'apparence sur le composant le plus visible de la librairie : elles
+   appartiennent au propriétaire de la palette, pas à un chantier de thème.
+4. **Minifier le CSS publié dans `build:css`.** `build:css` est un `cp` : tous les
+   commentaires partent chez le consommateur. Mesuré — le socle livré passerait de **46,3 à
+   5,7 kB gzippés (−88 %)**, et le coût marginal de `glass.css` de **7 597 à 222 octets**.
+   Les commentaires sont la valeur du dépôt dans `src/` ; ils n'ont aucune raison d'être
+   téléchargés. À faire dans le script, jamais en appauvrissant la source.
+5. La bascule du fond de `travels_in_world` vers `#deedf0`, et le remesurage de sa carte.
+6. Les trois familles de caractères, et le budget de police qui va avec.
+7. La simulation de deutéranopie sur `--danger` / `--success` / `--warning` : elle n'a pas
    été faite, et le résultat peut changer les trois valeurs. Le rouge n'est séparé du
    cuivre que de 11,3° de teinte. Elle **a** été faite sur les trois pastilles
    d'avancement, et son résultat est la raison du glyphe : l'ambre et le violet tombent à
    1,16:1 l'un contre l'autre en clair, et les trois s'effondrent ensemble en sombre
    (1,06 / 1,21 / 1,14:1).
-4. Le squircle (`corner-shape: superellipse()`) est **retenu** depuis la v0.3.0, sur
+8. Le squircle (`corner-shape: superellipse()`) est **retenu** depuis la v0.3.0, sur
    `IconTile` : le rayon en pourcentage donne déjà la bonne silhouette là où
    `corner-shape` manque, donc la dégradation est propre et il n'y a rien à prévoir. Ce qui
    reste ouvert est de savoir si la forme mérite d'exister sur d'autres composants alors

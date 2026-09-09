@@ -33,7 +33,13 @@ export function ThemeToggle() {
       <span className="tc-doc-themetoggle__glyph" aria-hidden="true">
         ☾
       </span>
-      Thème sombre
+      {/* LE LIBELLÉ EST ENVELOPPÉ, et c'est la barre du haut qui l'exige : sous
+          36 rem, `doc.css` le masque visuellement pour que la barre tienne sur
+          UNE ligne à toute largeur. Un nœud de texte nu n'est pas ciblable par un
+          sélecteur, donc l'enveloppe est la condition du repli. Le texte reste
+          dans l'arbre d'accessibilité : le bouton garde son nom, seule sa
+          présentation change. */}
+      <span className="tc-doc-themetoggle__label">Thème sombre</span>
     </button>
   );
 }

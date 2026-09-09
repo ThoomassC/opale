@@ -27,10 +27,9 @@ export const espacementPage: DocPage = {
   title: 'Espacement et rayons',
   lede: (
     <>
-      Une grille de 4 px, huit pas, et aucune valeur hors liste. Deux exceptions assumées, hors
-      échelle parce qu’elles répondent au doigt et non à l’œil :
-      <code className="tc-doc-inlinecode">--target-min</code> (44 px) et
-      <code className="tc-doc-inlinecode">--target-button</code> (48 px).
+      Une grille de 4 px, huit pas, aucune valeur hors liste. Deux exceptions, hors échelle parce
+      qu’elles répondent au doigt : <code className="tc-doc-inlinecode">--target-min</code> (44 px)
+      et <code className="tc-doc-inlinecode">--target-button</code> (48 px).
     </>
   ),
   render: () => (

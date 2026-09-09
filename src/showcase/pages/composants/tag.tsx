@@ -19,11 +19,9 @@ const PROPS: readonly PropRow[] = [
     defaultValue: "'plain'",
     description: (
       <>
-        <code>plain</code> — étiquette neutre : pilule sans-serif, aucun glyphe, c’est la chip de
-        stack technique du portfolio&nbsp;; <code>measured</code> — donnée mesurée, bordure{' '}
-        <strong>pleine</strong>, losange plein&nbsp;; <code>proposed</code> — proposée et non encore
-        vérifiée, bordure <strong>tiretée</strong>, losange creux&nbsp;; <code>open</code> —
-        question ouverte, bordure <strong>pointillée</strong>, cercle creux.
+        <code>plain</code> — pilule neutre, sans glyphe&nbsp;; <code>measured</code> — bordure
+        pleine, losange plein&nbsp;; <code>proposed</code> — bordure tiretée, losange creux&nbsp;;{' '}
+        <code>open</code> — bordure pointillée, cercle creux.
       </>
     ),
   },
@@ -32,8 +30,8 @@ const PROPS: readonly PropRow[] = [
     type: 'ReactNode',
     description: (
       <>
-        Le libellé, rendu dans <code>.tc-tag__label</code>. C’est la seule chose que le lecteur
-        d’écran entend : le glyphe des trois variantes de charte est <code>aria-hidden</code>.
+        Le libellé, et la seule chose que le lecteur d’écran entend : le glyphe est{' '}
+        <code>aria-hidden</code>.
       </>
     ),
   },
@@ -60,22 +58,17 @@ export const tagPage: DocPage = {
   title: 'Tag',
   lede: (
     <>
-      Une étiquette, neutre par défaut. <code>plain</code> est la chip de stack technique du
-      portfolio, et c’est le <strong>défaut</strong> : là où le préfixe désigne un emplacement et
-      non un sens, il n’y a rien à distinguer. Les trois variantes de charte se séparent, elles, par
-      la <strong>forme de la bordure</strong> — pleine, tiretée, pointillée — et par le glyphe,
-      jamais par la seule couleur : imprimé en noir et blanc, le tableau reste lisible.
+      Une étiquette, neutre par défaut : <code>plain</code> est la chip de stack technique du
+      portfolio. Les trois variantes de charte se séparent par la{' '}
+      <strong>forme de la bordure</strong> — pleine, tiretée, pointillée — et par le glyphe, jamais
+      par la seule couleur.
     </>
   ),
   render: () => (
     <PageBody>
       <UsageBlock label="Import et appels représentatifs de Tag" code={USAGE} />
 
-      <Specimen
-        title="Étiquettes — le défaut est neutre"
-        note="Sans variante, une étiquette est une chip : pilule, sans-serif, aucun glyphe. C’est ce qu’attend une liste de stack technique, où l’emplacement ne porte aucun sens à distinguer."
-        inline
-      >
+      <Specimen title="Étiquettes — le défaut est neutre" inline>
         <Tag>TypeScript</Tag>
         <Tag>PostgreSQL</Tag>
         <Tag>Vitest</Tag>
@@ -83,7 +76,7 @@ export const tagPage: DocPage = {
 
       <Specimen
         title="Étiquettes — les trois variantes de charte"
-        note="Elles restent parce que cette page en a besoin : c’est son seul moyen de marquer une donnée mesurée, proposée ou restée ouverte. La distinction passe par la forme de la bordure — pleine, tiretée, pointillée — et par le glyphe. Imprimée en noir et blanc, la nuance survit."
+        note="Imprimées en noir et blanc, les trois restent distinctes : la forme de la bordure et le glyphe survivent, la couleur non."
         inline
       >
         <Tag variant="measured">Mesuré</Tag>
@@ -95,11 +88,7 @@ export const tagPage: DocPage = {
           ci-dessus ne montre : la question réelle, à l'usage, est de savoir si
           une chip neutre se distingue d'une variante de charte dans la MÊME
           rangée — sinon les deux vocabulaires se mélangent à l'œil. */}
-      <Specimen
-        title="Les quatre dans la même rangée"
-        note="La chip neutre à côté des trois variantes. C’est la seule disposition qui répond à la question qui compte : les deux vocabulaires — l’emplacement et le statut — restent-ils séparables quand ils voisinent ? Le glyphe est ce qui les sépare, et plain n’en a pas."
-        inline
-      >
+      <Specimen title="Les quatre dans la même rangée" inline>
         <Tag>Vitest</Tag>
         <Tag variant="measured">Mesuré</Tag>
         <Tag variant="proposed">Proposé</Tag>
@@ -110,27 +99,19 @@ export const tagPage: DocPage = {
         id="tag"
         note={
           <>
-            Le type étend <code>ComponentPropsWithoutRef&lt;&apos;span&apos;&gt;</code> :{' '}
-            <code>id</code>, <code>title</code>, <code>lang</code>, <code>data-*</code> et le reste
-            des attributs natifs traversent jusqu’au <code>&lt;span&gt;</code> racine. L’étiquette
-            ne pose aucun rôle et n’est pas une région dynamique.
+            Le type étend <code>ComponentPropsWithoutRef&lt;&apos;span&apos;&gt;</code> : les
+            attributs natifs traversent jusqu’au <code>&lt;span&gt;</code> racine, et l’étiquette ne
+            pose aucun rôle.
           </>
         }
         rows={PROPS}
       />
 
       <p className="tc-doc-prose tc-doc-aside">
-        <strong>Le glyphe est un renfort, pas une information.</strong> <code>.tc-tag__glyph</code>{' '}
-        porte <code>aria-hidden=&quot;true&quot;</code> : une étiquette <code>measured</code>{' '}
-        désignée par un <code>aria-describedby</code> produit la description «&nbsp;Mesuré&nbsp;»,
-        sans le losange. Ce qui porte le sens est donc le libellé — écrivez-le en clair, et non
-        «&nbsp;M&nbsp;». La démonstration en niveaux de gris des quatre variantes est dans{' '}
+        Le glyphe est <code>aria-hidden</code> : le sens est porté par le libellé, qu’il faut donc
+        écrire en clair — la démonstration en niveaux de gris est dans{' '}
         <a className="tc-doc-link" href={hrefFor('accessibilite')}>
           Le contrat d’accessibilité
-        </a>
-        , et le vocabulaire d’<em>avancement</em>, qui n’est pas celui-ci, appartient à{' '}
-        <a className="tc-doc-link" href={hrefFor('composants/pill')}>
-          Pill
         </a>
         .
       </p>

@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { GLASS_BACKDROPS, GLASS_LAYERS, STATE_WASHES, resolveBackdrop, withWash } from './backdrop';
+import {
+  GLASS_BACKDROPS,
+  GLASS_LAYERS,
+  STATE_WASHES,
+  nested,
+  resolveBackdrop,
+  withWash,
+} from './backdrop';
 import type { BackdropSpec } from './backdrop';
 import { compositeLayers, parseRgba, withAlpha } from './color';
 import { parseThemes, resolveToken } from './stylesheet';
@@ -209,6 +216,102 @@ describe('withWash empile un lavis sans détruire le support', () => {
     const twice = withWash(withWash(card, '--panel-surface'), '--panel-surface-hover');
 
     expect(parseRgba(resolveBackdrop(light, twice)).alpha).toBe(1);
+  });
+});
+
+describe('nested empile des remplissages de verre SUPPLÉMENTAIRES', () => {
+  /*
+   * Le cas réel : un contrôle de verre posé dans une carte de verre. Son encre
+   * touche `page → halo → remplissage → remplissage → lavis`, soit une couche de
+   * plus que le pire support de `GLASS_BACKDROPS`. Sans cette fonction, chaque
+   * consommateur retapait la pile — et c'est exactement la duplication que
+   * `backdrop.ts` existe pour supprimer.
+   */
+  const card: BackdropSpec = {
+    label: 'la carte sur le halo froid',
+    layers: [GLASS_LAYERS.page, GLASS_LAYERS.coolHalo, GLASS_LAYERS.glassFill],
+  };
+
+  it('ajoute exactement `depth` remplissages de verre', () => {
+    expect(nested(card, 1).layers).toStrictEqual([...card.layers, GLASS_LAYERS.glassFill]);
+    expect(nested(card, 3).layers).toStrictEqual([
+      ...card.layers,
+      GLASS_LAYERS.glassFill,
+      GLASS_LAYERS.glassFill,
+      GLASS_LAYERS.glassFill,
+    ]);
+  });
+
+  it('compose le remplissage supplémentaire comme le navigateur le peindrait', () => {
+    /*
+     * La carte claire sur la page nue vaut rgb(235.2, 244.2, 246) — le premier
+     * test de ce fichier. Un second `rgba(255, 255, 255, 0.4)` par-dessus donne
+     * 0,4 × 255 + 0,6 × 235,2 = 243,12 sur le rouge : le verre BLANCHIT encore,
+     * ce qui est précisément la raison pour laquelle l'imbrication ne peut pas
+     * dégrader une encre de lecture (§ 10 de `glass.contract.test.ts`).
+     */
+    const onPage: BackdropSpec = {
+      label: 'la carte sur la page nue',
+      layers: [GLASS_LAYERS.page, GLASS_LAYERS.glassFill],
+    };
+
+    expect(resolveBackdrop(light, nested(onPage, 1))).toBe('rgb(243.12, 248.52, 249.6)');
+  });
+
+  it('ALLONGE le libellé, au singulier comme au pluriel', () => {
+    // Même raison qu'au `withWash` : un message d'échec qui nomme « 2 » sans
+    // nommer le support ne dit pas quelle pile est cassée.
+    expect(nested(card, 1).label).toBe(
+      'la carte sur le halo froid, 1 remplissage de verre imbriqué',
+    );
+    expect(nested(card, 2).label).toBe(
+      'la carte sur le halo froid, 2 remplissages de verre imbriqués',
+    );
+  });
+
+  it('refuse une profondeur non entière — une couche se peint ou ne se peint pas', () => {
+    expect(() => nested(card, 1.5)).toThrow(
+      /la carte sur le halo froid[\s\S]*entière[\s\S]*« 1\.5 »[\s\S]*demi-remplissage/,
+    );
+    expect(() => nested(card, Number.NaN)).toThrow(/entière/);
+    expect(() => nested(card, Number.POSITIVE_INFINITY)).toThrow(/entière/);
+  });
+
+  it('refuse une profondeur < 1 — un support sans couche en plus EST le support', () => {
+    /*
+     * Rendre le support tel quel serait la commodité tentante, et c'est ce qui
+     * rendrait `nested(x, 0)` indistinguable de `x` dans un `it.each` : la ligne
+     * rouge annoncerait une imbrication qui n'a jamais eu lieu. Le refus arrête
+     * l'appelant sur sa boucle, pas sur sa mesure.
+     */
+    expect(() => nested(card, 0)).toThrow(
+      /la carte sur le halo froid[\s\S]*EST le support lui-même/,
+    );
+    expect(() => nested(card, -1)).toThrow(/EST le support lui-même/);
+  });
+
+  it('ne mute pas le support d’entrée', () => {
+    nested(card, 3);
+
+    expect(card.layers).toHaveLength(3);
+    expect(card.label).toBe('la carte sur le halo froid');
+  });
+
+  it('s’enchaîne : deux imbrications de 1 valent une imbrication de 2', () => {
+    // La propriété qui autorise `nested` à être appelée sur un support déjà
+    // imbriqué sans que la pile devienne fausse.
+    expect(nested(nested(card, 1), 1).layers).toStrictEqual(nested(card, 2).layers);
+  });
+
+  it('reste composable avec withWash, dans les deux ordres', () => {
+    const washedThenNested = nested(withWash(card, '--panel-surface-active'), 1);
+    const nestedThenWashed = withWash(nested(card, 1), '--panel-surface-active');
+
+    // Les deux piles diffèrent — l'ordre de peinture compte, et c'est
+    // `nestedThenWashed` qui décrit le rendu réel : le lavis est la couche la
+    // plus haute, posée par l'interaction sur le verre déjà empilé.
+    expect(washedThenNested.layers).not.toStrictEqual(nestedThenWashed.layers);
+    expect(parseRgba(resolveBackdrop(light, nestedThenWashed)).alpha).toBe(1);
   });
 });
 
