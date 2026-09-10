@@ -137,6 +137,13 @@ const EXCLUDED = new Map<string, string>([
       'la surface du champ est celle du contrôle, qui est verré de son côté',
   ],
   [
+    'glass-lens.tsx',
+    "il ne peint AUCUN pixel : c'est un porte-définitions, un <svg> de taille " +
+      'nulle qui ne contient que le filtre de déplacement que lens.css référence. ' +
+      "Le verrer n'aurait pas de surface à verrer, et le filtre qu'il porte n'est " +
+      "pas du matériau — c'est de la géométrie",
+  ],
+  [
     'section-heading.tsx',
     'un sourcil, un titre et un chapô : du texte, aucune surface — et une grille ' +
       'à deux colonnes au-delà de 62rem, qui n’est pas un matériau',

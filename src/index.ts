@@ -77,6 +77,9 @@ export { DateRange } from './components/date-range.js';
 export type { FieldControlProps, FieldProps } from './components/field.js';
 export { Field } from './components/field.js';
 
+export type { GlassLensProps } from './components/glass-lens.js';
+export { GlassLens } from './components/glass-lens.js';
+
 export type {
   IconTileDecorProps,
   IconTileLinkProps,
