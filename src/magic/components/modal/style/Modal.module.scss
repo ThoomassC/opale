@@ -33,7 +33,7 @@
    `Glass` : vérifié par le fait que `.modalContent` (24 px) l'emportait déjà
    sur `.glassContent`. */
 .modalShell {
-    border-radius: 28px;
+    border-radius: 34px;
 
     /* L'ARÊTE, ET POURQUOI ELLE DOIT ÊTRE PRESQUE OPAQUE.
        Premier essai : 1 px de blanc à 38 %. Mesuré sur les pixels rendus, il

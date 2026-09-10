@@ -167,13 +167,13 @@ export const badgePage: DocPage = {
         <code>Badge</code> passe <code>rootClassName=&quot;rounded-full&quot;</code> à{' '}
         <code>Glass</code> pour arrondir son enveloppe. L’utilitaire{' '}
         <code>.rounded-full {'{ border-radius: 9999px }'}</code> et la classe interne de l’enveloppe{' '}
-        <code>{'{ border-radius: var(--lg-radius, 16px) }'}</code> ont la{' '}
+        <code>{'{ border-radius: var(--lg-radius, 22px) }'}</code> ont la{' '}
         <strong>même spécificité</strong> (0,1,0), et celle de l’enveloppe passe{' '}
         <strong>plus tard</strong> dans la feuille produite — lignes 51 et 403 du{' '}
         <code>magic.css</code> publié, offsets 1 578 et 17 011. Valeur calculée relevée au
-        navigateur sur les figures ci-dessus : <code>border-radius: 16px</code>. Opale a relevé ce
-        rayon de 8 à 16 px pour que les composants s’arrondissent, mais cela n’a rien réglé ici :{' '}
-        <strong>seule la valeur a changé, le mécanisme est intact</strong> et 16 px sur une pastille
+        navigateur sur les figures ci-dessus : <code>border-radius: 22px</code>. Opale a relevé ce
+        rayon de 8 à 22 px pour que les composants s’arrondissent, mais cela n’a rien réglé ici :{' '}
+        <strong>seule la valeur a changé, le mécanisme est intact</strong> et 22 px sur une pastille
         de 24 px de haut n’est toujours pas une pilule. Le correctif est en amont
         — <code>rootStyle</code> au lieu de <code>rootClassName</code>, comme le fait leur{' '}
         <code>Switch</code> —, et il n’est pas dans <code>src/magic/README.md</code> :{' '}

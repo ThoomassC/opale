@@ -74,7 +74,7 @@ esthétique de l'amont — et chacune est mesurée.
 
 ### `glass/style/Glass.module.scss` — le rayon de l'enveloppe
 
-`8px` figé → `var(--lg-radius, 16px)`, et `.glassFilter` passe de `8px` à
+`8px` figé → `var(--lg-radius, 22px)`, et `.glassFilter` passe de `8px` à
 `inherit`.
 
 L'enveloppe porte `overflow: hidden`. Son rayon ne décide donc pas de son seul
@@ -110,7 +110,7 @@ le rognait à 8, et son ombre extérieure de 60 px était rognée par le même
 `overflow`. **La modale n'avait en pratique ni angle arrondi ni ombre.**
 
 Une classe `.modalShell` part donc sur `rootClassName`, c'est-à-dire sur
-l'enveloppe : rayon 28 px, liseré, et les deux ombres.
+l'enveloppe : rayon 34 px, liseré, et les deux ombres.
 
 Le voile passe de `blur(10px)` sur 30 % d'opacité à `blur(3px)` sur 60 %. Et le
 liseré a dû être **presque opaque**, ce qui n'était pas prévu : un premier essai
@@ -223,18 +223,18 @@ les deux règles se disputent le même `border-radius` **à poids égal** :
 | règle | spécificité | valeur | position dans `dist/magic/magic.css` |
 | --- | --- | --- | --- |
 | `.rounded-full` | (0,1,0) | `9999px` | ligne 51 (offset 1 578) |
-| `.opale-magic-glassContainer-2XpdN` | (0,1,0) | `var(--lg-radius, 16px)` | ligne 403 (offset 17 011) |
+| `.opale-magic-glassContainer-2XpdN` | (0,1,0) | `var(--lg-radius, 22px)` | ligne 403 (offset 17 011) |
 
 À spécificité égale, c'est l'ordre du document qui tranche, et l'enveloppe passe
 plus tard : **le rayon effectif est celui de l'enveloppe, pas 9999px.** Le badge
 est un rectangle aux coins arrondis. Relevé au navigateur pour confirmation :
-`glassContainer rounded-full` → **16px** ; `glassContainer` + `rootStyle` en
+`glassContainer rounded-full` → **22px** ; `glassContainer` + `rootStyle` en
 ligne → **999px**.
 
-Le rayon de l'enveloppe valait `8px` en amont ; Opale l'a porté à 16 px et rendu
+Le rayon de l'enveloppe valait `8px` en amont ; Opale l'a porté à 22 px et rendu
 réglable par `--lg-radius` (voir « Modifications du code vendoré » plus bas).
 **Cela n'a pas corrigé ce défaut-ci** : seule la valeur a changé, le mécanisme
-est intact, et 16 px sur une pastille de 24 px de haut n'est pas davantage une
+est intact, et 22 px sur une pastille de 24 px de haut n'est pas davantage une
 pilule que 8.
 
 Leur `Switch` s'en sort parce qu'il emploie `rootStyle` et non `rootClassName`

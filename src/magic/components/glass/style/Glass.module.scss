@@ -20,7 +20,7 @@
        Mesuré au navigateur, le `Modal` demandait `rounded-3xl` (24 px) sur son
        contenu et sortait à 8 px, et le `Button` demandait `rounded-xl` (12 px)
        pour le même résultat. Un composant ne pouvait pas s'arrondir. */
-    border-radius: var(--lg-radius, 16px);
+    border-radius: var(--lg-radius, 22px);
 
     /* ÉCART OPALE — le conteneur devient son propre contexte d'empilement.
        Il était en `z-index: auto`, donc les `z-index` 1, 2 et 3 de ses quatre

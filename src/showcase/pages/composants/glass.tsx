@@ -152,7 +152,7 @@ export const glassPage: DocPage = {
         }
       >
         <MagicStage>
-          <MagicCell label="enveloppe par défaut — 16 px">
+          <MagicCell label="enveloppe par défaut — 22 px">
             <Glass>
               <span>rootClassName absent</span>
             </Glass>
@@ -161,7 +161,7 @@ export const glassPage: DocPage = {
             label={
               <>
                 <code>rootClassName=&quot;rounded-full&quot;</code> — <strong>inerte</strong>,
-                toujours 16 px
+                toujours 22 px
               </>
             }
           >
@@ -213,15 +213,15 @@ export const glassPage: DocPage = {
           navigateur.
         </strong>{' '}
         <code>Glass.module.scss</code> donne à son enveloppe un{' '}
-        <code>border-radius: var(--lg-radius, 16px)</code>, ce qui sort en{' '}
-        <code>.opale-magic-glassContainer-xxxxx {'{ border-radius: var(--lg-radius, 16px) }'}</code>
+        <code>border-radius: var(--lg-radius, 22px)</code>, ce qui sort en{' '}
+        <code>.opale-magic-glassContainer-xxxxx {'{ border-radius: var(--lg-radius, 22px) }'}</code>
         . L’utilitaire Tailwind <code>.rounded-full {'{ border-radius: 9999px }'}</code> a la{' '}
         <strong>même spécificité</strong> (0,1,0) et sa règle passe <strong>plus tôt</strong> dans
         la feuille produite — offset <strong>11 474</strong> contre <strong>37 534</strong> dans le
         CSS de cette vitrine, et lignes 51 contre 403 (offsets 1 578 contre 17 011) dans le{' '}
         <code>magic.css</code> publié. C’est donc l’enveloppe qui gagne, dans les deux. Valeur
-        calculée relevée au navigateur sur la figure ci-dessus : <code>border-radius: 16px</code>.
-        L’amont figeait ce rayon à <code>8px</code> ; Opale l’a passé à 16 px et rendu réglable par{' '}
+        calculée relevée au navigateur sur la figure ci-dessus : <code>border-radius: 22px</code>.
+        L’amont figeait ce rayon à <code>8px</code> ; Opale l’a passé à 22 px et rendu réglable par{' '}
         <code>--lg-radius</code>, parce qu’un conteneur en <code>overflow: hidden</code> ne décide
         pas de son seul bord : <strong>il rogne tout ce qu’il contient</strong>, et aucun composant
         ne pouvait donc s’arrondir davantage que son enveloppe.
