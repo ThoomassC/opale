@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { ruleBody as findRule, stripComments } from '../test/css-rules';
 import docSource from './doc.css?raw';
 
 /* =============================================================================
@@ -33,28 +34,19 @@ import docSource from './doc.css?raw';
    reste en tête de « ce qui reste à décider » du README.
    ========================================================================== */
 
-/** Retire les commentaires : un sélecteur cité en prose n'est pas une règle. */
-function stripComments(source: string): string {
-  return source.replace(/\/\*[\s\S]*?\*\//g, '');
-}
-
 /**
- * Le corps de la première règle qui cible exactement `selector`.
+ * Le corps d'une règle de `doc.css`, at-rule exigée si on la nomme.
  *
- * Une correspondance EXACTE sur le prélude, et non un `includes` : `.tc-doc-search__list`
- * apparaît aussi dans `.tc-doc-search__option` par préfixe de nom, et dans des
- * sélecteurs descendants. Un `includes` aurait lu le corps de la mauvaise règle
- * et le test serait passé pour une raison fausse.
+ * LE LECTEUR LOCAL A ÉTÉ REMPLACÉ PAR UN LECTEUR PARTAGÉ, et ce n'est pas de la
+ * mise en ordre. Sa version d'origine, `/([^{}]+)\{([^}]*)\}/g`, ne survit pas
+ * aux at-rules : `[^}]*` n'exclut pas `{`, donc la première correspondance d'un
+ * bloc `@media` avale le prélude de l'at-rule ET la règle qui l'ouvre. Les
+ * sélecteurs gardés ici étaient lus correctement par CHANCE. Voir
+ * `src/test/css-rules.ts`, qui balaie à accolades équilibrées, et son test, qui
+ * porte les deux contre-exemples.
  */
-function ruleBody(selector: string): string | null {
-  const rules = stripComments(docSource).matchAll(/([^{}]+)\{([^}]*)\}/g);
-
-  for (const rule of rules) {
-    const preludes = rule[1].split(',').map((part) => part.trim());
-    if (preludes.includes(selector)) return rule[2];
-  }
-
-  return null;
+function ruleBody(selector: string, within?: string): string | null {
+  return findRule(docSource, selector, within === undefined ? {} : { within });
 }
 
 /**
@@ -153,6 +145,41 @@ describe('le liseré de la pilule de recherche', () => {
         'un champ dont la limite disparaît échoue WCAG 1.4.11, son fond ne valant que 1,11:1 ' +
         'contre le sol de la barre.',
     ).toMatch(/border:\s*1px\s+solid\s+var\(--doc-field-border\)/);
+  });
+
+  it('devrait éteindre l’anneau du champ SOUS LA CONDITION de son remplaçant', () => {
+    /* LES DEUX EXTINCTIONS ET LEUR REMPLAÇANT DOIVENT VIVRE SOUS LA MÊME
+       CONDITION. `tokens.css` porte une règle universelle `:focus-visible` qui
+       pose un `outline` ET deux `box-shadow` sur tout élément focusable ; le
+       champ les éteint pour que l'anneau soit porté par l'enveloppe, via une
+       règle en `:has()`.
+
+       Si les extinctions étaient inconditionnelles — elles l'ont été — alors
+       dans tout contexte où `:has()` ne s'applique pas il ne resterait AUCUN
+       indicateur de focus sur le champ. Pas un anneau dégradé : aucun. Ce n'est
+       pas un manquement aujourd'hui, les trois moteurs livrés gérant `:has()` ;
+       c'est le seul `outline: none` du dépôt qui n'aurait pas de filet.
+
+       Le garde exige donc que la règle soit DANS le `@supports`, et non
+       seulement qu'elle existe. */
+    const guarded = ruleBody('.tc-doc-search__input', '@supports selector(:has(*))');
+    const bare = findRule(docSource, '.tc-doc-search__input');
+
+    expect(
+      guarded,
+      '.tc-doc-search__input n’éteint pas son anneau dans « @supports selector(:has(*)) ».',
+    ).not.toBeNull();
+
+    expect(guarded ?? '', 'l’extinction doit couvrir outline ET box-shadow.').toMatch(
+      /outline:\s*none/,
+    );
+    expect(guarded ?? '').toMatch(/box-shadow:\s*none/);
+
+    expect(
+      bare === null || !/outline:\s*none|box-shadow:\s*none/.test(bare),
+      'une extinction d’anneau subsiste HORS du @supports : un moteur sans `:has()` ' +
+        'n’aurait alors plus aucun indicateur de focus sur le champ de recherche.',
+    ).toBe(true);
   });
 
   it('devrait déclarer sa couleur une fois par bloc de thème', () => {

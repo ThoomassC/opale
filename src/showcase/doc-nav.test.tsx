@@ -106,13 +106,19 @@ describe('DocNav — le pli du sommaire entier', () => {
        n'a pas de canal d'entrée fiable (capture d'écran et `--dump-dom`, pas de
        pilotage CDP).
 
-       L'activation clavier est donc SUPPOSÉE, sur deux appuis : la
-       spécification HTML la définit comme le comportement d'activation d'un
-       `<summary>`, et c'est le même mécanisme que le pliage par groupe, en
-       place depuis plusieurs versions. Elle n'est pas mesurée, et le
-       `display: block` du `<summary>` — posé pour contourner un défaut WebKit
-       lui-même supposé — est exactement le genre de chose qui pourrait la
-       casser dans un moteur sans que ce dépôt le voie. */
+       ELLE A DEPUIS ÉTÉ MESURÉE, ET CE COMMENTAIRE DISAIT « supposée » À TORT.
+       Le `chrome-headless-shell` accepte `--remote-debugging-port`, donc
+       `Input.dispatchKeyEvent` produit des événements FIABLES. Mesuré dans
+       Chromium 151, sur les deux niveaux : pli `Entrée` `true → false`,
+       `Entrée` `→ true`, `Espace` `→ false` ; groupe `Entrée` `true → false`,
+       `Espace` `→ true`. Le `display: block` du `<summary>` ne casse donc PAS
+       l'activation dans Chromium.
+
+       Ce qui reste supposé est le seul moteur qui motivait ce `display: block` :
+       WebKit. Il n'y a pas de Safari sur cette machine, et le risque qu'il
+       perde le dépliage quand un `<summary>` quitte `list-item` est la raison
+       écrite du contournement — un risque qu'on évite pour rien, faute de
+       pouvoir le constater. */
     const user = userEvent.setup();
     renderNav();
     const resume = screen.getByText('Sommaire', { selector: 'summary' });
@@ -127,6 +133,25 @@ describe('DocNav — le pli du sommaire entier', () => {
       document.activeElement,
       'la première tabulation dans le sommaire doit atteindre le pli.',
     ).toBe(resume);
+  });
+
+  it('devrait être ouvert au premier rendu d’une page qui n’est PAS l’accueil', () => {
+    /* CETTE ASSERTION MANQUAIT, ET SON ABSENCE RENDAIT LE FICHIER VERT DANS LA
+       MAUVAISE DIRECTION. Tous les tests du pli partaient de l'accueil, donc ils
+       ne couvraient que le sens où une valeur calculée aurait déjà valu `false`.
+       Sous la mutation `open={currentSlug === HOME_SLUG}` — littéralement le
+       défaut que le commentaire de `doc-nav.tsx` existe pour interdire — les
+       trois premiers tests restaient verts, alors que le sommaire serait replié
+       au premier rendu de 25 pages sur 26.
+
+       Un lien profond, `#/composants/button`, est le cas normal sur un site de
+       doc : on n'arrive presque jamais par l'accueil. */
+    renderNav('composants/button');
+    expect(
+      pli().open,
+      'le sommaire est replié au premier rendu d’une page profonde : `open` est calculé ' +
+        'au lieu d’être écrit en dur.',
+    ).toBe(true);
   });
 
   it('ne devrait PAS être rouvert par un changement de page', () => {
@@ -146,6 +171,23 @@ describe('DocNav — le pli du sommaire entier', () => {
 
     rerender(<DocNav pages={PAGES} currentSlug="composants/card" />);
     expect(pli().open, 'la seconde navigation a rouvert le sommaire replié').toBe(false);
+  });
+
+  it('ne devrait PAS être rouvert par un RETOUR sur l’accueil', () => {
+    /* LE SECOND SENS, ET C'EST LUI QUI ATTRAPE LA MUTATION. Le test ci-dessus
+       part de l'accueil et navigue AILLEURS : sous `open={currentSlug ===
+       HOME_SLUG}` la valeur calculée y vaut déjà `false`, donc il passe. Il
+       faut replier depuis une page profonde puis REVENIR à l'accueil, là où la
+       valeur calculée repasse à `true` et rouvre le pli. */
+    const { rerender } = renderNav('composants/button');
+
+    pli().open = false;
+
+    rerender(<DocNav pages={PAGES} currentSlug={HOME_SLUG} />);
+    expect(
+      pli().open,
+      'revenir sur l’accueil a rouvert le sommaire que le visiteur venait de replier.',
+    ).toBe(false);
   });
 });
 
@@ -178,6 +220,41 @@ describe('DocNav — le pli par groupe', () => {
     rerender(<DocNav pages={PAGES} currentSlug="composants/button" />);
 
     expect(premier.open, 'une navigation a rouvert un groupe replié').toBe(false);
+  });
+
+  it('devrait nommer le pli par `aria-label`, comme les quatre groupes', () => {
+    /* LE DÉFAUT QUE CE FICHIER N'A PAS VU EN NAISSANT. Le pli a été ajouté
+       sans `aria-label`, et l'arbre d'accessibilité de Chromium donnait :
+
+         summary.tc-doc-nav__alltitle    name = '› SOMMAIRE'
+         summary.tc-doc-nav__grouptitle  name = 'Introduction'
+
+       Le chevron du `::before` entrait dans le nom (Accname 1.2 § 2.6.2), et
+       `text-transform: uppercase` s'y ajoutait. L'`aria-label` des groupes
+       protège de ces DEUX choses, et le cinquième `<summary>` n'en avait aucune.
+
+       CE TEST NE MESURE PAS LE NOM CALCULÉ, ET IL FAUT LE DIRE : jsdom ne rend
+       pas le contenu généré, donc il ne peut pas voir le chevron ; `axe-core`
+       non plus, sa `accessibleText` ne lisant pas les pseudo-éléments — vérifié,
+       elle rendait « Sommaire ». Le défaut n'est visible que dans l'arbre
+       d'accessibilité d'un vrai moteur. Ce qui SE vérifie ici, c'est la présence
+       de l'attribut qui le ferme, sur les CINQ `<summary>` et non sur quatre. */
+    renderNav();
+
+    const nonNommes = [...pli().parentElement!.querySelectorAll('summary')].filter(
+      (resume) => resume.getAttribute('aria-label') === null,
+    );
+
+    expect(
+      nonNommes.map((resume) => resume.className),
+      'des <summary> du sommaire n’ont pas d’`aria-label` : leur nom accessible reçoit alors ' +
+        'le chevron du `::before` et la capitalisation forcée.',
+    ).toEqual([]);
+
+    expect(
+      pli().querySelector('summary')?.getAttribute('aria-label'),
+      'le pli doit être nommé « Sommaire », comme le point de repère qui l’entoure.',
+    ).toBe('Sommaire');
   });
 
   it('devrait nommer chaque groupe sans le chevron du `::before`', () => {
