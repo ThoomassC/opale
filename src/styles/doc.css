@@ -505,9 +505,28 @@ body {
    Safari pose sur les champs de recherche ; `background: transparent` laisse
    voir celui de l'enveloppe.
 
-   `outline: none` EST SÛR ICI, ET C'EST LA SEULE FOIS DU DÉPÔT : l'anneau
-   n'est pas supprimé, il est DÉPLACÉ sur l'enveloppe par `:focus-within`
-   au-dessus. Un `outline: none` sans ce relais serait exactement le défaut que
+   L'ANNEAU EST DÉPLACÉ SUR L'ENVELOPPE, ET IL FAUT DEUX DÉCLARATIONS POUR ÇA.
+   Ce commentaire n'en citait qu'une (`outline: none`) et affirmait que l'anneau
+   était déplacé : c'était FAUX, il était dédoublé. `tokens.css` porte une règle
+   UNIVERSELLE `:focus-visible` — pas la liste de sélecteurs d'`utilities.css`,
+   une règle qui attrape tout élément focusable — et elle pose l'outline ET les
+   deux `box-shadow`. `outline: none` n'éteignait que la première.
+
+   Mesuré sur le champ focalisé, avant correction :
+     box-shadow = rgb(246,255,222) 0 0 0 2px, rgb(0,0,0) 0 0 0 5px
+     border-radius = 0
+   soit un anneau noir de 5 px À ANGLES DROITS autour du champ, à l'intérieur
+   de l'anneau en pilule de l'enveloppe. Deux anneaux concentriques de tons
+   opposés, dont un carré dans un arrondi.
+
+   `box-shadow: none` ferme la seconde moitié. Les deux tiennent par l'ORDRE et
+   non par le poids : la règle universelle pèse (0,1,0) comme
+   `.tc-doc-search__input`, et `doc.css` est importée après `tokens.css` dans
+   `main.tsx`. Vérifié au navigateur — `outlineStyle` vaut `none` et
+   `boxShadow` vaut `none` sur le champ focalisé, tandis que l'enveloppe garde
+   les siens.
+
+   Un `outline: none` sans ce relais serait exactement le défaut que
    `utilities.css` passe deux paragraphes à interdire. */
 .tc-doc-search__input {
   flex: 1 1 auto;
@@ -526,6 +545,7 @@ body {
   font-family: var(--font-sans);
   font-size: var(--text-sm);
   outline: none;
+  box-shadow: none;
 }
 
 /* `--text-muted` et non une encre plus pâle : un texte de substitution est du
