@@ -15,7 +15,7 @@ import { PageBody, PropsTable, UsageBlock } from '../api';
    ce qu'on achète.
    ========================================================================== */
 
-const USAGE = `import { DateRange } from '@thomascaron/ui';
+const USAGE = `import { DateRange } from '@thomascaron/opale';
 
 // Plage fermée : deux <time> distincts.
 <DateRange

@@ -20,7 +20,7 @@ const GLASS_CARDS: readonly ProjectCard[] = [
     text: 'Carte SVG rendue côté serveur, frise par étapes, aucun appel hors origine. Premier consommateur de cette librairie.',
   },
   {
-    title: '@thomascaron/ui',
+    title: '@thomascaron/opale',
     meta: 'la librairie que documente cette page',
     text: 'Jetons mesurés, contrat de couleur exécutable, composants sans état — rendables tels quels en Server Components.',
   },
@@ -31,7 +31,7 @@ const GLASS_CARDS: readonly ProjectCard[] = [
   },
 ];
 
-const USAGE = `import { Backdrop, Card } from '@thomascaron/ui';
+const USAGE = `import { Backdrop, Card } from '@thomascaron/opale';
 
 <Backdrop>
   <Card>

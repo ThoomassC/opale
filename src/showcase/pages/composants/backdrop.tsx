@@ -15,7 +15,7 @@ import { PageBody, PropsTable, UsageBlock } from '../api';
    descendre les halos à `z-index: -1`.
    ========================================================================== */
 
-const USAGE = `import { Backdrop, Card } from '@thomascaron/ui';
+const USAGE = `import { Backdrop, Card } from '@thomascaron/opale';
 
 <Backdrop>
   {/* Votre grille va dans un ENFANT, jamais sur l'hôte : les six disques

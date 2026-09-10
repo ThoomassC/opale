@@ -8,7 +8,7 @@ import { Specimen } from '../../section';
 import { PageBody, PropsTable, UsageBlock } from '../api';
 import type { PropRow } from '../api';
 
-const USAGE = `import { Field, Input } from '@thomascaron/ui';
+const USAGE = `import { Field, Input } from '@thomascaron/opale';
 
 <Field id="email" label="Adresse e-mail" hint="Nous ne l’affichons jamais." error={error}>
   {(control) => <Input {...control} type="email" name="email" />}

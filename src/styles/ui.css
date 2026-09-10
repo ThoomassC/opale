@@ -1,11 +1,11 @@
 /* =============================================================================
-   @thomascaron/ui — la feuille de composants.
+   @thomascaron/opale — la feuille de composants.
 
    Deux imports, dans cet ordre : les jetons d'abord, les composants ensuite.
    Cette feuille ne déclare aucun jeton, elle ne fait que les consommer.
 
-       import '@thomascaron/ui/tokens.css';
-       import '@thomascaron/ui/ui.css';
+       import '@thomascaron/opale/tokens.css';
+       import '@thomascaron/opale/ui.css';
 
    TROIS RÈGLES QUI TIENNENT TOUT LE FICHIER :
 
@@ -25,7 +25,7 @@
    Toutes les classes sont préfixées `tc-`. Ces trois règles s'appliquent à
    chacune des feuilles importées ci-dessous, qui portent les règles réelles :
    cette feuille-ci n'est qu'un index, et elle reste le point d'entrée public
-   (`@thomascaron/ui/ui.css`). L'ORDRE DES IMPORTS EST LA CASCADE — le déplacer
+   (`@thomascaron/opale/ui.css`). L'ORDRE DES IMPORTS EST LA CASCADE — le déplacer
    change le rendu sans rien casser de visible. Il reproduit exactement l'ordre
    dans lequel les règles se suivaient quand tout tenait dans un seul fichier.
 

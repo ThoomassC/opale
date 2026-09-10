@@ -6,7 +6,7 @@ import { Specimen } from '../../section';
 import { PageBody, PropsTable, UsageBlock } from '../api';
 import type { PropRow } from '../api';
 
-const USAGE = `import { Field, Input } from '@thomascaron/ui';
+const USAGE = `import { Field, Input } from '@thomascaron/opale';
 
 <Field id="altitude" label="Altitude" hint="En mètres.">
   {(control) => <Input {...control} inputMode="numeric" name="altitude" />}

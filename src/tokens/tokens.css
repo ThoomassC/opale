@@ -1,9 +1,9 @@
 /* =============================================================================
-   @thomascaron/ui — la feuille de jetons, point d'entrée unique.
+   @thomascaron/opale — la feuille de jetons, point d'entrée unique.
 
    C'est le seul fichier qu'un projet consommateur importe :
 
-       import '@thomascaron/ui/tokens.css';
+       import '@thomascaron/opale/tokens.css';
 
    Il assemble les trois couches et pose la base minimale qui doit être vraie
    partout : le sol, l'encre, la police, le double anneau de focus et la règle

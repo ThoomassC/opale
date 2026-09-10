@@ -1,16 +1,18 @@
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 
+import { GlassLens } from '../components/glass-lens';
 import type { DocPage } from './doc-model';
 import { HOME_SLUG, findPage, hrefFor } from './doc-model';
 import { DocNav } from './doc-nav';
+import { DocSearch } from './doc-search';
 import { MaterialToggle } from './material-toggle';
 import { PageBoundary } from './page-boundary';
 import { ThemeToggle } from './theme-toggle';
 import { useRoute } from './use-route';
 
 /** Le nom du paquet, affiché dans la barre du haut et dans `document.title`. */
-const SITE_NAME = '@thomascaron/ui';
+const SITE_NAME = '@thomascaron/opale';
 
 /**
  * Le repli du repli : un registre sans page d'accueil.
@@ -174,6 +176,14 @@ export function DocShell({ pages }: DocShellProps) {
             `gap: var(--space-3)`, mesuré à 12 px. L'espace-mot du JSX entre les
             deux éléments ne pèse plus rien : un enchaînement purement blanc
             entre deux éléments flexibles n'est pas rendu. */}
+        {/* LA RECHERCHE EST ENTRE LA MARQUE ET LES BASCULES, et c'est ce qui
+            lui donne la place : elle est le seul élément de la barre qui doive
+            s'étirer, les deux bascules ayant une largeur fixe. `doc.css` la
+            laisse rétrécir jusqu'à un plancher plutôt que de la faire
+            disparaître — une recherche absente sur téléphone est une
+            fonctionnalité qu'on retire à ceux qui ont le plus de mal à
+            parcourir un sommaire de vingt-quatre entrées. */}
+        <DocSearch pages={pages} />
         <div className="tc-doc-topbar__actions">
           <ThemeToggle /> <MaterialToggle />
         </div>
@@ -213,6 +223,20 @@ export function DocShell({ pages }: DocShellProps) {
           </footer>
         </div>
       </div>
+
+      {/* LA LENTILLE, MONTÉE UNE SEULE FOIS POUR TOUT LE SITE.
+
+          Ici et dans aucune page : le composant rend un `<svg>` de taille nulle
+          portant un `<filter>` IDENTIFIÉ, et un identifiant ne vaut qu'une fois
+          par document. Posé dans une page — celle de `GlassLens`, celle du
+          bouton bulle — il serait monté une seconde fois dès qu'on l'ouvre, et
+          `#tc-lens` désignerait alors deux nœuds.
+
+          En fin de coquille, qui est l'endroit que le composant documente
+          lui-même : l'ordre du document ne change rien à la résolution d'un
+          `url(#…)`, et un `aria-hidden` sans boîte ne coûte ni un arrêt de
+          tabulation ni une annonce. Il est donc là où il ne gêne personne. */}
+      <GlassLens />
     </div>
   );
 }

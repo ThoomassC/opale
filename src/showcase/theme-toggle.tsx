@@ -19,6 +19,24 @@ import { useTheme } from './use-theme';
  * Le glyphe est TEXTUEL et masqué. Le portfolio tire son croissant de
  * `@tabler/icons-react` ; une librairie de socle qui traîne un paquet d'icônes
  * l'impose à tous ses consommateurs, donc cette dépendance n'entre pas.
+ *
+ * LE GLYPHE SEUL, ET LE LIBELLÉ RESTE DANS L'ARBRE. Le bouton n'affiche plus
+ * son texte : il montre ☾ en clair, ☀ en sombre, c'est-à-dire CE QU'ON
+ * OBTIENDRAIT en cliquant. Deux choses ne changent pas pour autant, et c'est
+ * la condition pour que ce soit un bouton et non une décoration :
+ *
+ * — le libellé est toujours rendu, simplement masqué visuellement. Le nom
+ *   accessible reste « Thème sombre », donc l'annonce reste « Thème sombre,
+ *   bouton, activé ». Un `aria-label` aurait fait la même chose et aurait
+ *   perdu la sélection du texte et l'affichage en cas de CSS absente ;
+ * — le `title` est ABSENT volontairement. Il ne s'affiche ni au clavier ni au
+ *   toucher, il double le nom accessible chez la plupart des lecteurs, et il
+ *   n'apparaît qu'après un temps d'arrêt à la souris. Un bouton dont l'usage
+ *   dépend d'une infobulle est un bouton qu'on n'a pas su dessiner.
+ *
+ * `min-inline-size: var(--target-min)` dans `doc.css` garde la cible à 44 px
+ * malgré la perte du texte — c'est ce que la perte du texte coûte, et il est
+ * payé en géométrie plutôt qu'en accessibilité.
  */
 export function ThemeToggle() {
   const { isDarkTheme, toggleTheme } = useTheme();
@@ -30,16 +48,18 @@ export function ThemeToggle() {
       aria-pressed={isDarkTheme}
       onClick={toggleTheme}
     >
+      {/* LE GLYPHE SUIT L'ÉTAT, contrairement au libellé. Il montre ce qu'un
+          clic DONNERAIT — le croissant quand on est en clair, le soleil quand
+          on est en sombre — parce qu'une icône n'a pas de forme affirmative :
+          elle ne peut pas dire « sombre, activé », seulement montrer une
+          direction. C'est l'inverse du libellé, et les deux sont justes pour
+          la même raison. */}
       <span className="tc-doc-themetoggle__glyph" aria-hidden="true">
-        ☾
+        {isDarkTheme ? '☀' : '☾'}
       </span>
-      {/* LE LIBELLÉ EST ENVELOPPÉ, et c'est la barre du haut qui l'exige : sous
-          36 rem, `doc.css` le masque visuellement pour que la barre tienne sur
-          UNE ligne à toute largeur. Un nœud de texte nu n'est pas ciblable par un
-          sélecteur, donc l'enveloppe est la condition du repli. Le texte reste
-          dans l'arbre d'accessibilité : le bouton garde son nom, seule sa
-          présentation change. */}
-      <span className="tc-doc-themetoggle__label">Thème sombre</span>
+      {/* Le libellé, désormais masqué à TOUTE largeur et non plus seulement sous
+          36 rem. Il reste rendu : c'est lui le nom accessible du bouton. */}
+      <span className="tc-visually-hidden">Thème sombre</span>
     </button>
   );
 }

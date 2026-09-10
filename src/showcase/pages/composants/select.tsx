@@ -6,7 +6,7 @@ import { Specimen } from '../../section';
 import { PageBody, PropsTable, UsageBlock } from '../api';
 import type { PropRow } from '../api';
 
-const USAGE = `import { Field, Select } from '@thomascaron/ui';
+const USAGE = `import { Field, Select } from '@thomascaron/opale';
 
 <Field id="transport" label="Moyen de transport">
   {(control) => (

@@ -1,4 +1,4 @@
-# ui-commune — `@thomascaron/ui`
+# Opale — `@thomascaron/opale`
 
 Le socle d'interface partagé par [`portfolio`](https://github.com/ThoomassC/portfolio) et
 [`travels_in_world`](https://github.com/ThoomassC/travels_in_world).
@@ -24,18 +24,24 @@ Ce dépôt est ce garde. Il publie, dans cet ordre de valeur :
 ## Installation
 
 ```bash
-npm i "@thomascaron/ui@github:ThoomassC/ui-commune#v1.1.0"
+npm i "@thomascaron/opale@github:ThoomassC/opale#v1.2.0"
 ```
 
-Le paquet se compile à l'installation (`prepare`). Quatre points d'entrée :
+Le paquet se compile à l'installation (`prepare`). Cinq points d'entrée :
 
 ```ts
-import '@thomascaron/ui/tokens.css'; // la palette, les échelles, le focus, le mouvement
-import '@thomascaron/ui/ui.css'; // les styles de composants, une seule fois par app
-import '@thomascaron/ui/glass.css'; // OPTIONNEL — le thème verre, inerte sans l'attribut
-import { Button, Field, Input } from '@thomascaron/ui';
-import { contrastRatio, parseThemes } from '@thomascaron/ui/contract'; // dev only
+import '@thomascaron/opale/tokens.css'; // la palette, les échelles, le focus, le mouvement
+import '@thomascaron/opale/ui.css'; // les styles de composants, une seule fois par app
+import '@thomascaron/opale/glass.css'; // OPTIONNEL — le thème verre, inerte sans l'attribut
+import '@thomascaron/opale/lens.css'; // OPTIONNEL — le bouton bulle, après ui.css
+import { Button, Field, Input } from '@thomascaron/opale';
+import { contrastRatio, parseThemes } from '@thomascaron/opale/contract'; // dev only
 ```
+
+> **`lens.css` a la MÊME contrainte, pour une autre raison.** Elle écrase le fond que
+> `button.css` pose sur `.tc-btn--bubble`, à poids égal `(0,1,0)` : importée avant
+> `ui.css`, elle est simplement inopérante, et sans rien dire — le bouton reste peint,
+> il n'est juste plus en verre.
 
 > **L'ordre de ces imports EST la cascade, et `glass.css` vient en dernier.** Son bloc de
 > jetons pèse `(0,2,0)` — exactement le poids de `:root[data-theme='dark']`. À égalité,
@@ -87,9 +93,9 @@ paquet : `src/main.tsx` est le seul à l'importer.
 
 ## Les composants
 
-Dix-sept, tous **sans état et sans hook** — ils rendent tels quels en Server Component et
-ne coûtent rien au budget JavaScript de leurs hôtes. Les sept derniers arrivent en v0.3.0,
-portés du portfolio :
+Dix-huit, tous **sans état et sans hook** — ils rendent tels quels en Server Component et
+ne coûtent rien au budget JavaScript de leurs hôtes. Sept sont arrivés en v0.3.0, portés du
+portfolio ; le dix-huitième, `GlassLens`, en v1.2.0 :
 
 | Composant                | Ce qu'il rend                                                     |
 | ------------------------ | ----------------------------------------------------------------- |
@@ -99,6 +105,7 @@ portés du portfolio :
 | `DateRange`              | Deux `<time dateTime>` distincts, séparés par un « à » masqué visuellement ; plage ouverte rendue en texte simple |
 | `Timeline` / `TimelineItem` | `<ol>` nommée et son entrée, géométrie seule — le matériau reste `Card`. L'entrée prend le niveau de son titre en prop |
 | `ChipList`               | `<ul>` nommée de `Tag` en variante `plain`. **Rend `null` sur une liste vide** |
+| `GlassLens`              | Ne peint AUCUN pixel : un `<svg>` de taille nulle portant le filtre `#tc-lens` que `lens.css` référence. Monté une fois par document, il donne au bouton `bubble` sa déformation du fond |
 
 Deux d'entre eux décident quelque chose au rendu, et aucun n'a besoin d'une frontière
 client pour ça : `ChipList` rend `null` plutôt qu'une liste vide qu'un lecteur d'écran
@@ -130,8 +137,8 @@ import {
   GLASS_LAYERS, // les couches nommées une fois : page, halos, remplissage, repli opaque
   STATE_WASHES, // les trois lavis d'état, du repos à l'appui
   withWash, // le même support, un lavis posé dessus — le libellé grandit, il n'est pas remplacé
-} from '@thomascaron/ui/contract';
-import type { BackdropSpec } from '@thomascaron/ui/contract';
+} from '@thomascaron/opale/contract';
+import type { BackdropSpec } from '@thomascaron/opale/contract';
 ```
 
 Le type s'appelle **`BackdropSpec`** et non `Backdrop` : la librairie exporte depuis la
@@ -165,7 +172,8 @@ contenu — et il est borné par la mesure.
 
 | | Composants | Ce qu'ils reçoivent |
 | --- | --- | --- |
-| **Flou + liseré** | `Button --secondary`, `Button --danger`, `Message`, `IconTile` | `backdrop-filter: blur(var(--glass-blur-control)) saturate(...)` et un liseré spéculaire sur `::before` |
+| **Flou + liseré + LENTILLE** | `Button --secondary` | le flou, le liseré, ET `url(#tc-lens)` — le fond est réellement déformé. Voir « le bouton bulle » plus bas ; le filtre vient de `<GlassLens />` et `lens.css` |
+| **Flou + liseré** | `Button --danger`, `Message`, `IconTile` | `backdrop-filter: blur(var(--glass-blur-control)) saturate(...)` et un liseré spéculaire sur `::before` |
 | **Flou seul** | `Input`, `Select`, `Textarea` | le flou. Pas de liseré : **un contrôle de formulaire ne génère pas de boîte de pseudo-élément** — sondé, le témoin `<span>` peint son anneau, les trois contrôles n'en peignent aucun pixel |
 | **Liseré seul, aplat conservé** | `Button --primary`, `Tag`, les trois `Pill` | le bord et le reflet, jamais la transparence de fond |
 | **Inchangés** | `Backdrop`, `Card`, `Checkbox`, `ChipList`, `DateRange`, `Field`, `SectionHeading`, `Timeline` | rien |
@@ -284,6 +292,137 @@ cible d'un thème Liquid Glass étant Safari ; l'interdiction de cibler `::after
 trois replis ; et l'absence de toute couleur hors des blocs de repli — la forme exécutable de
 « la couleur par le jeton, la matière par la feuille ».
 
+Ce compte de dix-sept est passé à dix-huit avec `GlassLens`, qui est **exclu avec sa
+raison** : il ne peint aucun pixel, donc il n'a pas de surface à verrer.
+
+## Le bouton bulle, et ce qu'il a fallu abandonner pour l'avoir
+
+`variant="bubble"` + `lens.css` + `<GlassLens />` : un bouton dont le fond est réellement
+DÉFORMÉ, pas seulement flouté. `backdrop-filter` accepte une référence de filtre SVG, et
+Chromium l'honore — sondé au pixel, une carte uniforme à `scale = 10` déplace le fond de
+5 px, exactement ce que la spécification annonce. Le filtre déplace les trois canaux de
+`scale × (1 ± 0,12)` : le bord porte donc une frange colorée, comme un vrai bord de verre.
+
+**Deux moitiés, et aucune ne suffit.** Un filtre SVG est un ÉLÉMENT, pas une valeur CSS :
+`lens.css` ne peut pas en poser un. D'où le composant. Ce qui rend l'oubli inoffensif est
+mesuré : **une référence vers un filtre absent est INERTE** — le fond n'est pas déplacé, et
+le reste de la déclaration s'applique. Le bouton sans lentille est un bouton de verre
+flouté, complet et lisible.
+
+### La contradiction, chiffrée
+
+Un libellé lisible et une réfraction visible s'excluent, et le flou est l'arbitre : il
+efface les hautes fréquences qui rendent le texte illisible, donc aussi celles que la
+lentille aurait courbées. Mesuré sur les pixels composités, voile 0,32, libellé en
+`--text-strong`, pire ratio relevé :
+
+| `--lens-blur`   | damier 20 px + gras | fond réaliste |
+| --------------- | ------------------- | ------------- |
+| 0 px            | 2,87 / 2,08 ❌      | 9,82 / 11,10  |
+| 6 px            | 5,30 / 4,38 ❌      | 7,39 / 11,93  |
+| **8 px** (déf.) | **5,42 / 4,81**     | 7,49 / 10,37  |
+| 12 px           | 5,46 / 4,73         | 7,90 / 8,64   |
+
+Clair / sombre. Le damier de 20 px noir-blanc surchargé de texte gras est le pire fond que
+j'aie su construire ; le fond réaliste est un dégradé à masses larges avec un titre et un
+paragraphe, c'est-à-dire ce qu'un bouton flottant rencontre.
+
+**Le défaut ne suppose rien sur le fond ; le baisser demande de mesurer le sien.** C'est
+pour ça que `--lens-blur` est un jeton et non une constante : au-dessus d'une image, `0`
+donne la réfraction pleine et le libellé tient encore 9,82:1.
+
+Le voile est à **0,32 dans les deux thèmes**, et c'est une frontière, pas un goût : à 0,24
+le clair tient encore (4,82:1) et le sombre tombe à 4,09:1 — **quel que soit le flou**
+(4,03:1 à 12 px, 3,78:1 à 6 px). Le flou fait converger la plaque vers la moyenne du fond,
+et cette moyenne est trop claire pour une encre claire. Seul le voile la déplace.
+
+### Les états, et la non-conformité que l'audit a trouvée
+
+Le survol et l'appui empruntaient `--panel-surface-hover` / `-active`, l'échelle d'état des
+panneaux. Elle **creuse en clair et éclaircit en sombre** — juste pour un panneau, dont
+l'encre est du côté opposé ; **faux** pour la lentille, dont le voile va dans l'autre sens
+(blanc en clair, pitch en sombre) et dont l'encre suit le voile. Chaque état rapprochait donc
+la plaque du libellé :
+
+| état   | avant (clair / sombre) | après (clair / sombre) |
+| ------ | ---------------------- | ---------------------- |
+| repos  | 5,32 / 4,72            | 5,39 / 4,60            |
+| survol | **4,47 / 3,60** ❌     | 5,85 / 5,48            |
+| appui  | **4,26 / 3,30** ❌     | 6,07 / 5,74            |
+
+Deux états sous 4,5:1 en clair, trois en sombre : **la frontière avait été calibrée sur le
+seul état de repos.** Le lavis prend maintenant la famille du voile (`--lens-wash-*`), donc
+le contraste MONTE avec l'état.
+
+Le garde qui manquait n'est pas un test de présence — les blocs étaient là, les jetons étaient
+thémés, la valeur était fausse. `src/styles/lens.structure.test.ts` vérifie la **polarité** :
+que le lavis et le voile viennent de la même famille de primitives, bloc de thème par bloc de
+thème. Prouvé par mutation : lavis remis à `--panel-surface-*` → 2 échecs ; lavis retiré d'un
+bloc sombre → 2 échecs.
+
+### La frontière du contrôle, et ce qu'aucune couleur ne peut promettre
+
+`--glass-border` ne dessine **rien** : 1,75:1 sur le blanc de la vitrine, 1,74 sur
+`--surface`, 1,72 sur `--site-background`, 1,85 et 1,87 sur les deux sols sombres. Or
+`button.css` porte la doctrine du dépôt — « le liseré EST la forme d'un bouton dont le fond
+est un lavis, donc WCAG 1.4.11 lui demande 3:1 ». La bulle emploie donc `--control-border`,
+qui tient **5,73 / 5,13 / 4,77 / 6,64 / 6,42:1** sur ces cinq sols.
+
+**Ce que ça ne règle pas.** Contre un contenu quelconque, aucune couleur opaque ne peut
+garantir 3:1 : le pire support est celui de même luminance, et il donne 1:1 par construction.
+Même la paire à deux couches — liseré opaque plus reflet spéculaire, contraste interne 5,73:1
+en clair et 2,78 en sombre — ne descend qu'à environ 2,4:1 dans le pire cas. La frontière de
+ce contrôle est garantie **sur les sols de la librairie et pas au-dessus d'une image
+arbitraire.** C'est la même limite structurelle que celle du libellé, et une raison de plus de
+tenir la variante dans la couche de navigation.
+
+### Le secondary du thème verre reçoit la même lentille
+
+`variant="secondary"` sous `data-material="glass"` est le contrôle le plus TRANSPARENT de la
+librairie — voile `--panel-surface`, alpha 0,05 dans les deux thèmes. Il lui manquait la
+déformation ; il l'a. C'est là que la réfraction se voit le mieux, et le coût est nul :
+
+| support | libellé, flou 0 | libellé, flou 12 |
+| --- | --- | --- |
+| `--site-background` | 9,32 / 10,65 | 9,32 / 10,65 |
+| le décor à six halos | 8,88 / 10,21 | 8,56 / 10,05 |
+
+**Le flou ne sert à rien sur un fond lisse, et c'est le même fait qui dit qu'une lentille n'y
+montre rien** : il n'y a pas de détail à effacer, donc pas de détail à courber.
+
+**Le flou reste néanmoins à 12 px, contre l'esthétique.** Sur un fond chargé c'est lui qui
+tient le libellé : 3,15:1 à 12 px, 3,09 à 8, 2,01 à 4 et **1,09 à 0**, un texte invisible. À
+dire franchement : 3,15:1 est déjà sous 4,5:1, et ce n'est pas la lentille qui l'introduit —
+l'état livré du thème verre mesure 3,15 / 2,52 aux mêmes endroits et la lentille le laisse à
+3,13 / 2,54. Le manquement appartient au voile à 0,05, il est antérieur, et il est publié ici.
+
+Le `--danger` ne la reçoit pas : un liseré rouge dont le fond se courbe attire l'œil sur une
+action destructrice, ce que `button.css` refuse pour lui. Le `--primary` est un aplat opaque —
+il n'y a rien à voir à travers.
+
+**Ce qui n'est pas reproductible**, et que la capture d'Apple montre pourtant : la fusion
+« gouttelette » de deux formes de verre qui se rejoignent. Elle demande un champ de distance
+calculé par nuanceur, pas un filtre SVG appliqué par élément.
+
+### Ce qu'elle coûte
+
+`dist/lens.css` : **16 650 octets bruts, 6 572 gzippés** — dont l'essentiel est du
+commentaire, `build:css` étant un `cp`. La CSS utile pèse **2 464 octets bruts, 738
+gzippés**. `GlassLens` ajoute **3 210 octets de markup rendu**, une fois par document, et
+zéro octet de JavaScript à l'exécution : le composant n'a ni état ni hook, et son SVG est
+statique.
+
+### Ce qui n'est pas promis
+
+Le déplacement n'a été vérifié que sur **Chromium 151**. Safari et Firefox ne l'ont pas
+été, et `@supports` ne permet pas de trancher : il répond vrai dans les trois moteurs pour
+`backdrop-filter: url(#x)`. Le rendu sans déformation n'est donc pas un mode dégradé —
+c'est le rendu de base, et il est complet.
+
+Et la doctrine est celle d'Apple : **« Don't use Liquid Glass in the content layer. »**
+Cette variante n'a de sens qu'au-dessus d'un contenu. Sur le sol d'un formulaire, elle ne
+fait que rendre son propre fond illisible.
+
 ## La vitrine
 
 ```bash
@@ -313,6 +452,48 @@ publié `--site-background` reste `#deedf0`, mesuré, servi aux deux consommateu
 blanc dans la librairie invaliderait les vingt supports du contrat et retournerait la
 décision « les sols clairs sont du papier, pas de l'écran ».
 
+### La recherche
+
+La barre du haut porte un **champ de recherche à suggestions**, motif « Combobox » de l'APG
+dans sa forme à liste : `role="combobox"` sur le champ, la liste en `aria-controls`, et
+l'option courante désignée par **`aria-activedescendant`** — le focus ne quitte jamais le
+champ, donc la frappe continue d'y arriver et le lecteur d'écran annonce l'option sans perdre
+le contexte du champ.
+
+Les accents sont traités, et c'est ce qui compte dans une doc en français : `elevation` trouve
+**Élévation**, `acces` trouve **Accessibilité**. Personne ne tape les accents dans une barre
+de recherche.
+
+**Aucun raccourci global, et c'est une décision.** Un `⌘K` aurait fait moderne et détourne un
+raccourci du navigateur ; un `/` vole la frappe dès que le focus est dans un champ, et cette
+vitrine est pleine de spécimens d'`Input`.
+
+Ce que les audits ont trouvé et qui est corrigé — chacun mesuré, aucun visible à l'œil :
+
+| défaut | mesure | critère |
+| --- | --- | --- |
+| l'option désignée était invisible | 1,14:1 en clair, 1,09:1 en sombre, contre 4,87 / 3,40 après | 1.4.11 |
+| l'option désignée pouvait être hors du panneau | 382 px de rangées dans 223 px de lucarne, `scrollTop` à 0 | 1.4.11, 2.4.7 |
+| `listbox` sans enfant `option` | `axe-core`, `critical` | 1.3.1 |
+| `Début` / `Fin` volées à l'édition du texte | `selectionStart` immobile | APG |
+| la région live parlait à chaque frappe | 3 mutations pour « button », 1 après report | — |
+| la marque tombait à 0 px sous zoom de texte 200 % | 0 px, contre 32 × 44,8 après | 2.5.8 |
+
+Et une **régression que la correction de la troisième a introduite**, attrapée par l'audit
+qui la relisait : sorti de la `listbox`, le message « aucun résultat » est devenu un enfant
+flexible de la pilule, donc il s'est posé **dans** le champ — la barre passait de 72 à 122 px
+et le champ à 4 px de large. `src/styles/doc-search.structure.test.ts` épingle désormais les
+quatre déclarations qui font des deux calques des calques, parce que jsdom ne peint pas et
+qu'aucun des cent tests de la recherche ne pouvait la voir.
+
+### Les bascules
+
+La bascule de thème est réduite à son glyphe — ☾ en clair, ☀ en sombre. **Le glyphe suit
+l'état, le nom accessible non**, et les deux sont justes pour la même raison : une icône ne
+peut pas dire « sombre, activé », seulement montrer une direction, donc elle montre ce qu'un
+clic donnerait ; le nom dit la chose et `aria-pressed` dit le oui. Le libellé reste rendu,
+masqué visuellement. Pas de `title` : il ne s'affiche ni au clavier ni au toucher.
+
 La barre du haut porte **deux** bascules indépendantes — clair/sombre et aplat/verre — et
 tient sur une seule ligne de 320 px à 1440 px : sous 36 rem les libellés sont masqués
 visuellement, leur nom accessible conservé. Cette hauteur n'est pas cosmétique : le collant
@@ -338,6 +519,13 @@ Une règle qu'on ne peut pas citer de mémoire n'est pas appliquée.
    ne contient que des succès est une charte qu'on n'a pas éprouvée.
 
 ## Le contrat teal & cuivre
+
+> **v1.2.0 — un bouton de plus, un composant de plus, et rien qui casse.** `bubble` est
+> une valeur AJOUTÉE à l'union `ButtonVariant` : un appelant qui ne l'écrit pas ne voit
+> aucune différence, et `lens.css` est un cinquième point d'entrée optionnel. `GlassLens`
+> est un dix-huitième composant, donc un ajout à la surface publiée, pas un changement.
+> Deux primitives d'alpha entrent (`--tc-white-a32`, `--tc-pitch-a32`) ; aucune ne bouge.
+> Le sommaire de la vitrine, lui, n'est pas dans le paquet. **Mineur.**
 
 > **v1.1.0 — un second thème, et rien qui casse.** Le verre liquide arrive en feuille
 > **optionnelle** (`./glass.css`) pilotée par un attribut : aucun jeton renommé, aucun rôle
@@ -575,7 +763,13 @@ la main, une fois. **Elles ne sont pas rejouées en CI**, et rien ne les surveil
 
 Par coût de retour en arrière décroissant.
 
-1. **Le harnais navigateur, et c'est désormais le premier de la liste.** Le thème verre
+1. **Le harnais navigateur, et le bouton bulle vient d'aggraver le cas.** Les quatre
+   ratios de la table de `--lens-blur` ont été relevés par capture d'écran et lecture de
+   pixels, à la main, dans une session : **rien ne les rejoue.** Le contrat de couleur
+   sait recalculer une composition d'alphas ; il ne sait pas ce qu'un
+   `feDisplacementMap` a mis sous un libellé. C'est la première mesure publiée par ce
+   dépôt qu'aucun test ne garde, et un changement de `--lens-veil` ou de la carte de
+   déplacement la périmerait en silence. Le thème verre, lui,
    multiplie par neuf la surface de rendu qu'aucun test ne garde : les limites du contrat
    listées plus haut ne sont pas des précautions de style, ce sont les trois choses que ce
    dépôt affirme sans pouvoir les prouver. Une sonde qui capture les quatre combinaisons,

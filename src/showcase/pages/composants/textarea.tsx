@@ -6,7 +6,7 @@ import { Specimen } from '../../section';
 import { PageBody, PropsTable, UsageBlock } from '../api';
 import type { PropRow } from '../api';
 
-const USAGE = `import { Field, Textarea } from '@thomascaron/ui';
+const USAGE = `import { Field, Textarea } from '@thomascaron/opale';
 
 <Field id="recit" label="Récit" hint="Deux paragraphes suffisent.">
   {(control) => <Textarea {...control} name="recit" rows={8} />}

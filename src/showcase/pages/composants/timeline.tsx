@@ -24,7 +24,7 @@ import { PageBody, PropsTable, UsageBlock } from '../api';
    échouer le test de fumée du site.
    ========================================================================== */
 
-const USAGE = `import { DateRange, IconTile, Timeline, TimelineItem } from '@thomascaron/ui';
+const USAGE = `import { DateRange, IconTile, Timeline, TimelineItem } from '@thomascaron/opale';
 
 <Timeline label="Étapes du voyage">
   <TimelineItem level={3} icon={<IconTile><Glyphe /></IconTile>}>

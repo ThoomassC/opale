@@ -5,7 +5,7 @@ import { Specimen } from '../../section';
 import { PageBody, PropsTable, UsageBlock } from '../api';
 import type { PropRow } from '../api';
 
-const USAGE = `import { Checkbox } from '@thomascaron/ui';
+const USAGE = `import { Checkbox } from '@thomascaron/opale';
 
 <Checkbox name="options" value="draft" label="Conserver un brouillon local" />
 <Checkbox name="options" value="publish" label="Publier l’étape" defaultChecked />`;

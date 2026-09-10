@@ -17,17 +17,17 @@ import { PageBody, UsageBlock } from './api';
    catalogue, parce que `Timeline` et `TimelineItem` se documentent ensemble.
    ========================================================================== */
 
-const INSTALL = `npm i "@thomascaron/ui@github:ThoomassC/ui-commune#v1.0.0"`;
+const INSTALL = `npm i "@thomascaron/opale@github:ThoomassC/opale#v1.2.0"`;
 
 const IMPORTS = `// 1. Les jetons : la palette, les échelles, le focus, le mouvement.
-import '@thomascaron/ui/tokens.css';
+import '@thomascaron/opale/tokens.css';
 // 2. Les composants, une seule fois par application.
-import '@thomascaron/ui/ui.css';
+import '@thomascaron/opale/ui.css';
 
-import { Button, Field, Input } from '@thomascaron/ui';
+import { Button, Field, Input } from '@thomascaron/opale';
 
 // L'entrée de développement, pour mesurer sa propre palette.
-import { contrastRatio, parseThemes } from '@thomascaron/ui/contract';`;
+import { contrastRatio, parseThemes } from '@thomascaron/opale/contract';`;
 
 export const introductionPage: DocPage = {
   slug: '',

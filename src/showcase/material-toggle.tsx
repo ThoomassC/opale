@@ -47,8 +47,17 @@ export function MaterialToggle() {
           UNE ligne à toute largeur. Un nœud de texte nu n'est pas ciblable par un
           sélecteur, donc l'enveloppe est la condition du repli. Le texte reste
           dans l'arbre d'accessibilité : le bouton garde son nom, seule sa
-          présentation change. */}
-      <span className="tc-doc-themetoggle__label">Verre liquide</span>
+          présentation change.
+
+          SA PROPRE CLASSE, ET NON PLUS CELLE DE LA BASCULE DE THÈME. Ce bouton
+          reprend délibérément les classes de l'autre — l'apparence est la même,
+          et un second jeu de jetons pour un second bouton n'aurait promis
+          aucune différence. Le LIBELLÉ fait exception depuis que la bascule de
+          thème n'en affiche plus : garder `tc-doc-themetoggle__label` sur le
+          seul libellé encore visible de la barre aurait fait porter à une
+          classe le nom d'un composant qui ne l'émet plus, et le sélecteur du
+          repli sous 36 rem aurait paru concerner les deux boutons. */}
+      <span className="tc-doc-materialtoggle__label">Verre liquide</span>
     </button>
   );
 }

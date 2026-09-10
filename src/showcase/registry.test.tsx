@@ -98,7 +98,7 @@ const PUBLISHED_COMPONENTS: readonly string[] = Object.entries(library)
  * des exports. En ajoutant un composant à `src/index.ts`, ce chiffre monte
  * d'un — et il faut aussi lui écrire une page, ce que le test suivant exige.
  */
-const PUBLISHED_COMPONENT_COUNT = 17;
+const PUBLISHED_COMPONENT_COUNT = 18;
 
 /** Le libellé de la page attendue pour un composant. */
 function pageLabelFor(component: string): string {
@@ -171,7 +171,7 @@ afterEach(() => {
 
 describe('Le registre des pages', () => {
   describe('la couverture des composants publiés', () => {
-    it('devrait trouver les 17 composants publiés par src/index.ts', () => {
+    it('devrait trouver les 18 composants publiés par src/index.ts', () => {
       /* Garde-fou du garde-fou : si la reconnaissance des exports cassait, le
          test suivant passerait sur une liste tronquée et ne dirait plus rien. */
       expect(

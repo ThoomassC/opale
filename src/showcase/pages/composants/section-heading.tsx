@@ -16,7 +16,7 @@ import { PageBody, PropsTable, UsageBlock } from '../api';
    page pour que la fratrie se lise avant tout titre plus profond.
    ========================================================================== */
 
-const USAGE = `import { SectionHeading } from '@thomascaron/ui';
+const USAGE = `import { SectionHeading } from '@thomascaron/opale';
 
 <section aria-labelledby="titre-parcours">
   <SectionHeading

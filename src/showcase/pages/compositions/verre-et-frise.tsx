@@ -37,7 +37,7 @@ import { PageBody, UsageBlock } from '../api';
    même décor — seule la composition de l'entrée s'y compare.
    ========================================================================== */
 
-const USAGE = `import { Backdrop, IconTile, Timeline, TimelineItem } from '@thomascaron/ui';
+const USAGE = `import { Backdrop, IconTile, Timeline, TimelineItem } from '@thomascaron/opale';
 
 // La composition du portfolio, mot pour mot : l'entrée de frise EST une carte
 // de verre, et le matériau arrive par la classe — jamais par une prop.
@@ -63,7 +63,7 @@ const GLASS_CARDS: readonly ProjectCard[] = [
     text: 'Carte SVG rendue côté serveur, frise par étapes, aucun appel hors origine. Premier consommateur de cette librairie.',
   },
   {
-    title: '@thomascaron/ui',
+    title: '@thomascaron/opale',
     meta: 'la librairie que documente ce site',
     text: 'Jetons mesurés, contrat de couleur exécutable, composants sans état — rendables tels quels en Server Components.',
   },

@@ -14,6 +14,12 @@ import './styles/ui.css';
 // Elle vient donc après `ui.css`, et avant `doc.css` qui habille la vitrine.
 import './styles/glass.css';
 
+/* LA LENTILLE DU BOUTON BULLE, et sa place dans cette liste est une
+   contrainte : APRÈS `ui.css`, qui pose le fond de `.tc-btn--bubble` au même
+   poids (0,1,0). Importée avant, elle est inopérante — et silencieusement,
+   puisque le bouton reste par ailleurs peint. */
+import './styles/lens.css';
+
 // L'habillage de la vitrine, et lui seul : `doc.css` n'est pas dans `ui.css` et
 // n'est pas publié dans le paquet, donc aucun consommateur ne le télécharge.
 import './styles/doc.css';
