@@ -143,11 +143,31 @@ body {
 
 /* --- Lien d'évitement ------------------------------------------------------ */
 
+/* --- L'ÉCHELLE DE PROFONDEUR DE LA VITRINE, ÉCRITE UNE FOIS ---------------
+   Quatre calques se disputent le même contexte d'empilement — la racine —, et
+   l'ordre entre eux n'est PAS arbitraire :
+
+     3  le lien d'évitement       au-dessus de tout, c'est sa raison d'être
+     2  la barre du haut          et, dans son contexte, le panneau de recherche
+     1  la pastille de version    au-dessus des entrées qui défilent sous elle
+     -  le contenu                `z-index: auto`
+
+   LA BARRE ÉTAIT À 1, COMME LA PASTILLE, ET C'ÉTAIT UN DÉFAUT VISIBLE. À
+   égalité de `z-index`, c'est l'ordre du document qui tranche, et le sommaire
+   vient APRÈS la barre : la pastille de version, dont le fond est opaque,
+   peignait donc par-dessus le panneau de suggestions. Constaté à 420 px, en
+   une colonne, où le panneau descend juste sur elle — la première suggestion
+   disparaissait entièrement derrière « v1.2.0 ».
+
+   Le panneau garde `z-index: 2` DANS le contexte de la barre : la barre étant
+   elle-même un contexte d'empilement (elle a un `z-index` numérique), ce 2 ne
+   se compare qu'à ses frères, pas à l'échelle ci-dessus. */
+
 .tc-doc-skip {
   position: absolute;
   inset-block-start: var(--space-2);
   inset-inline-start: var(--space-2);
-  z-index: 2;
+  z-index: 3;
   display: inline-flex;
   align-items: center;
   min-block-size: var(--target-min);
@@ -180,8 +200,9 @@ body {
 
    Son fond est OPAQUE (`--doc-ground`) et non transparent : le contenu passe
    dessous en défilant, et un fond translucide laisserait deux textes se
-   superposer. `z-index: 1` la met au-dessus de ce contenu et sous le lien
-   d'évitement, qui est à 2.
+   superposer. `z-index: 1` la met au-dessus de ce contenu, sous la barre du
+   haut et sous le lien d'évitement — l'échelle complète est écrite en tête de
+   la section du lien d'évitement.
 
    ELLE N'EST PAS PASSÉE AU VERRE, ET C'EST MESURÉ — c'était pourtant le
    meilleur candidat du site, puisque le contenu défile RÉELLEMENT dessous.
@@ -234,11 +255,17 @@ body {
 .tc-doc-topbar {
   position: sticky;
   inset-block-start: 0;
-  z-index: 1;
+  z-index: 2;
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: var(--space-5);
+  /* `--space-3` ET NON `--space-5` DEPUIS QUE LA BARRE A TROIS ENFANTS. À
+     24 px d'écart, marque + recherche + deux bascules ne tenaient plus sous
+     360 px : la recherche était comprimée sous son plancher et débordait. À
+     12 px, mesuré, la barre tient de 320 à 1440 px sur une ligne. Les deux
+     bascules gardent leur propre `--space-3` entre elles, donc les cibles ne
+     se touchent pas (WCAG 2.5.8). */
+  gap: var(--space-3);
   min-block-size: var(--doc-topbar-size);
   padding-inline: var(--space-5);
   border-block-end: 1px solid var(--rule);
@@ -253,9 +280,40 @@ body {
      partent pas à la ligne. `min-inline-size: 0` est ce qui l'autorise — la
      taille minimale automatique d'un élément flexible est celle de son contenu,
      donc sans cette ligne c'est la barre qui déborde au lieu du texte qui
-     s'abrège. Le nom du paquet reste lisible jusqu'à 320 px ; au-delà, la
-     troncature est préférable à une barre de trois lignes. */
-  min-inline-size: 0;
+     s'abrège.
+
+     CETTE PHRASE DISAIT « le nom du paquet reste lisible jusqu'à 320 px », ET
+     LA RECHERCHE L'A RENDUE FAUSSE. Mesuré depuis, capture par capture : le nom
+     entier tient à partir de **560 px**, il est tronqué en dessous
+     (« @thomascaron/ » à 480), et à **320 px il ne reste que le losange**. Le
+     champ de recherche prend 128 px de plancher, que la marque n'a plus.
+
+     C'est accepté plutôt que corrigé, pour une raison qui se vérifie : le lien
+     GARDE SON NOM ACCESSIBLE. Le texte est clippé par `overflow: hidden`, pas
+     retiré du DOM, donc le lien s'annonce toujours « @thomascaron/ui, lien » et
+     reste une cible de 44 px vers l'accueil. Ce qui se perd est la lecture du
+     nom à l'œil sur un téléphone — le motif « logo seul en étroit », qui est
+     celui de tout le monde, et non une dégradation silencieuse. */
+  /* `1rem` ET NON `0`, ET C'EST LA MOITIÉ RESTANTE DU DÉFAUT DE ZOOM. Le
+     plancher en `min()` du champ a réduit le débordement à 200 % de taille de
+     racine (`scrollWidth` 557 → 402 sur 320 px) mais n'a PAS réglé ce qui le
+     motivait : la marque tombait toujours à 0 px, donc le lien d'accueil
+     n'avait aucune surface. Le champ n'était pas seul coupable — à 200 %, les
+     deux bascules passent à 95,7 et 85,3 px, leur `padding-inline` étant en
+     `rem`, soit 181 px avant même le champ. La marque, seul élément
+     compressible, absorbait tout.
+
+     16 px au repos, 32 px à 200 % : au-delà de 24 px, 2.5.8 est satisfait sans
+     recourir à l'exception d'espacement. Et 16 px tient dans le budget de
+     320 px à taille normale — 48 de coussin, 24 de gouttières, 16 de marque,
+     128 de champ, 100 pour les deux bascules : 316 sur 320. Vérifié après
+     coup, pas déduit.
+
+     LE DÉBORDEMENT HORIZONTAL À 200 % RESTE, et il est assumé : 1.4.4 tolère
+     le défilement bidirectionnel sous un zoom de texte, ce qu'il ne tolère pas
+     est la perte de contenu ou de fonction — c'est-à-dire le lien de largeur
+     nulle, qui est ce qui est corrigé ici. */
+  min-inline-size: 1rem;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -308,12 +366,301 @@ body {
   flex: none;
   align-items: center;
   gap: var(--space-3);
+  /* `margin-inline-start: auto` EST GARDÉ, ET LE RAISONNEMENT A ÉTÉ REFAIT.
+     Il avait d'abord été retiré au motif que la recherche, seul élément
+     élastique, devait prendre l'espace libre — vrai, mais incomplet : la
+     recherche est PLAFONNÉE à 26 rem, donc au-delà de ~1000 px il reste un
+     vide que personne ne réclame. Sans cette marge, il s'accumulait à DROITE
+     des bascules, qui se retrouvaient au milieu de la barre avec 300 px de
+     blanc après elles. Avec, le vide se place entre la recherche et les
+     bascules : marque à gauche, recherche à sa suite, contrôles au bord. Sous
+     ~1000 px la marge ne vaut plus rien d'elle-même, la recherche ayant tout
+     pris — donc elle ne coûte rien à la disposition étroite. */
   margin-inline-start: auto;
 }
 
 .tc-doc-topbar__actions .tc-doc-themetoggle {
   margin-block-start: 0;
 }
+
+/* --- La recherche de la barre du haut ---------------------------------------
+   L'ENVELOPPE EST LE BLOC CONTENANT DU PANNEAU. `position: relative` n'est pas
+   décoratif : le panneau de suggestions est `position: absolute`, et sans bloc
+   contenant il se placerait par rapport au bloc initial, c'est-à-dire au coin
+   de la page — la panne classique, et elle ne se voit qu'après défilement.
+
+   ELLE EST LE SEUL ÉLÉMENT ÉLASTIQUE DE LA BARRE. `flex: 1 1 auto` avec un
+   plancher : la marque se tronque, les deux bascules ne bougent pas, et c'est
+   la recherche qui prend ce qui reste. Le plafond de 26 rem existe pour qu'à
+   1440 px le champ ne traverse pas la moitié de l'écran — un champ de
+   recherche démesuré se lit comme un champ de saisie de formulaire.
+
+   LE PLANCHER EST 8 rem, ET LE CALCUL QUI VIVAIT ICI ÉTAIT FAUX. Il disait
+   « 128 px au champ laisse 68 px à la marque, soit @thomascaron… — lisible »,
+   en oubliant les 48 px de `padding-inline` de la barre et les 48,3 px réels de
+   la bascule de thème. Mesuré à 320 px : la marque fait **15,2 px**, c'est-à-dire
+   le losange seul. Le commentaire de `.tc-doc-topbar__brand`, trente lignes plus
+   haut, dit la bonne chose — les deux se contredisaient dans le même fichier.
+
+   8 rem reste le plancher parce qu'en dessous le glyphe et le curseur se
+   disputent la même place, et parce que 15,2 px de marque restent une cible
+   valide : le losange garde le nom accessible du lien, et l'exception
+   d'espacement de 2.5.8 s'applique — cercle de 24 px centré sur 31,6, donc
+   19,6→43,6, contre un champ qui commence à 51,2. Aucune intersection. */
+.tc-doc-search {
+  position: relative;
+  flex: 1 1 auto;
+  /* `min()` ET NON `8rem` SEUL, ET C'EST LA CORRECTION D'UN DÉFAUT DE ZOOM DE
+     TEXTE. Un plancher en `rem` grandit avec la police : à 200 % de taille de
+     racine — le zoom texte seul de Firefox, ou une préférence de police
+     système —, il passait à 256 px, la barre débordait (`scrollWidth` 557 pour
+     une fenêtre de 320) et la MARQUE tombait à 0 px de large. Un lien d'accueil
+     de largeur nulle n'est plus une cible : 2.5.8 échoue, et 1.4.4 tolère le
+     défilement mais pas la perte de fonctionnalité.
+
+     Le second terme est relatif à la BARRE et non à la police, donc il plafonne
+     le plancher quoi qu'il arrive à la taille de texte. 45 % laisse toujours la
+     majorité à la marque et aux deux bascules. */
+  min-inline-size: min(8rem, 45%);
+  max-inline-size: 26rem;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--target-min);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-pill);
+  corner-shape: superellipse(1.2);
+  background: var(--panel-surface);
+  transition:
+    border-color var(--motion-color) var(--motion-ease),
+    background-color var(--motion-color) var(--motion-ease);
+}
+
+/* L'ENVELOPPE PORTE L'ÉTAT DE FOCUS DU CHAMP, via `:focus-within`. C'est ce qui
+   permet à l'anneau d'entourer la pilule entière — glyphe compris — plutôt que
+   le seul rectangle de l'`<input>`, qui est plus étroit et décalé. Les deux
+   couches sont celles du reste du site, aux mêmes valeurs mesurées. */
+/* `:has(… :focus-visible)` ET NON `:focus-within`, POUR SUIVRE LA CONVENTION
+   DU DÉPÔT : tout le reste du site montre l'anneau sur `:focus-visible` —
+   `utilities.css`, la marque, les liens du sommaire, les `<summary>`. L'anneau
+   reste sur l'ENVELOPPE pour entourer la pilule entière, glyphe compris, et
+   c'est `:has()` qui permet de lire l'état du champ tout en peignant le parent.
+
+   CE COMMENTAIRE AJOUTAIT QUE L'ANNEAU N'APPARAÎTRAIT PLUS AU CLIC SOURIS.
+   C'EST FAUX, et ça ne peut pas être vrai : un champ de saisie texte correspond
+   TOUJOURS à `:focus-visible` au pointeur, puisque la frappe y est attendue.
+   Vérifié dans la même page — clic au centre du champ, `matches(':focus-visible')`
+   vaut `true` ; sur `.tc-doc-themetoggle`, `false`. Ce qui est gagné n'est donc
+   pas la suppression au clic, c'est que le champ se comporte exactement comme
+   `.tc-input:focus-visible` du reste de la librairie. La cohérence, pas
+   l'économie d'un anneau. */
+.tc-doc-search:has(.tc-doc-search__input:focus-visible) {
+  border-color: var(--accent);
+  background: var(--surface);
+  outline: 3px solid var(--focus-outer);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--focus-inner),
+    0 0 0 5px var(--focus-outer);
+}
+
+.tc-doc-search__glyph {
+  flex: none;
+  color: var(--text-muted);
+  font-size: var(--text-md);
+  line-height: 1;
+}
+
+/* L'INPUT EST DÉSHABILLÉ, et c'est l'enveloppe qui fait la pilule : un champ
+   qui porterait lui-même le liseré et le fond aurait dessiné une seconde boîte
+   à l'intérieur de la première. `appearance: none` retire la décoration que
+   Safari pose sur les champs de recherche ; `background: transparent` laisse
+   voir celui de l'enveloppe.
+
+   `outline: none` EST SÛR ICI, ET C'EST LA SEULE FOIS DU DÉPÔT : l'anneau
+   n'est pas supprimé, il est DÉPLACÉ sur l'enveloppe par `:focus-within`
+   au-dessus. Un `outline: none` sans ce relais serait exactement le défaut que
+   `utilities.css` passe deux paragraphes à interdire. */
+.tc-doc-search__input {
+  flex: 1 1 auto;
+  /* `align-self: stretch` DONNE AU CHAMP TOUTE LA HAUTEUR DE LA PILULE. Sans
+     lui, mesuré : enveloppe 44 px, champ 33 px — un clic dans la bande haute de
+     5,5 px laissait `document.activeElement` sur `body`. 2.5.8 restait
+     satisfait (33 ≥ 24), mais la moitié de ce qui ressemble à un champ n'en
+     était pas un. */
+  align-self: stretch;
+  min-inline-size: 0;
+  appearance: none;
+  padding-block: var(--space-2);
+  border: 0;
+  background: transparent;
+  color: var(--text-strong);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  outline: none;
+}
+
+/* `--text-muted` et non une encre plus pâle : un texte de substitution est du
+   texte, donc WCAG 1.4.3 s'y applique. Mesuré ailleurs dans cette feuille,
+   `--text-muted` tient 8,12:1 sur le sol blanc de la vitrine et 8,47:1 en
+   sombre — et il est ici sur `--panel-surface`, un lavis composé sur ce sol,
+   donc au-dessus du seuil dans les deux thèmes. */
+.tc-doc-search__input::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+/* --- Le panneau de suggestions --------------------------------------------
+   IL FLOTTE, DONC IL A UNE OMBRE ET UN FOND OPAQUE. Opaque obligatoirement :
+   il recouvre le contenu de la page, et c'est la seule surface du site dont le
+   dessous défile pendant qu'elle est ouverte. Un fond translucide y laisserait
+   passer les titres de la page en train de bouger.
+
+   `z-index` : la barre du haut est déjà à 1 dans le contexte de la page ; le
+   panneau doit passer au-dessus du contenu de la barre ET du contenu du site,
+   d'où 2 dans le contexte de la barre. Il n'y a pas de troisième prétendant. */
+.tc-doc-search__list {
+  position: absolute;
+  z-index: 2;
+  inset-inline: 0;
+  /* Sous la pilule, séparé d'elle : `calc(100% + …)` place le bord haut du
+     panneau juste après le bord bas de l'enveloppe, coussin compris. */
+  inset-block-start: calc(100% + var(--space-2));
+  max-block-size: 60dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: var(--space-2);
+  list-style: none;
+  /* `--control-border` ET NON `--border-subtle` : le panneau flotte au-dessus
+     du contenu, donc son bord est ce qui dit où il commence. Mesuré, le fond du
+     panneau contre la page en dessous ne vaut que 1,12:1 en clair et 1,04:1 en
+     sombre, et `--border-subtle` 1,34 / 1,36:1 : il ne tenait que par son
+     ombre, qui est une encre SOMBRE — donc invisible sur un sol sombre. Le
+     panneau flottait sans contour en thème sombre. `--control-border` tient
+     5,73:1 en clair et 6,42:1 en sombre. Aucun critère AA ne l'exigeait ; c'est
+     la lisibilité d'une surface qui recouvre le contenu. */
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--elevation-3);
+}
+
+.tc-doc-search__option {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+  align-items: baseline;
+  justify-content: space-between;
+  /* 44 px de haut sans y penser : `--target-min` en plancher, et le coussin
+     par-dessus. Une liste de suggestions est une liste de cibles (WCAG 2.5.8),
+     même quand on n'y arrive qu'au clavier. */
+  min-block-size: var(--target-min);
+  padding-block: var(--space-2);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+/* UN SEUL ÉTAT VISUEL POUR LE SURVOL ET POUR LE CLAVIER, et c'est voulu :
+   `onMouseEnter` déplace l'option courante, donc la souris et les flèches
+   pilotent la MÊME désignation. Deux apparences distinctes auraient laissé
+   croire à deux curseurs concurrents. L'attribut est `aria-selected`, donc le
+   sélecteur lit l'état réel de l'arbre d'accessibilité et non une classe
+   parallèle qui pourrait en diverger.
+
+   L'APLAT `--accent`, ET NON LE LAVIS `--accent-quiet` : C'EST LA CORRECTION
+   D'UN MANQUEMENT À 1.4.11. Le lavis ne se voyait pas. Mesuré sur les fonds
+   composés — option courante contre option normale :
+
+     --accent-quiet   1,14:1 en clair, 1,09:1 en sombre    ÉCHEC (seuil 3:1)
+     --accent         4,87:1 en clair, 3,40:1 en sombre    tient
+
+   Le second indice, `--text-strong` au lieu de `--text-body`, ne rattrapait
+   rien : 11,06 → 9,68:1 sur le libellé, une variation d'encre imperceptible.
+   Un utilisateur clavier tapait, appuyait trois fois sur ↓, n'voyait rien
+   changer, validait, et arrivait sur une page qu'il n'avait pas vue désignée —
+   pendant que le lecteur d'écran, lui, annonçait correctement.
+
+   Ironie du diagnostic : le bloc `forced-colors` plus bas faisait DÉJÀ ce qu'il
+   fallait. L'état n'était visible qu'en couleurs forcées.
+
+   L'ENCRE PASSE À `--text-on-accent`, ET LE NOM DE GROUPE AVEC. Sur l'aplat
+   teal, `--text-muted` tomberait sous le seuil ; le blanc y tient 5,44:1, donc
+   les deux lignes de la rangée sont au-dessus de 4,5:1. Le nom de groupe perd
+   sa nuance de gris sur cette seule rangée — c'est le prix, et il est payé en
+   hiérarchie plutôt qu'en lisibilité. */
+.tc-doc-search__option[aria-selected='true'] {
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+
+.tc-doc-search__option[aria-selected='true'] .tc-doc-search__group {
+  color: var(--text-on-accent);
+}
+
+.tc-doc-search__label {
+  font-weight: var(--weight-semibold);
+}
+
+.tc-doc-search__group {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+/* IL FLOTTE COMME LE PANNEAU QU'IL REMPLACE, ET C'EST LA CORRECTION D'UNE
+   RÉGRESSION QUE J'AI INTRODUITE. Ce message vivait dans le `<ul>` en
+   `role="presentation"` ; l'en sortir était juste — une `listbox` doit
+   contenir des `option` — mais il est alors devenu un ENFANT FLEXIBLE de la
+   pilule, qui est `display: flex; align-items: center`. Sans position, sans
+   fond et sans bord, il se posait DANS le champ.
+
+   Mesuré, requête sans résultat : la barre passait de 72,0 px à **122,2 px** de
+   320 à 480 px de large, poussant toute la page vers le bas, et le champ était
+   réduit à **4,0 px** — l'utilisateur ne pouvait plus lire ce qu'il venait de
+   taper. À 320 px le message débordait en plus sur la bascule de thème, dont
+   une bande de 12 px cessait d'être cliquable (`elementFromPoint` renvoyait le
+   paragraphe).
+
+   Il reprend donc les six déclarations qui font du panneau un calque flottant :
+   position, débordement latéral, décalage sous la pilule, fond opaque, liseré
+   et ombre. Ce qui aurait dû être fait du premier coup — le message REMPLACE le
+   panneau, il n'est pas un contenu de la barre. */
+.tc-doc-search__empty {
+  position: absolute;
+  z-index: 2;
+  inset-inline: 0;
+  inset-block-start: calc(100% + var(--space-2));
+  margin: 0;
+  padding-block: var(--space-3);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--elevation-3);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+/* SOUS COULEURS FORCÉES, l'option courante ne peut pas compter sur son lavis :
+   le mode force `background-color`, donc `--accent-quiet` disparaît et les huit
+   rangées deviennent identiques. `Highlight` / `HighlightText` sont la paire
+   système prévue pour exactement ça. */
+@media (forced-colors: active) {
+  .tc-doc-search__option[aria-selected='true'] {
+    background: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+}
+
+/* `prefers-reduced-motion` n'a rien à couper ici : les deux transitions de
+   l'enveloppe sont des transitions de COULEUR, que `tokens.css` conserve
+   délibérément sous cette préférence — elle refuse le mouvement, pas le retour
+   visuel. Aucun bloc, et cette phrase dit pourquoi il n'y en a pas. */
 
 /* --- Grille du site ---------------------------------------------------------
    PILE PAR DÉFAUT, DEUX COLONNES À PARTIR DE 60rem. Le petit écran est l'état
@@ -864,8 +1211,18 @@ body {
    Le seuil vaut 36 rem parce que c'est là que « marque + deux pilules
    libellées » cesse de tenir : mesuré, la barre passe à deux lignes entre
    480 px et 560 px. */
+/* CE BLOC MASQUAIT LE LIBELLÉ DE LA BASCULE DE THÈME SOUS 36 rem, et il n'a
+   plus d'objet : le libellé est masqué à TOUTE largeur depuis que le bouton se
+   réduit à son glyphe, et il l'est par `.tc-visually-hidden` — la recette
+   partagée de la librairie, corrigée une fois pour toutes plutôt que recopiée
+   ici. `.tc-doc-themetoggle__label` n'est plus émis par personne.
+
+   Le libellé de la bascule de MATÉRIAU, lui, reste masqué sous 36 rem par le
+   bloc de sa propre section : « Verre liquide » n'a pas de glyphe que tout le
+   monde lise, donc son texte est gardé aussi longtemps que la barre le permet. */
+
 @media (width < 36rem) {
-  .tc-doc-themetoggle__label {
+  .tc-doc-materialtoggle__label {
     position: absolute;
     inset-inline-start: 0;
     inline-size: 1px;

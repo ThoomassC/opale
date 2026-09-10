@@ -5,6 +5,7 @@ import { GlassLens } from '../components/glass-lens';
 import type { DocPage } from './doc-model';
 import { HOME_SLUG, findPage, hrefFor } from './doc-model';
 import { DocNav } from './doc-nav';
+import { DocSearch } from './doc-search';
 import { MaterialToggle } from './material-toggle';
 import { PageBoundary } from './page-boundary';
 import { ThemeToggle } from './theme-toggle';
@@ -175,6 +176,14 @@ export function DocShell({ pages }: DocShellProps) {
             `gap: var(--space-3)`, mesuré à 12 px. L'espace-mot du JSX entre les
             deux éléments ne pèse plus rien : un enchaînement purement blanc
             entre deux éléments flexibles n'est pas rendu. */}
+        {/* LA RECHERCHE EST ENTRE LA MARQUE ET LES BASCULES, et c'est ce qui
+            lui donne la place : elle est le seul élément de la barre qui doive
+            s'étirer, les deux bascules ayant une largeur fixe. `doc.css` la
+            laisse rétrécir jusqu'à un plancher plutôt que de la faire
+            disparaître — une recherche absente sur téléphone est une
+            fonctionnalité qu'on retire à ceux qui ont le plus de mal à
+            parcourir un sommaire de vingt-quatre entrées. */}
+        <DocSearch pages={pages} />
         <div className="tc-doc-topbar__actions">
           <ThemeToggle /> <MaterialToggle />
         </div>
