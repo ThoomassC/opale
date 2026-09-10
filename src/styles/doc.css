@@ -1270,6 +1270,59 @@ body {
   .tc-doc-nav:has(.tc-doc-nav__all:not([open])) .tc-doc-nav__versionnote {
     display: none;
   }
+
+  /* --- La recherche AU CENTRE OPTIQUE de la barre -------------------------
+     TROIS PISTES ET NON UNE BOÎTE FLEXIBLE, parce qu'en flex la recherche est
+     centrée dans l'espace QUI RESTE et non dans la barre : la marque
+     (168,2 px mesurés) et le bloc des deux bascules (197,3 px mesurés) n'ont
+     pas la même largeur, donc le milieu du vide n'est pas le milieu de la
+     barre. Mesuré après le passage en grille : l'écart entre le centre du
+     champ et le centre de la barre vaut 0,0 px à 960, 1280 et 1440.
+
+     Deux pistes latérales `minmax(0, 1fr)` sont ÉGALES par construction : la
+     piste du milieu est donc centrée sur la barre quoi que portent les deux
+     autres. `minmax(0, …)` et non `1fr` seul : le minimum automatique d'une
+     piste `1fr` est son contenu, donc la marque non tronquable ferait déborder
+     la barre au lieu de s'abréger — c'est le même piège que le
+     `min-inline-size: 0` des boîtes flexibles.
+
+     POURQUOI 60 rem ET PAS PLUS TÔT. Le centrage coûte de la place aux pistes
+     latérales : à 26 rem au milieu et 48 px de coussin, chaque côté reçoit
+     (L − 48 − 416 − 24) / 2. LA CONTRAINTE QUI MORD EST LE BLOC DES BASCULES
+     ET NON LA MARQUE — 197,3 px contre 168,2, et ce commentaire annonçait
+     « ≈ 96 px » pour les bascules, un chiffre supposé et faux. Il faut donc
+     L ≥ 882,6 px, soit 55,2 rem, et non les 51,5 rem que la marque seule
+     donnait. En dessous, la barre reste en boîte flexible : la disposition
+     mesurée sans débordement de 320 à 1440 (`scrollWidth` = `clientWidth` aux
+     cinq largeurs sondées).
+
+     60 rem est le barreau qui EXISTE DÉJÀ — c'est là que la page passe à deux
+     colonnes — et il est au-dessus des 55,2 rem requis : une échelle de
+     ruptures et non deux. À 60 rem exactement, chaque côté reçoit 236 px,
+     pour 197,3 de bascules et 168,2 de marque. Vérifié au navigateur sur le
+     build, pas déduit. */
+  .tc-doc-topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 26rem) minmax(0, 1fr);
+  }
+
+  .tc-doc-topbar__brand {
+    justify-self: start;
+  }
+
+  .tc-doc-search {
+    /* La piste porte déjà le plafond de 26 rem ; le champ la remplit. */
+    justify-self: stretch;
+    max-inline-size: none;
+  }
+
+  .tc-doc-topbar__actions {
+    /* La marge automatique a fait son travail en boîte flexible ; en grille
+       c'est la piste qui place, et une marge automatique qui reste
+       neutraliserait `justify-self`. */
+    margin-inline-start: 0;
+    justify-self: end;
+  }
 }
 
 /* --- Bascule de thème ------------------------------------------------------
