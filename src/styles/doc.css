@@ -544,8 +544,23 @@ body {
   color: var(--text-strong);
   font-family: var(--font-sans);
   font-size: var(--text-sm);
-  outline: none;
-  box-shadow: none;
+}
+
+/* LES DEUX EXTINCTIONS SONT CONDITIONNÉES COMME LEUR REMPLAÇANT. Elles étaient
+   inconditionnelles alors que l'anneau qui les remplace est porté par une règle
+   en `:has()`. Dans tout contexte où `:has()` ne s'applique pas, il ne restait
+   donc AUCUN indicateur de focus sur le champ de recherche — pas un anneau
+   dégradé, aucun.
+
+   Ce n'est pas un manquement aujourd'hui : les trois moteurs livrés gèrent
+   `:has()`. C'est le seul endroit du dépôt où un `outline: none` n'avait pas de
+   filet, et `@supports selector(…)` le lui donne pour zéro octet de rendu. Un
+   moteur sans `:has()` retrouve le double anneau natif au lieu de rien. */
+@supports selector(:has(*)) {
+  .tc-doc-search__input {
+    outline: none;
+    box-shadow: none;
+  }
 }
 
 /* `--text-muted` et non une encre plus pâle : un texte de substitution est du
@@ -592,6 +607,33 @@ body {
   border-radius: var(--radius-md);
   background: var(--surface);
   box-shadow: var(--elevation-3);
+}
+
+/* LE PANNEAU DEVIENT FOCUSABLE DÈS QU'IL DÉFILE, ET SON OMBRE EFFAÇAIT ALORS
+   L'ANNEAU. C'est le cas qu'`utilities.css` décrit sans le nommer : une
+   `box-shadow` déclarée après `tokens.css` remplace celles de la règle
+   universelle `:focus-visible`, à poids égal, par simple ordre.
+
+   Le `<ul>` n'a pas de `tabindex`, mais Chrome rend focusable au clavier un
+   conteneur défilant dont aucun enfant ne l'est — et les `<li role="option">`
+   ne le sont pas. Mesuré sur le build :
+
+     960 × 900  clientH 368 = scrollH 368  ->  focusable : non
+     960 × 420  clientH 250 < scrollH 368  ->  focusable : OUI
+     375 × 700  clientH 418 < scrollH 544  ->  focusable : OUI
+
+   Dans ces deux cas l'`outline` était bien peint (3 px noir) mais les deux
+   ombres de l'anneau non : il ne restait que la moitié de l'indicateur.
+
+   L'ÉTAT FOCALISÉ CUMULE, il ne remplace pas : l'ombre de lévitation est ce
+   qui dit que le panneau flotte au-dessus du contenu, et la perdre pendant le
+   focus serait échanger un défaut contre un autre. (0,2,0) contre (0,1,0),
+   donc la règle gagne par le poids et non par l'ordre. */
+.tc-doc-search__list:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--focus-inner),
+    0 0 0 5px var(--focus-outer),
+    var(--elevation-3);
 }
 
 .tc-doc-search__option {
@@ -1308,6 +1350,24 @@ body {
 
   .tc-doc-topbar__brand {
     justify-self: start;
+    /* `max-inline-size: 100%` ET C'EST LA RÉPARATION D'UNE RÉGRESSION QUE LE
+       PASSAGE EN GRILLE A INTRODUITE. `justify-self: start` dimensionne
+       l'élément en `fit-content`, et `white-space: nowrap` rend son
+       `min-content` égal à son `max-content` : l'élément DÉPASSE sa piste au
+       lieu de s'abréger, donc `overflow: hidden` et `text-overflow: ellipsis`
+       — les vingt-cinq lignes mesurées plus haut — ne s'appliquaient plus.
+
+       Mesuré à 960 px avec une taille de police minimale forcée (le réglage de
+       Chrome, qui grossit le texte SANS grossir les coussins en `rem`) : marque
+       282,5 px dans une piste de 236, `scrollWidth == clientWidth` donc rien ne
+       le signale, et 34,5 px de RECOUVREMENT avec la pilule de recherche. Le
+       nom du paquet était peint sous le champ, coupé en pleine lettre et sans
+       points de suspension. À 375 px, en boîte flexible, le même sondage rend
+       « tronqué : oui » — le dispositif ne marchait plus qu'en dessous du
+       barreau.
+
+       Le plafond rend la piste opposable à l'élément, donc l'ellipse remord. */
+    max-inline-size: 100%;
   }
 
   .tc-doc-search {
@@ -1564,9 +1624,26 @@ body {
    Si ce chemin est emprunté, l'anneau doit rester DANS la fenêtre : la boîte de
    `<main>` fait la hauteur de la page, donc un anneau posé dehors n'en montre
    que deux traits verticaux, bord haut caché sous la barre collante. */
+/* `box-shadow: none` EST LA MOITIÉ QUI MANQUAIT, et le commentaire au-dessus
+   décrivait le défaut sans le corriger entièrement. L'`outline` est rentré
+   (`offset` négatif) pour que l'anneau se peigne À L'INTÉRIEUR de `<main>`,
+   mais les deux `box-shadow` de la règle universelle de `tokens.css`
+   survivaient et se peignaient DEHORS.
+
+   Mesuré, `<main>` focalisé en 760 × 560 sur le build : boîte de 760 × 1903,7,
+   `outline` 3 px noir à −4 px, et `box-shadow` valant encore
+   « rgb(246,255,222) 0 0 0 2px, rgb(0,0,0) 0 0 0 5px » — soit un anneau noir de
+   5 px autour d'une boîte de 1904 px de haut, dont le bord supérieur passe sous
+   la barre collante. Exactement les « deux traits verticaux » que ce
+   commentaire affirmait avoir supprimés.
+
+   Le chemin qui y mène est réel : le lien d'évitement `href="#contenu"`
+   emprunté avant que son gestionnaire de clic soit attaché, ou l'ancre ouverte
+   par un autre moyen, donne le focus à `<main>`. */
 .tc-doc-main:focus-visible {
   outline: 3px solid var(--focus-outer);
   outline-offset: calc(-1 * var(--space-1));
+  box-shadow: none;
 }
 
 .tc-doc-page__title {

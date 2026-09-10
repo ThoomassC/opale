@@ -90,13 +90,38 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
           coûte qu'une ligne à garder. Le pli porte donc les quatre groupes,
           rien de plus. */}
       <details className="tc-doc-nav__all" open>
-        {/* Le nom est « Sommaire », comme le point de repère qui l'entoure, et
-            c'est assumé : un lecteur d'écran énonce « Sommaire, navigation »
-            puis « Sommaire, groupe ». La redondance est le prix d'un nom
-            stable — un `<summary>` dont le libellé changerait avec l'état
-            (« Masquer » / « Afficher ») rendrait la commande introuvable au
-            second coup d'œil, et l'état est DÉJÀ annoncé par `<details>`. */}
-        <summary className="tc-doc-nav__alltitle">Sommaire</summary>
+        {/* `aria-label` OBLIGATOIRE, ET SON ABSENCE ÉTAIT LE DÉFAUT LE PLUS SÉRIEUX
+            DE CE CHANGEMENT. Les quatre `<summary>` de groupe le portent depuis
+            plusieurs versions, pour la raison écrite vingt lignes plus bas ; le
+            cinquième, ajouté par-dessus, ne l'avait pas.
+
+            Mesuré dans l'arbre d'accessibilité de Chromium, pas déduit :
+
+              summary.tc-doc-nav__alltitle    name = '› SOMMAIRE'
+              summary.tc-doc-nav__grouptitle  name = 'Introduction'
+
+            Le chevron du `::before` entrait donc dans le nom (Accname 1.2
+            § 2.6.2 : le contenu généré est préfixé au texte, sans espace), et
+            `text-transform: uppercase` s'y ajoutait — un lecteur réglé sur les
+            capitales épelle alors « S-O-M-M-A-I-R-E ». L'`aria-label` des
+            groupes protège de CES DEUX CHOSES à la fois, et le pli perdait les
+            deux.
+
+            NI `doc-nav.test.tsx` NI `axe-core` NE POUVAIENT LE VOIR : jsdom ne
+            rend pas le contenu généré, et la `accessibleText` d'axe-core ne lit
+            pas les pseudo-éléments — vérifié, elle rendait « Sommaire ». Le
+            défaut n'apparaît que dans l'arbre d'accessibilité d'un vrai moteur.
+
+            LE NOM EST « Sommaire », COMME LE POINT DE REPÈRE QUI L'ENTOURE, et
+            c'est assumé : un lecteur énonce « Sommaire, navigation » puis
+            « Sommaire, bouton, développé ». Le rôle désambiguïse, et 2.4.6 ne
+            l'interdit pas. Un `<summary>` dont le libellé changerait avec
+            l'état (« Masquer » / « Afficher ») rendrait la commande
+            introuvable au second coup d'œil, et l'état est DÉJÀ annoncé par
+            `<details>` — mesuré, `expanded` suit les deux niveaux. */}
+        <summary className="tc-doc-nav__alltitle" aria-label="Sommaire">
+          Sommaire
+        </summary>
 
         {GROUPS.map((group) => {
           const groupPages = pages.filter((page) => page.group === group.id);
