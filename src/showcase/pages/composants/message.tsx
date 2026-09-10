@@ -5,7 +5,7 @@ import { Specimen } from '../../section';
 import { PageBody, PropsTable, UsageBlock } from '../api';
 import type { PropRow } from '../api';
 
-const USAGE = `import { Message } from '@thomascaron/ui';
+const USAGE = `import { Message } from '@thomascaron/opale';
 
 <Message tone="ok">Palette enregistrée.</Message>
 

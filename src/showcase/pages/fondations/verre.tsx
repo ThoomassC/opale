@@ -33,9 +33,9 @@ import { PageBody, UsageBlock } from '../api';
    ========================================================================== */
 
 const USAGE = `// L'ORDRE EST UN INVARIANT : glass.css APRÈS tokens.css et ui.css.
-import '@thomascaron/ui/tokens.css';
-import '@thomascaron/ui/ui.css';
-import '@thomascaron/ui/glass.css';
+import '@thomascaron/opale/tokens.css';
+import '@thomascaron/opale/ui.css';
+import '@thomascaron/opale/glass.css';
 
 // Puis le porteur, sur <html> et nulle part ailleurs.
 document.documentElement.dataset.material = 'glass';

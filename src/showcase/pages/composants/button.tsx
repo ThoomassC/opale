@@ -52,7 +52,7 @@ const STATE_CELLS: readonly StateCell[] = [
   { label: 'aria-disabled', text: 'Enregistrer', inert: true },
 ];
 
-const USAGE = `import { Button } from '@thomascaron/ui';
+const USAGE = `import { Button } from '@thomascaron/opale';
 
 <Button variant="secondary" onClick={close}>Annuler</Button>
 <Button href="/contact" variant="secondary">Me contacter</Button>

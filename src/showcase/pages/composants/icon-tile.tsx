@@ -17,7 +17,7 @@ import { PageBody, PropsTable, UsageBlock } from '../api';
    console. Il est décrit dans le tableau, à sa ligne.
    ========================================================================== */
 
-const USAGE = `import { IconTile } from '@thomascaron/ui';
+const USAGE = `import { IconTile } from '@thomascaron/opale';
 
 // Décor : un <span aria-hidden>, encre cuivre. Le sens est dans le titre voisin.
 <IconTile>

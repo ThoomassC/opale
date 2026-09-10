@@ -1,5 +1,5 @@
 /* =============================================================================
-   @thomascaron/ui — COUCHE 1 : PRIMITIVES
+   @thomascaron/opale — COUCHE 1 : PRIMITIVES
 
    Les hexadécimaux nus, et rien d'autre. Aucun composant ne cite ce fichier ;
    seules `roles.css` et `materials.css` en ont le droit. Une primitive ne
@@ -71,7 +71,7 @@
   /* PAPER — RETIRÉE en v0.3.0. Cinq sols chauds (#fbf1de … #ded4c1) posés à la
      luminosité exacte des `mist` qu'ils remplaçaient. Le portfolio reprend la
      main sur l'apparence : ses sols sont des `mist` froids, la famille n'était
-     plus citée nulle part (vérifié par grep sur ui-commune et sur les treize
+     plus citée nulle part (vérifié par grep sur opale et sur les treize
      arbres travels_in_world) et cinq primitives qu'aucun rôle ne cite sont une
      invitation à réintroduire par erreur un sol chaud. Elle est retirée plutôt
      que gardée « au cas où » : la retrouver, c'est un `git show`. */

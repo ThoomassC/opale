@@ -15,7 +15,7 @@ interface ButtonOwnProps {
    *
    * La réfraction de `bubble` demande deux choses à l'application : un
    * `<GlassLens />` monté UNE fois dans le document, et l'import de
-   * `@thomascaron/ui/lens.css`. Ni l'un ni l'autre n'est vérifié, et il n'y a
+   * `@thomascaron/opale/lens.css`. Ni l'un ni l'autre n'est vérifié, et il n'y a
    * rien à vérifier : mesuré, une référence vers un filtre absent est inerte
    * dans Chromium — sans le composant le bouton reste correct et lisible, son
    * fond n'est simplement pas déformé.

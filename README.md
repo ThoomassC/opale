@@ -1,4 +1,4 @@
-# ui-commune — `@thomascaron/ui`
+# Opale — `@thomascaron/opale`
 
 Le socle d'interface partagé par [`portfolio`](https://github.com/ThoomassC/portfolio) et
 [`travels_in_world`](https://github.com/ThoomassC/travels_in_world).
@@ -24,18 +24,18 @@ Ce dépôt est ce garde. Il publie, dans cet ordre de valeur :
 ## Installation
 
 ```bash
-npm i "@thomascaron/ui@github:ThoomassC/ui-commune#v1.2.0"
+npm i "@thomascaron/opale@github:ThoomassC/opale#v1.2.0"
 ```
 
 Le paquet se compile à l'installation (`prepare`). Cinq points d'entrée :
 
 ```ts
-import '@thomascaron/ui/tokens.css'; // la palette, les échelles, le focus, le mouvement
-import '@thomascaron/ui/ui.css'; // les styles de composants, une seule fois par app
-import '@thomascaron/ui/glass.css'; // OPTIONNEL — le thème verre, inerte sans l'attribut
-import '@thomascaron/ui/lens.css'; // OPTIONNEL — le bouton bulle, après ui.css
-import { Button, Field, Input } from '@thomascaron/ui';
-import { contrastRatio, parseThemes } from '@thomascaron/ui/contract'; // dev only
+import '@thomascaron/opale/tokens.css'; // la palette, les échelles, le focus, le mouvement
+import '@thomascaron/opale/ui.css'; // les styles de composants, une seule fois par app
+import '@thomascaron/opale/glass.css'; // OPTIONNEL — le thème verre, inerte sans l'attribut
+import '@thomascaron/opale/lens.css'; // OPTIONNEL — le bouton bulle, après ui.css
+import { Button, Field, Input } from '@thomascaron/opale';
+import { contrastRatio, parseThemes } from '@thomascaron/opale/contract'; // dev only
 ```
 
 > **`lens.css` a la MÊME contrainte, pour une autre raison.** Elle écrase le fond que
@@ -137,8 +137,8 @@ import {
   GLASS_LAYERS, // les couches nommées une fois : page, halos, remplissage, repli opaque
   STATE_WASHES, // les trois lavis d'état, du repos à l'appui
   withWash, // le même support, un lavis posé dessus — le libellé grandit, il n'est pas remplacé
-} from '@thomascaron/ui/contract';
-import type { BackdropSpec } from '@thomascaron/ui/contract';
+} from '@thomascaron/opale/contract';
+import type { BackdropSpec } from '@thomascaron/opale/contract';
 ```
 
 Le type s'appelle **`BackdropSpec`** et non `Backdrop` : la librairie exporte depuis la

@@ -20,13 +20,13 @@ import { PageBody, PropsTable, UsageBlock } from '../api';
    monter, combien de fois, et ce qui se passe quand il manque.
    ========================================================================== */
 
-const USAGE = `import { Button, GlassLens } from '@thomascaron/ui';
+const USAGE = `import { Button, GlassLens } from '@thomascaron/opale';
 
-import '@thomascaron/ui/tokens.css';
-import '@thomascaron/ui/ui.css';
+import '@thomascaron/opale/tokens.css';
+import '@thomascaron/opale/ui.css';
 // Optionnelle, et APRÈS ui.css, jamais avant : sans elle, aucune surface ne
 // référence le filtre — importée trop tôt, elle est inopérante en silence.
-import '@thomascaron/ui/lens.css';
+import '@thomascaron/opale/lens.css';
 
 // UNE SEULE FOIS PAR DOCUMENT, dans le gabarit de l'application : deux
 // montages, c'est deux <filter> de même identifiant. La fin du gabarit est

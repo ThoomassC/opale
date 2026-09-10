@@ -12,7 +12,7 @@ import { ThemeToggle } from './theme-toggle';
 import { useRoute } from './use-route';
 
 /** Le nom du paquet, affiché dans la barre du haut et dans `document.title`. */
-const SITE_NAME = '@thomascaron/ui';
+const SITE_NAME = '@thomascaron/opale';
 
 /**
  * Le repli du repli : un registre sans page d'accueil.

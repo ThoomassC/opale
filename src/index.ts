@@ -1,13 +1,13 @@
 /**
- * `@thomascaron/ui` — the components.
+ * `@thomascaron/opale` — the components.
  *
  * None of them holds state, calls a hook, or needs `"use client"`: they render
  * as Server Components in Next.js and cost a consumer's JavaScript budget
  * nothing. Every visual state — hover, active, focus, invalid, busy, disabled —
  * is carried by CSS, which is why `ui.css` has to be imported once per app:
  *
- *     import '@thomascaron/ui/tokens.css';
- *     import '@thomascaron/ui/ui.css';
+ *     import '@thomascaron/opale/tokens.css';
+ *     import '@thomascaron/opale/ui.css';
  *
  * Three components decide something at render time, and none needs a client
  * boundary to do it. `ChipList` returns `null` on an empty list rather than

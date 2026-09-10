@@ -5,7 +5,7 @@ import { Specimen } from '../../section';
 import { PageBody, PropsTable, UsageBlock } from '../api';
 import type { PropRow } from '../api';
 
-const USAGE = `import { Pill } from '@thomascaron/ui';
+const USAGE = `import { Pill } from '@thomascaron/opale';
 
 <Pill tone="done">Obtenu</Pill>
 <Pill tone="progress">En cours</Pill>

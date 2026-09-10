@@ -174,7 +174,7 @@ export interface GlassLensProps {
  * au bouton `variant="bubble"` sa déformation du fond.
  *
  * Ne rend rien de visible. Placez-le où vous voulez — la fin du gabarit est
- * l'endroit habituel — et importez `@thomascaron/ui/lens.css`.
+ * l'endroit habituel — et importez `@thomascaron/opale/lens.css`.
  *
  * Sans lui, le bouton `bubble` reste correct : voile, liseré et reflet sont
  * portés par la feuille de style, seule la déformation manque.

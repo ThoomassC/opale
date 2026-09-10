@@ -34,8 +34,8 @@ import { PageBody, UsageBlock } from '../api';
    plaques, que `palette-data.test.ts` rejoue contre les jetons résolus.
    ========================================================================== */
 
-const USAGE = `import { Button, GlassLens } from '@thomascaron/ui';
-import '@thomascaron/ui/lens.css';
+const USAGE = `import { Button, GlassLens } from '@thomascaron/opale';
+import '@thomascaron/opale/lens.css';
 
 // Le verre liquide se pose AU-DESSUS d'un contenu, jamais dedans : ce n'est pas
 // un bouton de formulaire. Sans <GlassLens />, le bouton reste correct — son

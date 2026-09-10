@@ -33,7 +33,7 @@ import { UI_VERSION } from './version';
  * pour un test élargirait la surface du module pour rien. Une dérive ici
  * rougit — c'est le titre affiché dans l'onglet.
  */
-const TITLE_SUFFIX = ' — @thomascaron/ui';
+const TITLE_SUFFIX = ' — @thomascaron/opale';
 
 /** L'identifiant de `<main>`, cible du lien d'évitement et du focus. */
 const MAIN_ID = 'contenu';
@@ -900,7 +900,7 @@ describe('DocShell — la frontière d’erreur du contenu', () => {
        visiteur bloqué dans le thème ou le matériau où il se trouvait. */
     expect(screen.getByRole('button', { name: /Thème sombre/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Verre liquide/ })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /@thomascaron\/ui/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /@thomascaron\/opale/ })).toBeInTheDocument();
   });
 
   it('devrait rendre le message d’erreur à la place du contenu de la page', () => {

@@ -14,7 +14,7 @@ import { PageBody, PropsTable, UsageBlock } from '../api';
    liste peuplée, sous légende.
    ========================================================================== */
 
-const USAGE = `import { ChipList } from '@thomascaron/ui';
+const USAGE = `import { ChipList } from '@thomascaron/opale';
 
 // Nommée par un libellé masqué…
 <ChipList label="Technologies de l'étape" items={['Bus', 'Train', 'Marche']} />

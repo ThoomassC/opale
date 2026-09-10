@@ -5,7 +5,7 @@ import { Specimen } from '../../section';
 import { PageBody, PropsTable, UsageBlock } from '../api';
 import type { PropRow } from '../api';
 
-const USAGE = `import { Tag } from '@thomascaron/ui';
+const USAGE = `import { Tag } from '@thomascaron/opale';
 
 <Tag>TypeScript</Tag>
 <Tag variant="measured">Mesuré</Tag>

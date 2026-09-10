@@ -1,13 +1,13 @@
 /* =============================================================================
-   @thomascaron/ui — LA LENTILLE : le bouton `variant="bubble"`.
+   @thomascaron/opale — LA LENTILLE : le bouton `variant="bubble"`.
 
    Feuille OPTIONNELLE, comme `glass.css`, et pour la même raison : un
    consommateur qui n'emploie pas la variante n'a aucune raison de la
    télécharger.
 
-       import '@thomascaron/ui/tokens.css';
-       import '@thomascaron/ui/ui.css';
-       import '@thomascaron/ui/lens.css';   // après `ui.css`, jamais avant
+       import '@thomascaron/opale/tokens.css';
+       import '@thomascaron/opale/ui.css';
+       import '@thomascaron/opale/lens.css';   // après `ui.css`, jamais avant
 
    L'ORDRE N'EST PAS UNE PRÉCAUTION. Cette feuille écrase le fond que
    `button.css` pose sur `.tc-btn--bubble` — mais `.tc-btn--bubble` pèse (0,1,0)
