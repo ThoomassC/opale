@@ -11,8 +11,31 @@
 }
 
 .glassContainer {
-    @apply relative overflow-hidden rounded-[8px];
+    @apply relative overflow-hidden;
     width: fit-content;
+
+    /* ÉCART OPALE — le rayon devient réglable, et il était la cause de DEUX
+       défauts visibles. Ce conteneur porte `overflow: hidden` : son rayon ne
+       décide donc pas de son seul bord, il ROGNE tout ce qu'il contient.
+       Mesuré au navigateur, le `Modal` demandait `rounded-3xl` (24 px) sur son
+       contenu et sortait à 8 px, et le `Button` demandait `rounded-xl` (12 px)
+       pour le même résultat. Un composant ne pouvait pas s'arrondir. */
+    border-radius: var(--lg-radius, 16px);
+
+    /* ÉCART OPALE — le conteneur devient son propre contexte d'empilement.
+       Il était en `z-index: auto`, donc les `z-index` 1, 2 et 3 de ses quatre
+       couches s'échappaient dans le contexte de la PAGE HÔTE. Mesuré : aucun
+       contexte d'empilement entre la glace et la racine, `glassContent` sortant
+       à 3 contre 2 pour la barre collante du site — le composant passait
+       par-dessus l'en-tête au défilement.
+
+       `z-index: 0` ET NON `isolation: isolate`, délibérément : `isolate` crée
+       aussi une RACINE DE FOND, et `.glassFilter` porte un
+       `backdrop-filter: blur(2px)` qui n'échantillonnerait alors plus que
+       l'intérieur du conteneur — le verre cesserait de refracter la page. Un
+       `z-index` numérique sur un élément déjà positionné suffit à contenir les
+       couches sans toucher à ce que le fond laisse voir. */
+    z-index: 0;
 }
 
 .glassAnimating {
@@ -29,7 +52,10 @@
 
 .glassFilter {
     position: absolute;
-    border-radius: 8px;
+    /* ÉCART OPALE — hérité au lieu d'être figé à 8 px, sans quoi cette couche
+       garderait des angles droits dès que le conteneur s'arrondit davantage.
+       `.glassSpecular` héritait déjà ; celle-ci ne le faisait pas. */
+    border-radius: inherit;
     inset: 0;
     z-index: 0;
     backdrop-filter: blur(2px);
