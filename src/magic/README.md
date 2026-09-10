@@ -57,9 +57,70 @@ documentés (voir plus bas).
 > faite au moment de la copie et **n'est pas rejouable dans ce dépôt** — la source
 > n'y est pas présente. Elle est reportée telle quelle.
 
-Corollaire : les défauts de leur code sont conservés tels quels. Ne les corrigez
-pas ici — remontez-les chez tweeedlex. Ce fichier est là pour qu'aucun de ces
-défauts ne soit une surprise.
+Corollaire : les défauts de COMPORTEMENT de leur code sont conservés tels quels.
+Ne les corrigez pas ici — remontez-les chez tweeedlex. Ce fichier est là pour
+qu'aucun de ces défauts ne soit une surprise.
+
+**Trois fichiers vendorés font désormais exception**, et la répartition 39 / 11
+ci-dessus ne décrit donc plus l'arbre : elle décrit l'état à la copie. Voir
+« Modifications du code vendoré » juste en dessous.
+
+## Modifications du code vendoré
+
+Distinctes des écarts de `magic.scss` : celles-ci touchent des fichiers de
+composant, c'est-à-dire du code copié au caractère. Chacune corrige une faute
+qui rendait le composant inutilisable **dans une page hôte**, pas un choix
+esthétique de l'amont — et chacune est mesurée.
+
+### `glass/style/Glass.module.scss` — le rayon de l'enveloppe
+
+`8px` figé → `var(--lg-radius, 16px)`, et `.glassFilter` passe de `8px` à
+`inherit`.
+
+L'enveloppe porte `overflow: hidden`. Son rayon ne décide donc pas de son seul
+bord : **il rogne tout ce qu'elle contient**. Mesuré au navigateur, `Modal`
+demandait `rounded-3xl` (24 px) sur son contenu et sortait à 8 px ; `Button`
+demandait `rounded-xl` (12 px), même résultat. Aucun composant ne pouvait
+s'arrondir plus que son enveloppe, et `rootClassName` ne le permettait pas
+davantage (c'est le défaut du `Badge`, plus bas, qui est intact).
+
+### `glass/style/Glass.module.scss` — le contexte d'empilement
+
+`z-index: 0` ajouté à `.glassContainer`.
+
+L'enveloppe était en `z-index: auto`, donc les `z-index` 1, 2 et 3 de ses quatre
+couches **s'échappaient dans le contexte d'empilement de la page hôte**. Mesuré
+sur la vitrine : aucun contexte d'empilement entre la glace et la racine,
+`glassContent` sortant à 3 contre 2 pour la barre collante du site — le
+composant se peignait par-dessus l'en-tête au défilement.
+
+`z-index: 0` et non `isolation: isolate`, délibérément : `isolate` crée aussi une
+**racine de fond**, et `.glassFilter` porte un `backdrop-filter: blur(2px)` qui
+n'échantillonnerait alors plus que l'intérieur de l'enveloppe — le verre
+cesserait de réfracter la page. Vérifié après correction : `backdrop-filter:
+blur(2px)` et `filter: url("#lg-dist")` toujours actifs, un seul contexte
+d'empilement, sur l'enveloppe.
+
+### `modal/style/Modal.module.scss` et `modal/Modal.tsx` — la coquille
+
+`Modal` ne passait que `className` à `Glass`, qui l'applique à sa couche de
+CONTENU. Le rayon et l'ombre atterrissaient donc sur un enfant de l'enveloppe
+en `overflow: hidden` : mesuré, le contenu sortait bien à 24 px mais l'enveloppe
+le rognait à 8, et son ombre extérieure de 60 px était rognée par le même
+`overflow`. **La modale n'avait en pratique ni angle arrondi ni ombre.**
+
+Une classe `.modalShell` part donc sur `rootClassName`, c'est-à-dire sur
+l'enveloppe : rayon 28 px, liseré, et les deux ombres.
+
+Le voile passe de `blur(10px)` sur 30 % d'opacité à `blur(3px)` sur 60 %. Et le
+liseré a dû être **presque opaque**, ce qui n'était pas prévu : un premier essai
+à 38 % de blanc mesurait 1,13:1 contre le pourtour, invisible. La cause est
+structurelle — la modale est translucide au-dessus du même voile que la page,
+donc assombrir le voile fait descendre son remplissage avec lui et le rapport ne
+bouge pas (remplissage mesuré 1,24:1 contre pourtour). À 75 % de blanc sur
+1,5 px, l'arête compose `#d9dadc` et mesure **3,86:1** sur les pixels rendus,
+au-dessus du plancher de 3:1 de WCAG 1.4.11. Un filet sombre extérieur de 1 px
+tient l'arête dans l'autre sens, pour une page hôte claire.
 
 ## Les six écarts de `magic.scss`
 
@@ -161,13 +222,20 @@ les deux règles se disputent le même `border-radius` **à poids égal** :
 
 | règle | spécificité | valeur | position dans `dist/magic/magic.css` |
 | --- | --- | --- | --- |
-| `.rounded-full` | (0,1,0) | `9999px` | ligne 49 (offset 1419) |
-| `.opale-magic-glassContainer-2XpdN` | (0,1,0) | `8px` | ligne 401 (offset 17092) |
+| `.rounded-full` | (0,1,0) | `9999px` | ligne 51 (offset 1 578) |
+| `.opale-magic-glassContainer-2XpdN` | (0,1,0) | `var(--lg-radius, 16px)` | ligne 403 (offset 17 011) |
 
 À spécificité égale, c'est l'ordre du document qui tranche, et l'enveloppe passe
-plus tard : **le rayon effectif est 8px, pas 9999px.** Le badge est un rectangle
-aux coins arrondis. Relevé au navigateur pour confirmation : `glassContainer
-rounded-full` → **8px** ; `glassContainer` + `rootStyle` en ligne → **999px**.
+plus tard : **le rayon effectif est celui de l'enveloppe, pas 9999px.** Le badge
+est un rectangle aux coins arrondis. Relevé au navigateur pour confirmation :
+`glassContainer rounded-full` → **16px** ; `glassContainer` + `rootStyle` en
+ligne → **999px**.
+
+Le rayon de l'enveloppe valait `8px` en amont ; Opale l'a porté à 16 px et rendu
+réglable par `--lg-radius` (voir « Modifications du code vendoré » plus bas).
+**Cela n'a pas corrigé ce défaut-ci** : seule la valeur a changé, le mécanisme
+est intact, et 16 px sur une pastille de 24 px de haut n'est pas davantage une
+pilule que 8.
 
 Leur `Switch` s'en sort parce qu'il emploie `rootStyle` et non `rootClassName`
 (`Switch.tsx:38`, `rootStyle={{ borderRadius: "999px" }}`) : une déclaration en
