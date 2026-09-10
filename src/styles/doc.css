@@ -1538,6 +1538,85 @@ body {
   transform: translateY(1px);
 }
 
+/* --- Rebasculer le MATÉRIAU dans une plaque de thème -----------------------
+   Les trois blocs de thème du dépôt sont tous portés par `:root` — c'est la
+   convention de `roles.css`, `materials.css` et `lens.css`, et elle est juste :
+   un thème est une propriété du document, pas d'un conteneur. Conséquence
+   mesurée : une plaque de démonstration qui peint un sol sombre avec des
+   littéraux N'EMPORTE PAS les jetons avec elle. La plaque sombre de la page du
+   bouton bulle montrait donc le matériau CLAIR — voile blanc, encre sombre —
+   posé sur un damier sombre, c'est-à-dire une démonstration qui affirme le
+   contraire de ce qu'elle prétend montrer.
+
+   Cette classe rebascule les jetons dont ce spécimen dépend, et
+   elle cite des primitives publiées, pas des littéraux : `--tc-mist-865` EST
+   la valeur de `--text-strong` en sombre, `--tc-pitch-a32` celle de
+   `--lens-veil`. Elle n'existe que pour la vitrine et n'est pas exportée.
+
+   LA LISTE S'EST ALLONGÉE UNE FOIS, ET C'EST INSTRUCTIF : elle n'avait que
+   `--text-strong` et `--lens-veil`, et le bouton `aria-disabled` de la plaque
+   sombre sortait alors en pastille BLANCHE — son repli opaque est
+   `--glass-fill-solid`, resté au thème clair. Chaque jeton qu'un spécimen
+   emploie sans être dans cette liste est un mensonge en attente.
+
+   Ce qu'elle ne fait PAS, et il faut le savoir : elle ne rebascule pas le
+   thème, seulement les jetons listés. Tout autre jeton employé dans une plaque
+   sombre reste celui du thème du document. Le jour où un spécimen en aura
+   besoin, c'est la liste ci-dessous qui s'allonge, une valeur à la fois et
+   mesurée — pas un `[data-theme]` imbriqué, qui ne marcherait pas. */
+.tc-doc-plate--darkmaterial {
+  /* Chaque ligne est la valeur que le bloc `:root[data-theme='dark']` de
+     `roles.css` — ou de `lens.css` pour la dernière — porte déjà. Aucune n'est
+     choisie ici, elles sont RECOPIÉES de leur bloc de thème. */
+  --surface: var(--tc-mist-188);
+  --glass-fill-solid: var(--tc-mist-188);
+  --text-strong: var(--tc-mist-865);
+  --text-muted: var(--tc-mist-762);
+  --control-border: var(--tc-mist-687);
+  --lens-veil: var(--tc-pitch-a32);
+  /* LE LISERÉ, ET C'EST CELUI QUI MANQUAIT LE PLUS : en clair il vaut une
+     encre quasi noire à 25 %, donc sur un sol sombre le contour du bouton
+     était INVISIBLE et le seul bord visible était le reflet spéculaire — celui
+     du thème clair, donc plus lumineux que la réalité. */
+  --glass-border: var(--tc-veil-a22);
+  --shadow-ink: var(--tc-soot-a50);
+  /* LE LAVIS D'ÉTAT, ET SON OUBLI DISSIMULAIT LE PIRE DÉFAUT DE LA VARIANTE :
+     avec les valeurs claires, la plaque sombre appliquait un lavis clair sur un
+     fond sombre, donc s'ÉLOIGNAIT de l'encre — le spécimen « les quatre états
+     figés » affirmait ainsi que l'état est anodin précisément là où il était le
+     plus grave. Depuis que le lavis suit la famille du voile, les deux
+     polarités sont justes ; ces deux lignes restent nécessaires pour que la
+     plaque montre les valeurs de SON thème. */
+  --lens-wash-hover: var(--tc-pitch-a10);
+  --lens-wash-active: var(--tc-pitch-a13);
+}
+
+/* CE QUE CETTE CLASSE NE REBASCULE PAS, ET QUI RESTE UN ÉCART ASSUMÉ :
+   `--glass-specular` et `--glass-highlight`. Les deux sont des DÉGRADÉS
+   littéraux à sept et cinq arrêts, pas des références de jeton — les recopier
+   ici en créerait une seconde source qui dériverait au premier ajustement de
+   `materials.css`. Conséquence mesurée : sur la plaque sombre, le reflet et le
+   liseré spéculaire sont ceux du thème CLAIR, donc plus lumineux que la
+   réalité. C'est écrit sur la page du spécimen. La seule vraie sortie est un
+   harnais qui rend le spécimen dans un document à `data-theme="dark"` — c'est
+   le chantier « harnais navigateur » du README. */
+
+/* La bulle. Elles changent la VALEUR du lavis d'état, comme le fait `lens.css`
+   § 4, et ne redéclarent surtout pas `background` : la pile de fonds de la
+   bulle contient une couche que seul `lens.css` sait écrire correctement, et
+   la recopier ici l'avait déjà rendue invalide une fois. Une valeur ne se
+   dispute pas, donc la question du poids ne se pose plus — elle se posait, et
+   le commentaire qui vivait ici comparait d'ailleurs (0,2,0) à un « (0,1,0) »
+   qui était en réalité (0,4,0). */
+.tc-doc-state--hover.tc-btn--bubble {
+  --lens-state-wash: var(--panel-surface-hover);
+}
+
+.tc-doc-state--active.tc-btn--bubble {
+  --lens-state-wash: var(--panel-surface-active);
+  transform: translateY(1px);
+}
+
 .tc-doc-states {
   display: flex;
   flex-wrap: wrap;

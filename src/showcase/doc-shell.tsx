@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 
+import { GlassLens } from '../components/glass-lens';
 import type { DocPage } from './doc-model';
 import { HOME_SLUG, findPage, hrefFor } from './doc-model';
 import { DocNav } from './doc-nav';
@@ -213,6 +214,20 @@ export function DocShell({ pages }: DocShellProps) {
           </footer>
         </div>
       </div>
+
+      {/* LA LENTILLE, MONTÉE UNE SEULE FOIS POUR TOUT LE SITE.
+
+          Ici et dans aucune page : le composant rend un `<svg>` de taille nulle
+          portant un `<filter>` IDENTIFIÉ, et un identifiant ne vaut qu'une fois
+          par document. Posé dans une page — celle de `GlassLens`, celle du
+          bouton bulle — il serait monté une seconde fois dès qu'on l'ouvre, et
+          `#tc-lens` désignerait alors deux nœuds.
+
+          En fin de coquille, qui est l'endroit que le composant documente
+          lui-même : l'ordre du document ne change rien à la résolution d'un
+          `url(#…)`, et un `aria-hidden` sans boîte ne coûte ni un arrêt de
+          tabulation ni une annonce. Il est donc là où il ne gêne personne. */}
+      <GlassLens />
     </div>
   );
 }

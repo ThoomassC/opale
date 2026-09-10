@@ -16,6 +16,7 @@ import { checkboxPage } from './composants/checkbox';
 import { chipListPage } from './composants/chip-list';
 import { dateRangePage } from './composants/date-range';
 import { fieldPage } from './composants/field';
+import { glassLensPage } from './composants/glass-lens';
 import { iconTilePage } from './composants/icon-tile';
 import { inputPage } from './composants/input';
 import { messagePage } from './composants/message';
@@ -26,6 +27,7 @@ import { tagPage } from './composants/tag';
 import { textareaPage } from './composants/textarea';
 import { timelinePage } from './composants/timeline';
 
+import { boutonBullePage } from './compositions/bouton-bulle';
 import { verreEtFrisePage } from './compositions/verre-et-frise';
 
 /* =============================================================================
@@ -64,6 +66,7 @@ export const PAGES: readonly DocPage[] = [
   chipListPage,
   dateRangePage,
   fieldPage,
+  glassLensPage,
   iconTilePage,
   inputPage,
   messagePage,
@@ -74,5 +77,6 @@ export const PAGES: readonly DocPage[] = [
   textareaPage,
   timelinePage,
 
+  boutonBullePage,
   verreEtFrisePage,
 ];

@@ -63,9 +63,19 @@ const USAGE = `import { Button } from '@thomascaron/ui';
 const PROPS: readonly PropRow[] = [
   {
     name: 'variant',
-    type: "'primary' | 'secondary' | 'danger'",
+    type: "'primary' | 'secondary' | 'danger' | 'bubble'",
     defaultValue: "'primary'",
-    description: <>L’aplat teal, le liseré teal, ou le liseré rouge.</>,
+    description: (
+      <>
+        L’aplat teal, le liseré teal, le liseré rouge — ou le verre liquide. <code>bubble</code> se
+        pose <strong>au-dessus</strong> d’un contenu et jamais dedans : ce n’est pas un bouton de
+        formulaire, et il ne se juge que sur un fond qui a de la matière —{' '}
+        <a className="tc-doc-link" href={hrefFor('compositions/bouton-bulle')}>
+          voir Bouton bulle
+        </a>
+        .
+      </>
+    ),
   },
   {
     name: 'href',
@@ -238,6 +248,15 @@ export const buttonPage: DocPage = {
         <code>Pill</code> applique la même politique sur un <code>href</code> vide —{' '}
         <a className="tc-doc-link" href={hrefFor('composants/pill')}>
           voir sa page
+        </a>
+        . La quatrième variante, <code>bubble</code>, n’est pas montrée ici parce qu’un aplat uni ne
+        laisse rien voir de sa réfraction : elle a sa page,{' '}
+        <a className="tc-doc-link" href={hrefFor('compositions/bouton-bulle')}>
+          Bouton bulle
+        </a>
+        , et son filtre est{' '}
+        <a className="tc-doc-link" href={hrefFor('composants/glass-lens')}>
+          GlassLens
         </a>
         .
       </p>
