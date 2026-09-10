@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import glassSource from '../styles/glass.css?raw';
+import lensSource from '../styles/lens.css?raw';
 import materialsSource from './materials.css?raw';
 import primitivesSource from './primitives.css?raw';
 import rolesSource from './roles.css?raw';
@@ -161,11 +162,18 @@ describe('la direction de dépendance entre couches', () => {
    * rien ne le voit. Le masque de `glass.css` peint donc en `currentColor` : un
    * masque ne lit que le canal alpha, la teinte y est arbitraire, et une valeur
    * arbitraire n'a aucune raison d'être écrite en dur.
+   *
+   * `styles/lens.css` la rejoint pour la MÊME raison exactement : son liseré
+   * emploie la recette de masque de `glass.css`, donc le même `currentColor`,
+   * donc la même tentation d'y écrire un noir en dur. Elle y entre le jour où
+   * elle est écrite plutôt qu'après le premier hexadécimal — c'est tout
+   * l'intérêt d'une liste qui se relit à chaque feuille ajoutée.
    */
   it.each([
     ['roles.css', rolesSource],
     ['materials.css', materialsSource],
     ['styles/glass.css', glassSource],
+    ['styles/lens.css', lensSource],
   ])('%s ne contient aucun hexadécimal : toute couleur y passe par un jeton', (file, source) => {
     const declarations = stripComments(source);
     const offenders = [...declarations.matchAll(HEX_ANYWHERE)].map((match) => {

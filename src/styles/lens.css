@@ -1,0 +1,448 @@
+/* =============================================================================
+   @thomascaron/ui — LA LENTILLE : le bouton `variant="bubble"`.
+
+   Feuille OPTIONNELLE, comme `glass.css`, et pour la même raison : un
+   consommateur qui n'emploie pas la variante n'a aucune raison de la
+   télécharger.
+
+       import '@thomascaron/ui/tokens.css';
+       import '@thomascaron/ui/ui.css';
+       import '@thomascaron/ui/lens.css';   // après `ui.css`, jamais avant
+
+   L'ORDRE N'EST PAS UNE PRÉCAUTION. Cette feuille écrase le fond que
+   `button.css` pose sur `.tc-btn--bubble` — mais `.tc-btn--bubble` pèse (0,1,0)
+   là comme ici. À poids égal c'est l'ordre du document qui tranche : importée
+   avant `ui.css`, la lentille est simplement inopérante, et rien ne le dit.
+
+   DEUX MOITIÉS, ET AUCUNE NE SUFFIT SEULE. Cette feuille porte le voile, le
+   flou, le liseré et le reflet. La DÉFORMATION du fond, elle, vient du filtre
+   SVG que `<GlassLens />` monte dans le document — une feuille de style ne peut
+   pas poser un élément. Voir `components/glass-lens.tsx` pour le pourquoi.
+
+   CE QUE VAUT LA MOITIÉ SANS L'AUTRE, mesuré et non supposé : un
+   `backdrop-filter` qui référence un filtre absent est INERTE dans Chromium 151
+   — le fond n'est pas déplacé, et le reste de la déclaration (flou, saturation)
+   s'applique normalement. Le bouton sans lentille est donc un bouton de verre
+   flouté, correct et lisible ; il lui manque la courbure du bord, rien d'autre.
+   C'est aussi son rendu partout où `backdrop-filter: url()` n'est pas honoré,
+   ce qui n'a PAS pu être établi ailleurs que dans Chromium : `@supports` répond
+   vrai dans les trois moteurs, il ne permet pas de trancher, et ni Safari ni
+   Firefox n'ont été vérifiés. Le rendu sans déformation n'est donc pas un mode
+   dégradé — c'est le rendu de base, et il est complet.
+
+   LA DOCTRINE, QUI EST CELLE D'APPLE ET NON UNE PRÉFÉRENCE : « Don't use
+   Liquid Glass in the content layer. » Cette variante déplace et floute ce
+   qu'il y a derrière elle ; elle n'a de sens qu'AU-DESSUS d'un contenu, en
+   couche de navigation ou d'action flottante. Sur le sol d'un formulaire, elle
+   ne fait que rendre son propre fond illisible.
+   ========================================================================== */
+
+/* -----------------------------------------------------------------------------
+   § 1. LES TROIS JETONS DE LA LENTILLE.
+
+   TROIS BLOCS DE THÈME, comme `roles.css` et `materials.css`, et pour la même
+   raison qu'eux : `prefers-color-scheme` seul ne sait pas qu'un visiteur a
+   choisi le thème clair à la main, et `[data-theme]` seul ne sait pas ce que le
+   système préfère. Le premier bloc est la valeur claire ; le bloc `@media` est
+   gardé par `:not([data-theme='light'])` pour qu'un choix explicite le batte ;
+   le bloc `[data-theme='dark']` reprend la valeur sombre pour le choix inverse.
+
+   Les autres matériaux — liseré, reflet, ombre — sont ceux du verre de la
+   librairie (`--glass-*`, dans `tokens/materials.css`), non redéclarés ici.
+   Une lentille et une carte de verre sont le même matériau vu de deux
+   épaisseurs : leur donner deux liserés serait promettre une différence qui
+   n'existe pas.
+   -------------------------------------------------------------------------- */
+
+:root {
+  /* LE VOILE, ET SON ALPHA EST UNE FRONTIÈRE MESURÉE, PAS UN GOÛT.
+
+     Balayé au pixel sur les images composées, au-dessus du pire fond que
+     j'aie su construire — damier de 20 px noir/blanc surchargé de texte gras.
+     Le couple (voile 0,32 ; flou 8 px) est le plus TRANSPARENT qui garde le
+     libellé à 4,5:1 dans les deux thèmes : 5,42:1 en clair, 4,81:1 en sombre —
+     et 5,39 / 4,60 à la position la plus défavorable du damier.
+
+     UN CRAN PLUS TRANSPARENT NE MARCHE PAS, ET PAS FAUTE DE FLOU. À 0,24 le
+     clair tient encore (4,82:1) mais le sombre tombe à 4,09:1 — et il y reste
+     quel que soit le flou (4,03:1 à 12 px, 3,78:1 à 6 px). La raison est dans
+     l'optique : le flou fait converger la plaque vers la MOYENNE du fond, et
+     cette moyenne est trop claire pour un `--text-strong` clair. Seul le voile
+     la déplace. C'est pourquoi les deux jetons se lisent ensemble et pas l'un
+     après l'autre.
+
+     Le voile ÉCLAIRCIT en clair et CREUSE en sombre : dans les deux cas il
+     s'éloigne de l'encre du libellé. Un voile blanc en thème sombre a été
+     mesuré et rejeté — il rapproche la plaque de l'encre claire. */
+  --lens-veil: var(--tc-white-a32);
+
+  /* LE FLOU, ET C'EST UN JETON QUE L'APPELANT A LE DROIT DE BAISSER.
+
+     8 px est le DÉFAUT SÛR : avec le voile ci-dessus, il tient 4,5:1 au-dessus
+     de n'importe quoi. C'est aussi ce qui efface le plus la déformation qu'on
+     est venu chercher — un flou de 8 px sur un damier de 20 px n'en laisse
+     qu'un gris uni, donc il n'y a plus rien à courber.
+
+     LA TABLE, MESURÉE CASE PAR CASE SUR UN BANC UNIQUE. Voile 0,32, libellé
+     en `--text-strong`, pire ratio relevé sur les pixels composités :
+
+       flou    damier hostile        fond réaliste
+               (20 px + gras)        (masses larges, titre, image)
+       -----   -------------------   ----------------------------------
+        0 px   2,87 / 2,08  ÉCHOUE    9,82 / 11,10   tient largement
+        6 px   5,30 / 4,38  ÉCHOUE    7,39 / 11,93   tient
+        8 px   5,42 / 4,81  tient     7,49 / 10,37   tient
+       12 px   5,46 / 4,73  tient     7,90 /  8,64   tient
+
+     8 px n'est donc pas un défaut prudent : c'est LA frontière. 6 px tient en
+     clair et tombe en sombre, et 12 px ne rachète rien — le flou plafonne,
+     pour la raison écrite au jeton du voile.
+
+     PRÉCISION SUR LA PRÉCISION : le pixel le plus défavorable se déplace avec
+     la PHASE du damier sous le bouton, ce qui fait varier le pire ratio
+     d'environ 0,2 point selon la position. Les chiffres ci-dessus sont les
+     pires OBSERVÉS, pas une borne prouvée — le repos en sombre a été relevé à
+     4,81:1 à une position et 4,60:1 à une autre.
+
+     Les paires sont clair / sombre. Un appelant qui pose la lentille au-dessus
+     d'une image ou d'un dégradé — le cas d'un bouton flottant — peut donc
+     descendre à 0 et voir la réfraction pleine, à CONDITION de mesurer son
+     propre fond. Le défaut, lui, ne suppose rien sur ce fond. */
+  --lens-blur: 8px;
+
+  /* La saturation compense ce que le flou lave : moyenner des pixels rapproche
+     leur chroma du gris. 1,35 et non les 1,6 du verre de carte — la lentille
+     ajoute déjà une frange colorée au bord, et cumuler les deux fait ressortir
+     la frange comme un défaut d'affichage. */
+  --lens-saturate: 1.35;
+
+  /* LE LAVIS D'ÉTAT, ET C'EST UN JETON PARCE QUE DEUX DÉFAUTS L'EXIGEAIENT.
+
+     Le survol et l'appui redéclaraient `background` en entier. Deux pannes, et
+     les deux prouvées :
+
+     1. LA VALEUR ÉTAIT INVALIDE. `--glass-highlight` vaut DEUX dégradés, donc
+        le raccourci s'étendait en quatre couches dont la troisième était une
+        couleur nue — et la grammaire de `background` n'admet une couleur que
+        dans la DERNIÈRE couche. Sondé : la même règle écrite sans `var()`
+        parse en style VIDE, ce qui prouve la faute de grammaire ; avec `var()`
+        elle devient invalide au calcul, donc TOUS les longhands retombent à
+        leur valeur initiale. Mesuré au survol : `background-color` à
+        `rgba(0,0,0,0)` et `background-image` à `none`. Le bouton ne gagnait
+        pas un lavis — il PERDAIT son voile et ses deux reflets, juste avant le
+        clic. Invisible à la relecture parce que « perdre le voile blanc »
+        ressemble à « creuser » en clair, et l'inverse en sombre : exactement
+        les deux directions que ce fichier annonce ;
+     2. LE POIDS. `.tc-btn--bubble:not(:disabled):not([aria-disabled]):hover`
+        pèse (0,4,0). Les trois blocs d'aplatissement redéclarent
+        `.tc-btn--bubble` seul, soit (0,1,0), et NI `@media` NI `@supports`
+        n'ajoutent de spécificité. Le survol les battait tous les trois : un
+        visiteur en transparence réduite retrouvait du verre en survolant, et
+        cumulé au défaut 1, un libellé peint à même le contenu de l'appelant.
+
+     Le lavis passe donc par une propriété personnalisée. Les états ne
+     déclarent plus `background` du tout : ils changent une VALEUR, et une
+     valeur ne se dispute pas. Les blocs d'aplatissement reprennent la main
+     sans avoir à gagner un duel qu'ils ne peuvent pas gagner.
+
+     Corollaire assumé : un lavis empilé en couche d'image ne se transitionne
+     pas. `.tc-btn` transitionne `background-color` ; ce lavis-ci apparaît d'un
+     coup. C'était déjà le cas avant, la pile étant déjà faite de dégradés. */
+  --lens-state-wash: transparent;
+
+  /* LES DEUX VALEURS QUE LES ÉTATS POSENT, ET ELLES SUIVENT LE VOILE.
+     `--panel-surface-hover` / `-active` ont été essayés et MESURÉS FAUX pour
+     cet emploi : leur polarité est l'inverse de celle du voile dans les deux
+     thèmes, donc chaque état rapprochait la plaque de l'encre du libellé —
+     5,32:1 → 4,47:1 → 4,26:1 en clair, 4,72 → 3,60 → 3,30 en sombre. L'histoire
+     complète et les alphas sont dans `tokens/primitives.css`. */
+  --lens-wash-hover: var(--tc-white-a10);
+  --lens-wash-active: var(--tc-white-a13);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --lens-veil: var(--tc-pitch-a32);
+    --lens-wash-hover: var(--tc-pitch-a10);
+    --lens-wash-active: var(--tc-pitch-a13);
+  }
+}
+
+:root[data-theme='dark'] {
+  --lens-veil: var(--tc-pitch-a32);
+  --lens-wash-hover: var(--tc-pitch-a10);
+  --lens-wash-active: var(--tc-pitch-a13);
+}
+
+/* -----------------------------------------------------------------------------
+   § 2. LA MATIÈRE.
+
+   `isolation: isolate` N'EST PAS DÉCORATIF : le liseré du § 3 se peint sur un
+   `::before` en `z-index: -1`, pour passer derrière le libellé sans le
+   survoler. Sans contexte d'empilement sur l'hôte, ce `-1` l'enverrait derrière
+   le FOND DE L'ANCÊTRE, c'est-à-dire hors du bouton — le liseré disparaîtrait
+   sur toute surface peinte. C'est la même discipline que `glass.css` § 3.
+
+   LE REFLET EST DANS LA PILE DE FONDS, ET NON SUR UN `::after`. `button.css`
+   possède déjà `.tc-btn[aria-busy='true']::after` — les points de suspension de
+   l'attente. Un reflet posé là aurait effacé l'indicateur d'attente du bouton,
+   ou l'inverse selon l'ordre des feuilles, et dans les deux cas au détriment
+   d'une information. Les deux dégradés de `--glass-highlight` sont donc
+   empilés au-dessus du voile dans `background`, où rien ne les dispute.
+   -------------------------------------------------------------------------- */
+
+.tc-btn--bubble {
+  position: relative;
+  isolation: isolate;
+  /* `--control-border` ET NON `--glass-border`, ET C'EST LA CORRECTION D'UN
+     MANQUEMENT À 1.4.11. Le liseré EST la forme d'un bouton dont le fond est un
+     lavis — c'est la doctrine que `button.css` écrit pour `--secondary` — donc
+     WCAG lui demande 3:1 contre ce qui l'entoure. Mesuré, `--glass-border`
+     (encre à 0,25 en clair, voile à 0,22 en sombre) ne tient RIEN sur les sols
+     de la librairie : 1,75:1 sur le blanc de la vitrine, 1,74 sur `--surface`,
+     1,72 sur `--site-background`, 1,85 et 1,87 sur les deux sols sombres.
+     `--control-border` y tient 5,73 / 5,13 / 4,77 / 6,64 / 6,42:1.
+
+     CE QUE ÇA NE RÈGLE PAS, ET IL FAUT LE DIRE : contre un contenu QUELCONQUE,
+     aucune couleur opaque ne peut garantir 3:1 — le pire support est celui de
+     même luminance, et il donne 1:1 par construction. Même la paire à deux
+     couches (liseré opaque + reflet spéculaire, contraste interne 5,73:1 en
+     clair, 2,78 en sombre) ne descend qu'à environ 2,4:1 dans le pire cas. La
+     frontière de ce contrôle est donc garantie sur les sols de la librairie et
+     PAS au-dessus d'une image arbitraire. C'est la même limite structurelle
+     que celle du libellé, et c'est une raison de plus de tenir la variante
+     dans la couche de navigation, au-dessus d'un fond que l'appelant choisit. */
+  border-color: var(--control-border);
+  /* LE LAVIS EST UNE COUCHE D'IMAGE, PAS UNE COULEUR :
+     `linear-gradient(<color> 0 0)` est l'idiome du dépôt (voir le masque de
+     `card.css`) et la seule façon de poser une couleur ailleurs que dans la
+     dernière couche. Écrite en couleur nue, elle invalidait la déclaration
+     entière — l'histoire est au § 1. */
+  background: var(--glass-highlight), linear-gradient(var(--lens-state-wash) 0 0), var(--lens-veil);
+  /* L'ORDRE DES FONCTIONS COMPTE : le flou d'abord, le déplacement ensuite.
+     `backdrop-filter` applique ses fonctions dans l'ordre écrit, donc le fond
+     est lissé puis courbé — la chaîne qui a été mesurée. Inversé, le
+     déplacement porterait sur un fond net et le flou effacerait ensuite la
+     frange chromatique qui fait tout l'effet.
+
+     `-webkit-backdrop-filter` est doublé pour Safari, qui en a encore besoin.
+     La référence `url()` n'y sera vraisemblablement pas honorée — ce n'est pas
+     un problème : le flou et la saturation, eux, le seront, et c'est ce qui
+     porte la lisibilité. */
+  -webkit-backdrop-filter: blur(var(--lens-blur)) saturate(var(--lens-saturate)) url(#tc-lens);
+  backdrop-filter: blur(var(--lens-blur)) saturate(var(--lens-saturate)) url(#tc-lens);
+  /* `--elevation-2` PORTE DÉJÀ SON ENCRE — `0 0.5rem 1.25rem var(--shadow-ink)`
+     — donc rien à ajouter après lui. Et `--glass-shadow` EST un alias de
+     `--shadow-ink` : le citer en plus n'aurait pas seulement été redondant,
+     c'eût été une seconde couleur dans une même ombre, donc une déclaration
+     invalide, jetée en silence par la cascade. */
+  box-shadow: var(--elevation-2);
+  color: var(--text-strong);
+}
+
+/* -----------------------------------------------------------------------------
+   § 3. LE LISERÉ SPÉCULAIRE.
+
+   La recette est celle de `glass.css` § 3, au mot près : un anneau de
+   `--glass-rim-width` obtenu en masquant un dégradé directionnel par la
+   différence entre la boîte de bordure et la boîte de contenu. Deux masques
+   composés en `exclude` — c'est la seule façon de peindre un contour dégradé
+   qui suive un `border-radius` et une `corner-shape`.
+
+   LE MASQUE PEINT EN `currentColor`, ET CE N'EST PAS UNE COULEUR : un masque ne
+   lit que le canal alpha de ses couches, donc la teinte est arbitraire. Cette
+   feuille n'a pas le droit d'écrire un hexadécimal, et `currentColor` est le
+   seul opaque qui ne soit ni un littéral ni un jeton de couleur détourné.
+   -------------------------------------------------------------------------- */
+
+.tc-btn--bubble::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  padding: var(--glass-rim-width);
+  border-radius: inherit;
+  corner-shape: inherit;
+  background: var(--glass-specular);
+  content: '';
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(currentColor 0 0) content-box,
+    linear-gradient(currentColor 0 0);
+  mask:
+    linear-gradient(currentColor 0 0) content-box,
+    linear-gradient(currentColor 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* -----------------------------------------------------------------------------
+   § 4. LES ÉTATS.
+
+   Le survol et l'appui ÉPAISSISSENT LE VERRE plutôt qu'ils ne le teintent :
+   une couche de plus dans la pile de fonds, DE LA FAMILLE DU VOILE.
+
+   CE PARAGRAPHE A AFFIRMÉ LE CONTRAIRE, ET IL AVAIT TORT. Il disait que les
+   jetons d'état de la librairie (`--panel-surface-hover`, `-active`) « creusent
+   en clair et éclaircissent en sombre », donc « dans le même sens que le voile,
+   jamais contre lui ». C'est l'inverse : le voile est BLANC en clair et PITCH
+   en sombre, l'échelle de panneau est ENCRE en clair et VOILE CLAIR en sombre.
+   Les deux polarités sont opposées thème par thème, et comme l'encre du
+   libellé suit le voile, chaque état rapprochait la plaque du libellé.
+
+   Mesuré, plaque nue sous le libellé sur damier hostile, AVANT correction :
+   5,32:1 au repos, 4,47:1 au survol, 4,26:1 à l'appui en clair ; 4,72 / 3,60 /
+   3,30 en sombre. Deux états sous 4,5:1 en clair, trois en sombre — un
+   manquement à 1.4.3 sur l'état où l'on est justement sur le point de cliquer.
+
+   APRÈS, le lavis prenant la famille du voile, remesuré sur le même banc :
+   5,39 → 5,85 → 6,07 en clair, et 4,60 → 5,48 → 5,74 en sombre. Le contraste
+   MONTE avec l'état, au lieu de tomber.
+
+   LES DEUX `:not()` REPRODUISENT `button.css` À L'IDENTIQUE, et ce n'est pas
+   une copie machinale : sans eux, un bouton inerte réagirait au survol, ce qui
+   est le contraire de ce que `[aria-disabled]` annonce.
+   -------------------------------------------------------------------------- */
+
+.tc-btn--bubble:not(:disabled):not([aria-disabled='true']):hover {
+  --lens-state-wash: var(--lens-wash-hover);
+}
+
+.tc-btn--bubble:not(:disabled):not([aria-disabled='true']):active {
+  --lens-state-wash: var(--lens-wash-active);
+  transform: translateY(1px);
+}
+
+/* L'INERTIE REPREND LA MAIN, ET IL FAUT UNE RÈGLE POUR ÇA. `button.css` peint
+   les boutons inertes avec `.tc-btn:disabled` — (0,2,0), le poids exact de
+   `.tc-btn--bubble` … non : celui-ci ne pèse que (0,1,0), mais cette feuille
+   est importée APRÈS `ui.css`, et son fond gagnait donc contre un sélecteur
+   plus lourd rien qu'en étant écrit plus tard. Un bouton `bubble` inerte
+   gardait son verre et son ombre : il ne se distinguait plus d'un bouton actif,
+   alors que `not-allowed` et le liseré tireté, eux, s'appliquaient. La règle
+   ci-dessous rend l'apparence inerte, filtre et liseré compris.
+
+   `backdrop-filter: none` retire aussi la lentille : un contrôle qu'on ne peut
+   pas actionner n'a pas à être le seul endroit vivant de la page. */
+.tc-btn--bubble:disabled,
+.tc-btn--bubble[aria-disabled='true'] {
+  /* `--glass-fill-solid` ET NON `--panel-surface-active`, QUI EST CE QU'EMPLOIE
+     `button.css` — et l'écart est mesuré, pas stylistique. Le lavis d'état est
+     translucide (0,13 en clair, 0,16 en sombre) : sur le sol de la librairie il
+     suffit, parce qu'il n'a qu'un aplat opaque derrière lui. Ici, retirer le
+     filtre lui retire son support — le lavis se compose alors sur le CONTENU de
+     l'appelant, et un bouton inerte devenait un rectangle presque invisible
+     au-dessus d'un fond chargé, sans même son libellé lisible. Le repli opaque
+     du verre est le seul fond qui tienne quel que soit ce qu'il y a derrière.
+     C'est la même valeur, et la même raison, qu'au § 5. */
+  background: var(--glass-fill-solid);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.tc-btn--bubble:disabled::before,
+.tc-btn--bubble[aria-disabled='true']::before {
+  display: none;
+}
+
+/* -----------------------------------------------------------------------------
+   § 5. LE REPLI MOTEUR — `@supports not`, ET IL REND LE FOND OPAQUE.
+
+   ÉCART ASSUMÉ AVEC `glass.css`, QUI NE RESTAURE RIEN. Là-bas, les surfaces
+   filtrées gardent sans filtre exactement la translucidité que la librairie
+   leur donne déjà en mode normal : il n'y a rien à réparer. Ici, le voile à
+   0,32 N'EST PAS un fond de repos — il a été dimensionné en SUPPOSANT le flou.
+   Sans `backdrop-filter`, le libellé se lit à même le contenu de l'appelant,
+   et le pire ratio mesuré tombe à 2,87:1 en clair, 2,08:1 en sombre —
+   c'est la ligne « 0 px » de la table du § 1, le flou étant ce qui disparaît. `--glass-fill-solid` — qui est
+   `--surface`, la carte de la librairie — est donc le seul recours honnête.
+
+   La lentille part avec : sans flou, la déformation seule ferait un bouton dont
+   le fond bouge sans qu'on sache pourquoi.
+   -------------------------------------------------------------------------- */
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  /* LES TROIS SÉLECTEURS, ET NON LE PREMIER SEUL. Le troisième pèse (0,2,0),
+     exactement le poids de la règle d'inertie du § 4 — écrit après, il reprend
+     la main. Avec `.tc-btn--bubble` seul, un bouton inerte gardait le fond de
+     l'inertie, qui est le même ici ; c'est explicite plutôt que chanceux. */
+  .tc-btn--bubble,
+  .tc-btn--bubble:disabled,
+  .tc-btn--bubble[aria-disabled='true'] {
+    /* Le lavis d'état SURVIT, posé sur un fond opaque : sans lui, le survol et
+       l'appui n'auraient plus aucun retour visuel dans ce repli. */
+    background: linear-gradient(var(--lens-state-wash) 0 0), var(--glass-fill-solid);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   § 6. LES DEUX PRÉFÉRENCES D'ACCESSIBILITÉ, DANS LA MÊME CONDITION.
+
+   `prefers-reduced-transparency: reduce` EST LA DEMANDE EXACTE, et elle ne
+   suffit pas : à ce jour Chromium seul l'implémente. `prefers-contrast: more`
+   est déclaré dans la même condition parce que c'est ce que Safari et Firefox
+   savent dire — ne pas l'écrire, c'est servir du verre à un visiteur qui a
+   demandé le contraire dans les deux moteurs qui n'ont pas le premier réglage.
+   C'est la condition de `glass.css`, de `card.css` et de `backdrop.css` ;
+   `glass.structure.test.ts` épingle leur égalité, et cette feuille rejoint la
+   liste.
+
+   L'APLATISSEMENT EST TOTAL ICI, pas partiel. Une lentille sans déformation ni
+   flou n'est plus une lentille : la garder à demi serait garder un voile
+   translucide dont personne ne veut, sur un fond qu'on refuse de flouter.
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .tc-btn--bubble,
+  .tc-btn--bubble:disabled,
+  .tc-btn--bubble[aria-disabled='true'] {
+    background: linear-gradient(var(--lens-state-wash) 0 0), var(--glass-fill-solid);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  /* Le liseré part avec le filtre : un dégradé blanc translucide étalé sur
+     1,5 px ADOUCIT une arête, et la demande sous-jacente à ces deux
+     préférences est un bord plus net, pas un reflet de plus. La bordure
+     opaque, elle, reste — c'est elle qui dessine le contour. */
+  .tc-btn--bubble::before {
+    display: none;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   § 7. LES COULEURS FORCÉES.
+
+   `forced-colors: active` N'IMPLIQUE PAS `prefers-contrast: more` — le bloc du
+   § 6 ne couvre donc pas ce cas, et l'oublier laissait le filtre en place sous
+   un thème à fort contraste de Windows.
+
+   Le fond passe à `Canvas` et la bordure à `ButtonBorder` : sous couleurs
+   forcées, les seules valeurs qui aient un sens sont les couleurs système. Le
+   voile, le reflet, l'ombre et la lentille n'en ont aucun et partent tous.
+   -------------------------------------------------------------------------- */
+
+@media (forced-colors: active) {
+  .tc-btn--bubble,
+  .tc-btn--bubble:disabled,
+  .tc-btn--bubble[aria-disabled='true'] {
+    border-color: ButtonBorder;
+    background: Canvas;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+    color: ButtonText;
+  }
+
+  .tc-btn--bubble::before {
+    display: none;
+  }
+
+  /* SOUS COULEURS FORCÉES, LE SURVOL N'AVAIT PLUS AUCUN RETOUR : `Canvas` ne
+     porte pas de couche de lavis, donc `background-image` reste à `none` au
+     repos comme au survol. Ce n'est exigé par aucun critère — le survol n'est
+     pas un indicateur obligatoire — mais un liseré `Highlight` le rend, et ne
+     coûte rien. */
+  .tc-btn--bubble:not(:disabled):not([aria-disabled='true']):hover {
+    border-color: Highlight;
+  }
+}

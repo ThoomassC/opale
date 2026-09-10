@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import backdropSource from './components/backdrop.css?raw';
+import glassSheetSource from './glass.css?raw';
+import lensSource from './lens.css?raw';
 import cardSource from './components/card.css?raw';
 import materialsSource from '../tokens/materials.css?raw';
 import { ruleBodies, stripComments } from '../contract/stylesheet';
@@ -453,8 +455,16 @@ describe('la transparence réduite', () => {
      absent des deux plus visibles.
 
      Ce test-ci est le garde de la COHÉRENCE, pas d'une valeur : il exige que
-     les trois fichiers énoncent la même condition. Ajouter demain un quatrième
-     fichier qui aplatit sans reprendre les deux conditions le fera rougir. */
+     tous les fichiers listés énoncent la même condition.
+
+     LA LISTE EST ÉCRITE EN DUR, ET C'EST SA LIMITE — la phrase qui vivait ici
+     promettait qu'« ajouter demain un quatrième fichier qui aplatit sans
+     reprendre les deux conditions le fera rougir », ce qui était FAUX : rien
+     ne découvre un fichier absent de la liste. `glass.css` et `lens.css` en
+     manquaient toutes deux alors que les deux aplatissent, et `lens.css`
+     affirmait de son côté être épinglée ici. Elles y sont maintenant. Un
+     sixième fichier reste à inscrire à la main : c'est le garde de la
+     cohérence de ce qui est listé, pas un inventaire. */
   it('devrait énoncer la même condition dans les trois fichiers qui aplatissent', () => {
     const CONDITIONS = ['prefers-reduced-transparency: reduce', 'prefers-contrast: more'];
 
@@ -462,6 +472,8 @@ describe('la transparence réduite', () => {
       ['tokens/materials.css', materialsSource],
       ['styles/components/card.css', cardSource],
       ['styles/components/backdrop.css', backdropSource],
+      ['styles/glass.css', glassSheetSource],
+      ['styles/lens.css', lensSource],
     ];
 
     for (const [name, source] of sheets) {
