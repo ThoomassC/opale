@@ -172,7 +172,8 @@ contenu — et il est borné par la mesure.
 
 | | Composants | Ce qu'ils reçoivent |
 | --- | --- | --- |
-| **Flou + liseré** | `Button --secondary`, `Button --danger`, `Message`, `IconTile` | `backdrop-filter: blur(var(--glass-blur-control)) saturate(...)` et un liseré spéculaire sur `::before` |
+| **Flou + liseré + LENTILLE** | `Button --secondary` | le flou, le liseré, ET `url(#tc-lens)` — le fond est réellement déformé. Voir « le bouton bulle » plus bas ; le filtre vient de `<GlassLens />` et `lens.css` |
+| **Flou + liseré** | `Button --danger`, `Message`, `IconTile` | `backdrop-filter: blur(var(--glass-blur-control)) saturate(...)` et un liseré spéculaire sur `::before` |
 | **Flou seul** | `Input`, `Select`, `Textarea` | le flou. Pas de liseré : **un contrôle de formulaire ne génère pas de boîte de pseudo-élément** — sondé, le témoin `<span>` peint son anneau, les trois contrôles n'en peignent aucun pixel |
 | **Liseré seul, aplat conservé** | `Button --primary`, `Tag`, les trois `Pill` | le bord et le reflet, jamais la transparence de fond |
 | **Inchangés** | `Backdrop`, `Card`, `Checkbox`, `ChipList`, `DateRange`, `Field`, `SectionHeading`, `Timeline` | rien |
@@ -374,6 +375,34 @@ en clair et 2,78 en sombre — ne descend qu'à environ 2,4:1 dans le pire cas. 
 ce contrôle est garantie **sur les sols de la librairie et pas au-dessus d'une image
 arbitraire.** C'est la même limite structurelle que celle du libellé, et une raison de plus de
 tenir la variante dans la couche de navigation.
+
+### Le secondary du thème verre reçoit la même lentille
+
+`variant="secondary"` sous `data-material="glass"` est le contrôle le plus TRANSPARENT de la
+librairie — voile `--panel-surface`, alpha 0,05 dans les deux thèmes. Il lui manquait la
+déformation ; il l'a. C'est là que la réfraction se voit le mieux, et le coût est nul :
+
+| support | libellé, flou 0 | libellé, flou 12 |
+| --- | --- | --- |
+| `--site-background` | 9,32 / 10,65 | 9,32 / 10,65 |
+| le décor à six halos | 8,88 / 10,21 | 8,56 / 10,05 |
+
+**Le flou ne sert à rien sur un fond lisse, et c'est le même fait qui dit qu'une lentille n'y
+montre rien** : il n'y a pas de détail à effacer, donc pas de détail à courber.
+
+**Le flou reste néanmoins à 12 px, contre l'esthétique.** Sur un fond chargé c'est lui qui
+tient le libellé : 3,15:1 à 12 px, 3,09 à 8, 2,01 à 4 et **1,09 à 0**, un texte invisible. À
+dire franchement : 3,15:1 est déjà sous 4,5:1, et ce n'est pas la lentille qui l'introduit —
+l'état livré du thème verre mesure 3,15 / 2,52 aux mêmes endroits et la lentille le laisse à
+3,13 / 2,54. Le manquement appartient au voile à 0,05, il est antérieur, et il est publié ici.
+
+Le `--danger` ne la reçoit pas : un liseré rouge dont le fond se courbe attire l'œil sur une
+action destructrice, ce que `button.css` refuse pour lui. Le `--primary` est un aplat opaque —
+il n'y a rien à voir à travers.
+
+**Ce qui n'est pas reproductible**, et que la capture d'Apple montre pourtant : la fusion
+« gouttelette » de deux formes de verre qui se rejoignent. Elle demande un champ de distance
+calculé par nuanceur, pas un filtre SVG appliqué par élément.
 
 ### Ce qu'elle coûte
 

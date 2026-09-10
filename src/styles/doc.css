@@ -1538,6 +1538,65 @@ body {
   transform: translateY(1px);
 }
 
+/* --- La scène où la réfraction se voit ------------------------------------
+   UNE LENTILLE NE MONTRE RIEN SUR UN APLAT UNI : elle déplace des pixels
+   identiques. C'est pourquoi le spécimen des surfaces filtrées, posé sur le sol
+   de la page, ne laisse RIEN voir de la déformation — mesuré, le libellé du
+   secondary y vaut 9,32:1 à flou 0 comme à flou 12, ce qui dit la même chose
+   autrement : il n'y a pas de détail à effacer, donc pas de détail à courber.
+
+   Les captures d'Apple montrent la réfraction parce que des barres colorées à
+   BORDS FRANCS passent derrière le verre. Cette scène reproduit cette
+   condition, et rien d'autre : cinq bandes à arrêts durs et une grille de
+   16 px.
+
+   ELLE NE SUIT PAS LE THÈME DU LECTEUR, et c'est la même dispensation que les
+   plaques de la page palette : un fond qui documente une MATIÈRE ne doit pas
+   changer sous celui qui la regarde. Deux conséquences écrites plutôt que
+   subies — les bandes citent les membres CLAIRS de chaque famille, et l'encre
+   du libellé est figée sur `--text-strong` du thème clair. Sans ce second
+   point, le thème sombre posait son encre claire sur des pastels clairs :
+   mesuré, 1,16:1 à 1,34:1 selon la bande, c'est-à-dire rien.
+
+   POURQUOI DES PASTELS ET NON LES ENCRES SATURÉES. La première version employait
+   `--accent`, `--success`, `--warning` et `--danger`, qui montrent une frange
+   chromatique superbe et rendent le libellé illisible — Apple ne met pas de
+   texte dans ses pilules de démonstration, moi je dois en mettre. Sur les cinq
+   pastels, l'encre tient 6,20:1 (rouge) à 9,72:1 (ambre), et la courbure des
+   arêtes se voit tout autant : ce qui la révèle est le BORD FRANC, pas la
+   saturation.
+
+   `overflow: hidden` ET NON `clip` : le bouton posé dessus porte un
+   `backdrop-filter`, dont la région déborde sa boîte de 30 % pour que le bord
+   de la lentille aille chercher le fond au-delà. Un conteneur qui clippe au ras
+   coupe cet échantillon et la frange devient une arête. */
+.tc-doc-lensstage {
+  --text-strong: var(--tc-mist-324);
+
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: center;
+  min-block-size: calc(var(--space-8) * 2);
+  padding: var(--space-6) var(--space-5);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+  background-image:
+    repeating-linear-gradient(0deg, var(--tc-shade-a16) 0 1px, transparent 1px 16px),
+    repeating-linear-gradient(90deg, var(--tc-shade-a16) 0 1px, transparent 1px 16px),
+    linear-gradient(
+      100deg,
+      var(--tc-teal-801) 0 18%,
+      var(--tc-green-812) 18% 36%,
+      var(--tc-amber-921) 36% 54%,
+      var(--tc-red-793) 54% 72%,
+      var(--tc-copper-819) 72% 100%
+    );
+  overflow: hidden;
+}
+
 /* --- Rebasculer le MATÉRIAU dans une plaque de thème -----------------------
    Les trois blocs de thème du dépôt sont tous portés par `:root` — c'est la
    convention de `roles.css`, `materials.css` et `lens.css`, et elle est juste :

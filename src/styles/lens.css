@@ -446,3 +446,81 @@
     border-color: Highlight;
   }
 }
+
+/* -----------------------------------------------------------------------------
+   § 8. LA LENTILLE SUR LE SECONDARY DU THÈME VERRE.
+
+   Le thème verre donne déjà à ce bouton un voile très mince — `--panel-surface`,
+   alpha 0,05 dans les deux thèmes — un flou de 12 px et le liseré spéculaire.
+   Ce qui lui manquait est exactement ce que la lentille apporte : la
+   DÉFORMATION de ce qui passe derrière. C'est le contrôle le plus transparent
+   de la librairie, donc celui où la réfraction se voit le mieux.
+
+   CE QUE ÇA NE COÛTE PAS, MESURÉ. Sur les supports que la librairie déclare, le
+   libellé ne bouge pas d'un centième : 9,32:1 en clair et 10,65:1 en sombre sur
+   `--site-background`, 8,88 et 10,21 sur le décor à six halos — et ces valeurs
+   sont les mêmes à flou 0 comme à flou 12, parce qu'un flou n'a rien à effacer
+   sur un fond lisse. La lentille est gratuite ici.
+
+   LE FLOU RESTE À 12 px, ET C'EST UNE DÉCISION CONTRE L'ESTHÉTIQUE. Sur un fond
+   CHARGÉ — le damier hostile — le flou est ce qui tient le libellé : 3,15:1 à
+   12 px, 3,09 à 8, 2,01 à 4, et 1,09 à 0, c'est-à-dire un texte invisible. Le
+   baisser rendrait la réfraction plus lisible et le bouton illisible. À signaler
+   franchement : 3,15:1 est DÉJÀ sous 4,5:1, et ce n'est pas cette règle qui
+   l'introduit — l'état livré du thème verre mesure 3,15 / 2,52 aux mêmes
+   endroits, et la lentille le laisse à 3,13 / 2,54. Le manquement est antérieur
+   et il appartient au voile à 0,05, pas au filtre.
+
+   CE QU'IL NE FAUT PAS ATTENDRE. Sur un aplat uni, une lentille ne montre RIEN
+   — elle déplace des pixels identiques. Les captures d'Apple montrent la
+   réfraction parce que des barres colorées à bords francs passent DERRIÈRE le
+   verre. Sur le sol d'une page, c'est le bord qui porte tout le matériau, et le
+   bord est déjà là. La page de vitrine pose donc le spécimen sur des bandes
+   franches, pour montrer la chose au lieu de l'affirmer.
+
+   ET PAS LE `--danger` NI LE `--primary`. La demande portait sur le secondary.
+   Le danger partage sa règle de flou dans `glass.css` mais pas celle-ci : un
+   liseré rouge dont le fond se courbe attire l'œil sur une action destructrice,
+   ce qui est le contraire de ce que `button.css` décide pour lui. Le primaire,
+   lui, est un aplat opaque : il n'y a rien à voir à travers.
+   -------------------------------------------------------------------------- */
+
+[data-material='glass'] .tc-btn--secondary {
+  /* (0,2,0), LE POIDS EXACT DE LA RÈGLE DE `glass.css` QU'ELLE COMPLÈTE, et
+     cette feuille est importée après : c'est l'ordre du document qui tranche.
+     La déclaration est REPRISE EN ENTIER plutôt qu'ajoutée — `backdrop-filter`
+     n'est pas une propriété qui s'accumule, la dernière déclaration gagne, donc
+     omettre le flou et la saturation les retirerait. */
+  -webkit-backdrop-filter: blur(var(--glass-blur-control)) saturate(var(--glass-saturate))
+    url(#tc-lens);
+  backdrop-filter: blur(var(--glass-blur-control)) saturate(var(--glass-saturate)) url(#tc-lens);
+}
+
+/* LES TROIS REPLIS DOIVENT ÊTRE REDÉCLARÉS ICI, ET C'EST LE MÊME PIÈGE QU'AU
+   § 4. `glass.css` aplatit bien ce bouton dans ses trois blocs, au même poids
+   (0,2,0) — mais cette feuille est importée APRÈS, donc la règle ci-dessus
+   gagnait contre eux et la lentille survivait à `prefers-reduced-transparency`.
+   Vérifié : sans les trois blocs ci-dessous, le filtre reste calculé sous les
+   trois conditions. Ils ne rétablissent rien de neuf, ils remettent simplement
+   `none` du bon côté de l'ordre du document. */
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  [data-material='glass'] .tc-btn--secondary {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  [data-material='glass'] .tc-btn--secondary {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (forced-colors: active) {
+  [data-material='glass'] .tc-btn--secondary {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

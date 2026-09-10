@@ -347,6 +347,25 @@ export const verrePage: DocPage = {
         </div>
       </Specimen>
 
+      <Specimen
+        title="La déformation, sur un fond qui a de la matière"
+        note="Une lentille ne montre rien sur un aplat uni : elle déplace des pixels identiques. Les bandes sont là pour que la courbure du bord se voie, pas pour illustrer un emploi — le libellé n’est pas censé se lire sur du rouge saturé."
+      >
+        <div className="tc-doc-stack">
+          <div className="tc-doc-lensstage">
+            <Button variant="secondary">Annuler</Button>
+            <Button variant="secondary">Un libellé nettement plus long</Button>
+          </div>
+          <p className="tc-doc-prose tc-doc-aside">
+            Sur les supports que la librairie déclare, la lentille ne coûte rien : le libellé du
+            secondary tient 9,32:1 en clair et 10,65:1 en sombre sur le sol, 8,88 et 10,21 sur le
+            décor — les mêmes valeurs à flou 0 comme à flou 12. Sur un fond chargé, c’est le flou
+            qui le tient, et il reste à 12 px pour cette raison. Sur les bandes ci-dessus, mesuré :
+            5,11:1 au pire pour le libellé long, 6,26:1 pour le court.
+          </p>
+        </div>
+      </Specimen>
+
       <Specimen title="Les aplats, qui ne reçoivent que le bord" inline>
         <Pill tone="done">Acquis</Pill>
         <Pill tone="progress">En cours</Pill>
