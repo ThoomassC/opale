@@ -200,9 +200,24 @@ body {
      `backdrop-filter` n'y change rien : le flou détruit le détail, pas la
      luminance moyenne.
 
-   La barre reste donc un aplat, et elle emprunte au verre ce qui ne coûte
-   rien : le liseré d'encre `--glass-border` à la place de `--rule`, pour que
-   son bord et celui du sommaire soient le même trait.
+   La barre reste donc un aplat, et son bord est `--rule` — LE MÊME TRAIT QUE
+   CELUI DU SOMMAIRE, ce qui était déjà l'intention et ne l'est redevenu qu'en
+   changeant de jeton.
+
+   Elle a porté `--glass-border`, et le commentaire qui vivait ici le
+   justifiait par ces mots exacts : « pour que son bord et celui du sommaire
+   soient le même trait ». C'était vrai quand le sommaire était un panneau de
+   verre bordé de `--glass-border`. Le sommaire est devenu une colonne bordée
+   de `--rule`, et la raison s'est retournée contre sa propre déclaration : les
+   deux filets se rencontrent au coin haut-gauche de la colonne de contenu, à
+   1,24:1 l'un de l'autre — un ressaut visible, tenu par une phrase qui
+   affirmait le contraire.
+
+   Ce que le changement coûte, mesuré : le filet passe de 1,75:1 à 1,42:1
+   contre le sol clair, et de 1,87 à 1,53 contre le sombre. Aucun critère n'est
+   en jeu — un séparateur n'est pas la frontière d'un contrôle, WCAG 1.4.11 ne
+   s'y applique pas — et `--rule` est le jeton que le dépôt nomme pour
+   exactement cet emploi.
    -------------------------------------------------------------------------- */
 
 /* `nowrap`, ET C'EST UNE CORRECTION MESURÉE. Avec `flex-wrap: wrap` et les deux
@@ -226,7 +241,7 @@ body {
   gap: var(--space-5);
   min-block-size: var(--doc-topbar-size);
   padding-inline: var(--space-5);
-  border-block-end: 1px solid var(--glass-border);
+  border-block-end: 1px solid var(--rule);
   background: var(--doc-ground);
 }
 
@@ -342,113 +357,74 @@ body {
    tronqué — mais on y perd le balayage vertical d'une liste de seize noms, qui
    est justement ce qu'on vient chercher dans un sommaire. Choix assumé : la
    coupe verticale, qui est le signal de défilement que tout le monde lit. */
-/* --- LE SOMMAIRE EST EN VERRE, ET LE MATÉRIAU EST RETEINT ICI ---------------
+/* --- LE SOMMAIRE EST DANS LA PAGE, ET NON DANS UNE FENÊTRE -----------------
 
-   DEUX CHEMINS EXISTAIENT, et celui-ci est le second : reteindre en local avec
-   les jetons `--glass-*` plutôt que d'envelopper la nav dans `Backdrop` et de
-   lui poser `tc-card tc-card--glass` (le motif que `TimelineItem` emploie dans
-   la page compositions). Trois raisons, dans l'ordre de gravité :
+   Il a été un panneau de verre — remplissage `--glass-fill`, liseré
+   `--glass-border`, rayon `--radius-lg`, ombre `--elevation-3`, coussin
+   extérieur de tous les côtés. Cela flottait, et c'est précisément ce qui a été
+   retiré : un sommaire n'est pas une palette posée sur la page, c'est une
+   partie de la page. Il n'a donc plus ni fond, ni bord fermé, ni rayon, ni
+   ombre — un filet, et le sol de la vitrine qui passe derrière lui.
 
-   1. LE COLLANT. `Backdrop` est `position: relative` : il deviendrait le bloc
-      conteneur du `sticky`, et sa hauteur est celle de son contenu — la course
-      du collant tomberait à zéro. C'est exactement le cas que `backdrop.tsx`
-      documente (« n'enveloppez pas votre application entière ») ;
-   2. LE DÉFILEMENT INTERNE. `.tc-card--glass` compose son matériau sur TROIS
-      couches, dont deux pseudo-éléments `position: absolute; inset: …`. Dans
-      un conteneur de défilement, un descendant absolu se positionne par
-      rapport à la boîte de rembourrage mais DÉFILE avec le contenu : le cœur
-      flouté et le liseré spéculaire remonteraient hors de vue au premier coup
-      de molette. Un `background`, lui, est attaché à l'élément
-      (`background-attachment: scroll` ne veut pas dire « défile ») et reste en
-      place — c'est pourquoi le verre est ici composé en couches de FOND ;
-   3. LES HALOS. `Backdrop` peint six disques teal et cuivre à 0,9 d'opacité.
-      L'utilisateur demande un fond BLANC : une colonne colorée derrière le
-      sommaire est la réponse à une autre question.
+   CE QUE LE VERRE COÛTAIT, MESURÉ, ET C'EST L'ARGUMENT QUI CLÔT LE SUJET : sur
+   un sol blanc, `--glass-fill` composé donne 1,000:1 contre ce sol et ΔE OKLab
+   0,00. Le remplissage ne peignait rien. Tout le panneau était porté par son
+   liseré et son ombre, c'est-à-dire par la seule chose qu'on vient d'enlever :
+   il ne restait donc, du matériau, que le contour d'une fenêtre. Aucune encre
+   du sommaire ne change en le retirant — elles étaient déjà lues sur le sol.
 
-   CE QUI MANQUE AU MATÉRIAU, ET POURQUOI. Pas de `backdrop-filter` : rien ne
-   passe derrière ce panneau — la barre du haut est au-dessus, le contenu est
-   dans l'AUTRE colonne de la grille — donc le filtre coûterait une passe de
-   peinture pour zéro pixel changé. Pas de ménisque (la bande de bord qui filtre
-   autrement que le centre) ni de liseré spéculaire, pour la même raison plus
-   une mesure : les arrêts de `--glass-specular` sont des blancs de 0,22 à 0,98,
-   et `materials.css` le dit déjà — « un filet blanc ne peut pas dessiner de
-   bord sur un remplissage quasi blanc ». Sur un sol BLANC, ce plafond tombe à
-   zéro : `--glass-fill` composé sur le sol mesure 1,000:1 et ΔE OKLab 0,00.
+   TROIS CONSÉQUENCES, dont deux suppressions :
 
-   CE QUI FAIT DONC LE VERRE ICI, ET C'EST MESURÉ :
-   — le liseré d'encre `--glass-border`, qui « porte le contour à peu près
-     seul » (materials.css) : ΔE OKLab 18,13 contre le sol blanc, soit MIEUX
-     que les 16,7 mesurés contre le sol papier. En luminance il ne vaut que
-     1,75:1 — c'est un trait décoratif, pas une forme de contrôle (WCAG 1.4.11
-     ne s'y applique pas), et c'est le même arbitrage que la carte de verre ;
-   — l'ombre portée, `--elevation-3`, qui EST la géométrie et l'encre de
-     l'ombre du verre (`0 1.5rem 3rem -0.75rem var(--shadow-ink)`, et
-     `--glass-shadow` est un alias de `--shadow-ink`) : citée par son jeton,
-     donc aucune longueur écrite à la main ;
-   — le lavis `--glass-highlight`, dont le second arrêt radial est un teal à
-     0,10 au coin bas-gauche : le seul reflet du matériau qui survive au blanc
-     (1,15:1, la même valeur que `--accent-quiet`) ;
-   — la superellipse et `--radius-lg`, la forme de la carte de verre.
+   1. les deux blocs de repli du verre — `prefers-reduced-transparency` /
+      `prefers-contrast` et `forced-colors` — n'ont plus d'objet. Ils sont
+      remplacés par les commentaires qui disent pourquoi, en dessous ;
+   2. le décalage collant n'a plus à porter le coussin du panneau : il valait
+      `--doc-topbar-size + --space-4` pour que le verre garde son air autour de
+      lui, il vaut maintenant la hauteur de la barre, et le sommaire monte
+      jusque sous elle comme le reste du contenu ;
+   3. la pastille de version garde son fond opaque, mais c'est désormais celui
+      de la page : c'est la seule surface du site sous laquelle du contenu
+      défile réellement, donc un fond transparent y laisserait passer les
+      entrées du sommaire.
 
-   Le texte ne perd RIEN à ce panneau, et c'est la conséquence de 1,000:1 :
-   composées sur le verre, les encres de la nav valent exactement ce qu'elles
-   valent sur le sol — `--text-body` 10,08:1, `--text-strong` 12,35:1,
-   `--text-muted` 8,12:1, l'entrée courante 10,74:1 sur son lavis.
+   CE QUI N'A PAS CHANGÉ : la colonne reste collante, borne sa hauteur et défile
+   pour elle seule. « Intégré à la page » décrit une apparence, pas un
+   comportement — un sommaire qui remonte avec le contenu de la page ne servirait
+   plus à naviguer dès la deuxième section.
    -------------------------------------------------------------------------- */
 
 .tc-doc-nav {
   max-block-size: 60dvh;
   overflow-y: auto;
-  /* Le panneau FLOTTE : sans coussin extérieur, un verre collé aux bords de la
-     fenêtre n'a plus de sol autour de lui et redevient une colonne. */
-  margin-block: var(--space-4);
-  margin-inline: var(--space-4);
   padding-block: var(--space-5);
   padding-inline: var(--space-5);
-  /* Le filet de séparation (`--rule`) a disparu des deux côtés : le bord du
-     panneau est désormais son propre liseré, et deux traits parallèles à 1 px
-     l'un de l'autre ne séparent rien de plus qu'un seul. */
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  corner-shape: superellipse(1.45);
-  background: var(--glass-highlight), var(--glass-fill);
-  box-shadow: var(--elevation-3);
+  /* UN SEUL FILET, ET RIEN D'AUTRE. Le sommaire n'a ni fond, ni liseré fermé,
+     ni rayon, ni ombre : il est posé sur le sol de la page et séparé du
+     contenu par un trait. Le filet est en bas en une colonne, sur le côté en
+     deux — c'est la seule chose qui change entre les deux dispositions. */
+  border-block-end: 1px solid var(--rule);
   /* Le défilement de la nav ne doit pas entraîner celui de la page quand elle
      arrive en butée. */
   overscroll-behavior: contain;
 }
 
-/* TRANSPARENCE RÉDUITE — même repli que `.tc-card--glass`, et pour la même
-   raison : les lavis de `roles.css` s'aplatissent sous cette préférence en
-   valeurs mesurées SUR `--surface`, donc le support doit devenir `--surface`.
-   `--glass-fill-solid` EST `--surface`. Il n'y a pas de `backdrop-filter` à
-   retirer ici, et les deux dégradés de `--glass-highlight` partent avec le
-   remplissage — ce qui est demandé, c'est de ne plus dépendre de ce qui passe
-   derrière.
+/* LES DEUX REPLIS DU VERRE N'ONT PLUS D'OBJET, ET LEUR ABSENCE EST UN FAIT —
+   d'où ce commentaire à la place des deux blocs qui vivaient ici.
 
-   LES DEUX CONDITIONS, comme `card.css` et `backdrop.css` — et il faut les
-   deux : `prefers-reduced-transparency` n'est implémenté que par Chromium,
-   `prefers-contrast: more` est partout. Un sommaire de verre qui resterait
-   translucide chez quelqu'un demandant plus de contraste sur Safari, pendant
-   que les cartes de la page s'aplatissent, serait le même demi-repli que celui
-   corrigé dans la feuille des composants. */
-@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-  .tc-doc-nav {
-    background: var(--glass-fill-solid);
-  }
-}
+   Le premier était un `@media (prefers-reduced-transparency: reduce),
+   (prefers-contrast: more)` qui ramenait le remplissage à `--glass-fill-solid`.
+   Le second un `@media (forced-colors: active)` qui remettait le fond à
+   `Canvas`, parce que le mode force `background-color` mais PAS les images de
+   fond, et que les deux dégradés de `--glass-highlight` auraient continué de
+   peindre par-dessus le `Canvas` forcé.
 
-/* CONTRASTE ÉLEVÉ : le verre doit se dégrader en APLAT LISIBLE. Le mode force
-   déjà `background-color` à `Canvas`, le liseré à `CanvasText` et supprime la
-   `box-shadow` — mais il ne touche PAS aux images de fond, et les deux dégradés
-   de `--glass-highlight` resteraient peints par-dessus le `Canvas` forcé. La
-   déclaration ci-dessous les retire, et elle ne fait rien d'autre : aucun
-   `forced-color-adjust`, donc le liseré et l'encre restent au système. */
-@media (forced-colors: active) {
-  .tc-doc-nav {
-    background: Canvas;
-  }
-}
+   Les deux visaient un remplissage translucide et deux dégradés que le
+   sommaire ne déclare plus. Il n'y a aucune transparence à réduire ni aucune
+   image de fond à retirer : le filet et l'encre partent au système comme le
+   reste de la colonne. La seule surface de verre de la vitrine est celle des
+   composants, servie par `glass.css`, qui porte ses propres blocs — et
+   `glass.structure.test.ts` épingle désormais la cohérence de leur condition
+   avec celle de `lens.css`, `card.css`, `backdrop.css` et `materials.css`. */
 
 /* COLLANTE DANS SON PROPRE CONTENEUR. La colonne défile dès que la fenêtre est
    courte (mesuré : 1 408 px de sommaire pour 928 px de fenêtre à 1440 × 1000),
@@ -457,39 +433,45 @@ body {
    sans elles, la pastille se collerait au bord au lieu de garder son coussin,
    et un blanc de 24 px défilerait au-dessus d'elle.
 
-   LE FOND RESTE OPAQUE, ET IL DEVIENT CELUI DU VERRE : `--glass-fill-solid`,
-   c'est-à-dire le repli opaque du matériau (`--surface` : #ebf4f6 en clair,
-   #0c1518 en sombre). Deux choses le décident, et aucune n'est le goût :
+   LE FOND RESTE OPAQUE, ET C'EST DÉSORMAIS CELUI DE LA PAGE. C'est la SEULE
+   surface du site sous laquelle du contenu défile réellement : ce qui passe
+   dessous, ce sont les vingt-trois entrées du sommaire, de l'encre à 10:1. Un
+   fond translucide y était mesuré et rejeté — l'encre d'un lien
+   (`--text-body`, #2b464c) sous `--glass-fill` donne un support
+   rgb(128, 144, 148), sur lequel `--text-strong` ne tient plus que 3,722:1, et
+   1,836:1 en thème sombre où l'encre des liens est claire. Un flou ne fabrique
+   pas de contraste : il détruit le détail, pas la luminance moyenne.
 
-   — opaque, obligatoirement. C'est la SEULE surface du site sous laquelle du
-     contenu défile réellement, donc le seul endroit où un `backdrop-filter`
-     aurait quelque chose à filtrer — et c'est aussi le pire : ce qui passe
-     dessous, ce sont les vingt-deux entrées du sommaire, de l'encre à 10:1.
-     Mesuré : l'encre d'un lien (`--text-body`, #2b464c) sous `--glass-fill`
-     donne un support rgb(128, 144, 148), sur lequel `--text-strong` ne tient
-     plus que 3,722:1 — et 1,836:1 dans le thème sombre, où l'encre des liens
-     est claire. Un flou ne fabrique pas de contraste : il détruit le détail,
-     pas la luminance moyenne ;
-   — et `--glass-fill-solid` plutôt qu'un blanc, parce qu'il doit se LIRE.
-     Mesuré : la pastille lève de 1,117:1 (ΔE OKLab 4,03) contre le verre
-     composé sur le sol blanc en clair, et 1,002:1 en sombre où c'est le filet
-     qui prend le relais. Un `--tc-white` y serait rigoureusement invisible —
-     le verre sur blanc mesure 1,000:1 contre le sol. L'encre forte tient
-     11,06:1 sur la pastille. */
+   CE QUI A CHANGÉ AVEC LA FENÊTRE DE SOMMAIRE : le fond était
+   `--glass-fill-solid`, choisi pour se LIRE contre le verre du panneau
+   (mesuré : 1,117:1, ΔE OKLab 4,03 en clair). Il n'y a plus de panneau à se
+   détacher de, et une pastille teintée en tête d'une colonne posée à même la
+   page se lirait comme une bande surlignée. `--doc-ground` la fait disparaître
+   dans le sol, et ce sont son cadre et son mono qui la tiennent — ce qu'ils
+   faisaient déjà. */
 .tc-doc-nav__version {
   position: sticky;
   inset-block-start: calc(-1 * var(--space-5));
   z-index: 1;
   margin-block-start: calc(-1 * var(--space-5));
   padding-block-start: var(--space-5);
-  /* LA MÊME ANNULATION, EN LIGNE : le coussin latéral de la nav est rendu à la
-     pastille, qui traverse donc le panneau de bord à bord. Sans ces deux
-     lignes, sa teinte s'arrêtait à 24 px des deux liserés et se lisait comme
-     une rangée surlignée au milieu du verre, pas comme la tête du panneau. Le
-     rayon du panneau la recoupe : `overflow-y: auto` clippe au rayon. */
+  /* LA MÊME ANNULATION, EN LIGNE : le coussin latéral de la colonne est rendu à
+     la pastille, qui traverse donc toute la largeur. Sans ces deux lignes, son
+     fond s'arrêtait à 24 px de chaque côté et laissait passer, à sa gauche et à
+     sa droite, les entrées du sommaire qui défilent dessous.
+
+     Ce commentaire parlait d'un « panneau », de son « rayon » et de son
+     « verre » : les trois ont disparu avec la fenêtre de sommaire, et la seule
+     raison qui reste — la seule qui ait jamais compté — est celle-là. */
   margin-inline: calc(-1 * var(--space-5));
   padding-inline: var(--space-5);
-  background: var(--glass-fill-solid);
+  /* LE SOL DE LA PAGE, ET IL FAUT UN FOND OPAQUE : c'est la seule surface du
+     site sous laquelle du contenu défile réellement — les entrées du sommaire
+     passent dessous quand la colonne défile. `--doc-ground` est le blanc de la
+     vitrine, donc la pastille ne se lit plus comme une bande teintée en tête
+     de colonne : elle disparaît dans le sol, et ce sont son cadre et son mono
+     qui la tiennent, ce qu'ils faisaient déjà. */
+  background: var(--doc-ground);
   display: flex;
   flex-wrap: wrap;
   /* `baseline` et non `center` : centrer une pastille de 32 px sur une note de
@@ -545,24 +527,127 @@ body {
    courante. L'ordre de lecture voulu est : page courante, entrées, groupes,
    notes, version. La capitale et l'interlettrage suffisent à distinguer un
    titre de sa note. */
+/* --- Les groupes sont pliables, en `<details>` natifs -----------------------
+   Le titre de groupe est devenu un `<summary>`. Il change donc de nature : ce
+   n'était qu'une étiquette, c'est maintenant une COMMANDE. Trois conséquences,
+   et aucune n'est cosmétique :
+
+   — le marqueur natif est retiré. `list-style: none` sur le `<summary>` suffit
+     dans Chromium et Firefox ; Safari a besoin de `::-webkit-details-marker`,
+     qui est un pseudo-élément propriétaire mais le seul levier existant. Les
+     deux sont déclarés ;
+   — la cible fait au moins 24 px de haut (WCAG 2.5.8). Le coussin est
+     `--space-2`, soit 8 px de chaque côté, et la cible MESURÉE dans le
+     navigateur fait 239 × 35 px sans note, 239 × 58 px avec. Ce commentaire
+     annonçait « 12 px de coussin, 16 px de ligne, 40 au total » : le critère
+     passait, les trois chiffres étaient faux ;
+   — l'anneau de focus est CELUI DU SITE et non celui du navigateur. Sans
+     `:focus-visible` explicite, un `<summary>` sans marqueur reçoit le contour
+     par défaut du moteur, qui n'a pas les deux couches mesurées de la vitrine.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-nav__group {
+  /* La marge est sur le groupe et non plus sur le titre : le `<summary>` est
+     maintenant à l'intérieur, et une marge haute sur lui se placerait DANS la
+     zone cliquable, ce qui l'agrandit sans le dire. */
+  margin-block-start: var(--space-5);
+}
+
+/* Le premier groupe suit la pastille de version, qui porte déjà son coussin
+   bas. Le sélecteur cite `:first-of-type` et non l'adjacence à la version :
+   c'est le même résultat aujourd'hui, et il tient si un jour la version passe
+   ailleurs. */
+.tc-doc-nav__group:first-of-type {
+  margin-block-start: 0;
+}
+
 .tc-doc-nav__grouptitle {
-  margin: var(--space-5) 0 var(--space-2);
+  /* `display: block` ET NON `flex`, ET CE N'EST PAS UN DÉTAIL DE MISE EN PAGE.
+     WebKit a un défaut ancien et connu : un `<summary>` dont le `display`
+     quitte `list-item` peut perdre son comportement de dépliage — le
+     `<details>` ne s'ouvre plus du tout. Je n'ai pas de Safari ici pour le
+     constater, donc c'est un risque SUPPOSÉ et non mesuré ; mais le prix de
+     l'éviter est nul, et le prix de se tromper est un sommaire définitivement
+     replié dans un moteur sur trois. En `block`, le chevron `::before` coule
+     naturellement avant le texte et la note reprend son `display: block` :
+     aucune boîte flexible n'est nécessaire. */
+  display: block;
+  margin-block-end: var(--space-2);
+  padding-block: var(--space-2);
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
   font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  cursor: pointer;
+  list-style: none;
 }
 
-.tc-doc-nav__version + .tc-doc-nav__grouptitle {
-  margin-block-start: 0;
+.tc-doc-nav__grouptitle::-webkit-details-marker {
+  display: none;
+}
+
+/* LE CHEVRON EST UN CARACTÈRE ET NON UNE IMAGE, pour la même raison que les
+   points de suspension de `[aria-busy]` dans `button.css` : rien à charger,
+   rien à colorer sous couleurs forcées. Il est `aria-hidden` de fait — un
+   pseudo-élément n'est pas dans l'arbre d'accessibilité —, et c'est voulu :
+   l'état est déjà annoncé par le `<details>` lui-même. Le doubler en texte
+   ferait dire « réduit » deux fois. */
+.tc-doc-nav__grouptitle::before {
+  content: '\203a';
+  display: inline-block;
+  inline-size: 1ch;
+  margin-inline-end: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1;
+  text-align: center;
+  transition: rotate var(--motion-move) var(--motion-ease);
+}
+
+.tc-doc-nav__group[open] > .tc-doc-nav__grouptitle::before {
+  rotate: 90deg;
+}
+
+/* PAS DE BLOC `prefers-reduced-motion` ICI, ET C'EST VÉRIFIÉ PLUTÔT QUE
+   SUPPOSÉ. Il y en a eu un, au motif que « `preferences.css` ne neutralise que
+   les transitions qu'elle connaît ». Les deux moitiés de ce motif étaient
+   fausses : `preferences.css` cible `[class*='tc-']`, qui ne matche AUCUN
+   pseudo-élément, et c'est `tokens.css` qui fait le travail avec un
+   `*, *::before, *::after { transition: none !important }`. Relevé en
+   émulation : sous la préférence, le `transition-property` calculé de ce
+   `::before` ne contient plus la rotation, et `rotate: 90deg` s'applique
+   instantanément. Le bloc était redondant, et son commentaire trompeur. */
+
+.tc-doc-nav__grouptitle:hover {
+  background: var(--panel-surface-hover);
+  color: var(--text-strong);
+}
+
+/* L'ANNEAU EXACT DES LIENS DU SOMMAIRE, à deux couches — et recopié plutôt que
+   partagé pour la raison écrite au bloc de focus de `utilities.css` : un
+   sélecteur mutualisé y pèserait moins que la classe qui pose le fond de survol
+   juste au-dessus, et il ne resterait que l'`outline`. Les deux couches sont
+   les mêmes valeurs mesurées : `--focus-outer` tient 17,48:1 sur le sol clair
+   et 17,24:1 sur le sombre. */
+.tc-doc-nav__grouptitle:focus-visible {
+  outline: 3px solid var(--focus-outer);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--focus-inner),
+    0 0 0 5px var(--focus-outer);
 }
 
 /* La note vit dans le titre du groupe : elle reprend donc son fil normal —
    casse, graisse et interlettrage — au lieu de la capitale espacée. */
+/* LA NOTE EST UN BLOC, donc sur sa propre ligne ; le retrait la remet sous le
+   libellé plutôt que sous le chevron — `1ch` est la largeur déclarée du
+   chevron, `--space-2` la marge qui le sépare du libellé. */
 .tc-doc-nav__groupnote {
   display: block;
   margin-block-start: var(--space-1);
+  padding-inline-start: calc(1ch + var(--space-2));
   color: var(--text-muted);
   font-size: var(--text-xs);
   font-weight: var(--weight-regular);
@@ -680,31 +765,23 @@ body {
 
   .tc-doc-nav {
     position: sticky;
-    /* Sous la barre du haut, jamais dessous au sens de la profondeur : le
-       décalage collant vaut sa hauteur PLUS le coussin du panneau.
-
-       LE COUSSIN NE S'AJOUTE PAS TOUT SEUL, ET C'EST MESURÉ, pas déduit de la
-       spécification : Chromium 151 contraint la boîte de BORDURE au décalage,
-       pas la boîte de marge. Sonde de layout à quatre positions de défilement,
-       avec `inset-block-start: var(--doc-topbar-size)` seul : le panneau
-       partait à 88 px (16 px de marge sous une barre de 72) puis remontait
-       COLLER le filet de la barre à 72 px dès le premier coup de molette — un
-       saut de 16 px, et le verre soudé à la barre. Avec le coussin dans le
-       décalage, la sonde donne 88 px aux quatre positions. */
-    inset-block-start: calc(var(--doc-topbar-size) + var(--space-4));
+    /* JUSTE SOUS LA BARRE DU HAUT, sans un pixel de plus. Le décalage valait
+       `--doc-topbar-size + --space-4` : ces 16 px étaient le coussin extérieur
+       du panneau de verre, qu'il fallait ajouter à la main parce que Chromium
+       contraint la boîte de BORDURE au décalage et non la boîte de marge
+       (sondé à quatre positions de défilement — sans l'appoint, le panneau
+       partait à 88 px puis remontait souder son liseré à la barre dès le
+       premier coup de molette). Le panneau n'existe plus, la marge extérieure
+       non plus : la colonne s'arrête sous la barre, comme le contenu. */
+    inset-block-start: var(--doc-topbar-size);
     align-self: start;
-    /* Les deux coussins sont retirés de la hauteur, sans quoi le panneau
-       dépasserait la fenêtre du bas de ce qu'il en descend du haut. */
-    block-size: calc(100dvh - var(--doc-topbar-size) - var(--space-4) * 2);
+    block-size: calc(100dvh - var(--doc-topbar-size));
     max-block-size: none;
-    /* `--space-5` EN TÊTE ET NON `--space-6`, et c'est la correction d'un
-       défaut qui ne se voyait pas sur un fond uni : la pastille collante annule
-       exactement `--space-5` de coussin haut (marge négative + rembourrage).
-       À 32 px de coussin, il restait 8 px de panneau NON couverts au-dessus
-       d'elle, dans lesquels le premier lien du sommaire venait défiler. Tant
-       que la pastille et le sol portaient le même fond, la fuite était
-       invisible ; sur le verre, la pastille a sa propre teinte et le décalage
-       se lirait. */
+    /* LE FILET PASSE SUR LE CÔTÉ. En une colonne il sépare le sommaire du
+       contenu qui le suit, donc il est en bas ; en deux colonnes le contenu est
+       à droite, donc il y va. Un seul trait dans les deux cas. */
+    border-block-end: 0;
+    border-inline-end: 1px solid var(--rule);
     padding-block: var(--space-5) var(--space-7);
   }
 }

@@ -1,5 +1,3 @@
-import { Fragment } from 'react';
-
 import type { DocPage } from './doc-model';
 import { GROUPS, hrefFor } from './doc-model';
 import { UI_VERSION } from './version';
@@ -20,11 +18,31 @@ export interface DocNavProps {
  * AUCUN TITRE DE SECTION ICI, ET C'EST DÉLIBÉRÉ. La nav précède le contenu
  * dans le DOM ; un `<h2>` par groupe placerait quatre titres de niveau 2 avant
  * le `<h1>` de la page, c'est-à-dire un plan de document inversé pour qui
- * navigue par titres. Les titres de groupe sont donc des `<p>` visibles, et
- * chaque liste est nommée par `aria-label` : elle s'annonce « Fondations,
+ * navigue par titres. Les titres de groupe sont donc des `<summary>`
+ * visibles — ni `<h2>` ni `<h3>` —, et chaque liste est nommée par `aria-label` : elle s'annonce « Fondations,
  * liste, 5 éléments » sans rien ajouter au plan.
  *
- * `aria-label` ET NON `aria-labelledby` VERS CE `<p>`, après mesure. Le `<p>`
+ * PLIABLE PAR GROUPE, EN `<details>`/`<summary>` NATIFS. La coquille et ses
+ * composants n'ont pas d'état React — pas un hook, pas un `"use client"` — donc
+ * un dépliage porté par `useState` était exclu. `<details>` donne le même
+ * comportement sans une ligne de JavaScript : il est focusable, il s'actionne à
+ * `Entrée` comme à `Espace`, et il s'annonce « Composants, groupe réduit » chez
+ * NVDA, JAWS et VoiceOver, ce qu'un `<div>` plus `aria-expanded` n'obtiendrait
+ * qu'en réimplémentant les trois.
+ *
+ * `open` EST ÉCRIT EN DUR ET NON CALCULÉ, et c'est la décision qui fait que le
+ * pliage tient. React n'écrit un attribut dans le DOM que lorsque sa valeur
+ * CHANGE d'un rendu à l'autre : à `open` constant, un groupe replié à la main
+ * le reste, parce que rien ne vient le rouvrir. Calculer `open={groupeCourant}`
+ * paraissait mieux — le groupe de la page lue serait toujours ouvert — mais la
+ * valeur change alors à chaque navigation, donc React réécrit l'attribut, et
+ * un groupe que le visiteur venait d'ouvrir se refermait sous ses yeux dès
+ * qu'il changeait de page. Le prix de ce choix est assumé et il est réel : un
+ * groupe replié cache le lien `aria-current` de la page en cours. C'est le
+ * visiteur qui l'a replié, et il est à un clic.
+ *
+ * `aria-label` ET NON `aria-labelledby` VERS LE TITRE DE GROUPE, après mesure.
+ * Ce titre — un `<p>` à l'époque de cette mesure, un `<summary>` depuis —
  * contient le libellé PUIS la note, sans aucune espace entre les deux dans le
  * DOM : le nom calculé valait donc « FondationsCe que les composants
  * consomment. », lisible seulement si le navigateur insère une séparation à la
@@ -62,11 +80,37 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
         if (groupPages.length === 0) return null;
 
         return (
-          <Fragment key={group.id}>
-            <p className="tc-doc-nav__grouptitle">
-              {group.label}
+          <details className="tc-doc-nav__group" key={group.id} open>
+            {/* Le chevron est peint par la feuille sur `::before` du `<summary>`
+                et non écrit ici : c'est `[open]` qui le tourne, donc l'indice
+                d'état suit l'élément qui porte l'état. Le marqueur natif est
+                retiré côté CSS — il n'est pas stylable de la même façon dans
+                les trois moteurs. */}
+            {/* `aria-label` SUR LE `<summary>`, ET IL FERME DEUX TROUS D'UN COUP.
+                Un `<summary>` est une COMMANDE : son nom se calcule depuis son
+                contenu, ce qu'un `<p>` inerte ne faisait pas.
+
+                1. le chevron du `::before` ENTRE dans ce nom. Accname 1.2,
+                   § 2.6.2 : le contenu généré d'un `::before` est préfixé au
+                   texte du nœud, SANS espace. Le nom commençait donc par un
+                   guillemet simple pointant à droite, qu'un lecteur en
+                   verbosité « toute la ponctuation » énonce ;
+                2. le libellé et la note sont adjacents SANS nœud de texte
+                   entre eux. C'est exactement le défaut que le bloc ci-dessus
+                   décrit pour refuser `aria-labelledby` — « Faire dépendre le
+                   nom d'un point de repère d'une déclaration CSS n'est pas
+                   acceptable » — et il était revenu, sur un contrôle cette
+                   fois. `aria-label` fixe le nom et rend la question sans
+                   objet ; la note reste dans le contenu, donc lue en linéaire
+                   juste après.
+
+                L'espace littéral est conservé par-dessus : il ne sert plus au
+                nom, il sert à ce que le DOM se lise correctement pour tout ce
+                qui ignorerait `aria-label`. */}
+            <summary className="tc-doc-nav__grouptitle" aria-label={group.label}>
+              {group.label}{' '}
               {group.note ? <span className="tc-doc-nav__groupnote">{group.note}</span> : null}
-            </p>
+            </summary>
             <ul className="tc-doc-nav__list" aria-label={group.label}>
               {groupPages.map((page) => (
                 <li key={page.slug}>
@@ -83,7 +127,7 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
                 </li>
               ))}
             </ul>
-          </Fragment>
+          </details>
         );
       })}
     </nav>
