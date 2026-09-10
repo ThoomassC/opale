@@ -2,11 +2,59 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      LA MARQUE, ET POURQUOI CES TROIS COULEURS-LÀ.
+
+      Le fichier qui était ici n'était pas celui d'Opale : un éclair violet
+      exporté de Figma, arrivé avec le PREMIER commit du dépôt (`aeaad09`) en
+      même temps que `icons.svg`, et jamais remplacé depuis. Ses couleurs —
+      #863bff, #7e14ff, #47bfff — n'existent nulle part dans la charte, et pas
+      seulement « par goût » : mesuré en OKLab, #7e14ff porte une chroma de
+      0,288 quand la couleur la plus saturée de TOUTE la palette,
+      `--tc-violet-498`, plafonne à 0,096 ; et #47bfff se pose à 236,3° de
+      teinte, hors de la bande froide 205-225° que `primitives.css` s'impose.
+      La famille violette de la charte est de surcroît « réservée à la pastille
+      "à venir", et à rien d'autre ».
+
+      Le dessin actuel est une goutte, parce que c'est ce que la librairie est
+      devenue en 2.0 : du verre liquide. Ses trois couleurs sont des jetons, et
+      chacune est mesurée :
+
+        fond      `--tc-teal-515`    #087487
+        goutte    `--tc-mist-936`    #deedf0   ->  4,53:1 sur le fond
+        le feu    `--tc-copper-425`  #723e32   ->  7,13:1 sur la goutte
+
+      LE FOND EST LE SEUL PRIMITIF DE LA CHARTE QUI NE BASCULE PAS. `roles.css`
+      sert `--tc-teal-515` pour `--accent` dans ses TROIS blocs de thème
+      (lignes 146, 291 et 349). Une tuile pleine dans cette teinte se lit donc
+      à l'identique sur un onglet clair et sur un onglet sombre, sans requête de
+      préférence — qu'un favicon ne pourrait de toute façon pas honorer partout.
+      Et le 7,13:1 du cuivre n'est pas un calcul de plus : c'est EXACTEMENT le
+      ratio que `roles.css` ligne 155 publie pour `--accent-secondary`, le fond
+      clair de la charte valant précisément `--tc-mist-936`. La charte se
+      recalcule d'elle-même.
+
+      DEUX FICHIERS ET NON UN, parce qu'iOS n'accepte pas le SVG pour une icône
+      d'écran d'accueil. Le PNG est donc à FOND PERDU, sans coins arrondis :
+      c'est iOS qui applique son propre masque, et une tuile déjà arrondie s'y
+      verrait rognée deux fois. Vérifié en décodant le PNG produit — (0,0) et
+      (179,179) valent bien #087487.
+
+      Aucun nom de jeton n'est cité DANS le SVG, et ce n'est pas un oubli :
+      deux tirets consécutifs sont illégaux dans un commentaire XML. Le fichier
+      cesse alors d'être analysable, le navigateur n'affiche AUCUNE erreur, et
+      l'onglet retombe silencieusement sur son icône par défaut. C'est arrivé
+      une fois pendant l'écriture de ce dessin.
+
+      NON VÉRIFIÉ : le rendu réel sur un onglet Safari et sur un écran d'accueil
+      iOS. Les quatre tailles ont été mesurées dans Chromium seul.
+    -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Documentation de @thomascaron/opale — la palette teal et cuivre mesurée, les échelles, et une page par composant du socle partagé par portfolio et travels_in_world."
+      content="Documentation de @thomascaron/opale 2.0 — la charte mesurée (palette teal et cuivre, échelles, contrat de couleur exécutable) et une page par composant verre liquide, vendorés de react-magic-ui sous licence MIT."
     />
     <!--
       La couleur de la barre d'adresse mobile, et la SEULE copie en dur de
