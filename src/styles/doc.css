@@ -70,16 +70,19 @@ html {
 
 :root {
   --doc-ground: var(--tc-white);
+  --doc-field-border: var(--tc-mist-658);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --doc-ground: var(--site-background);
+    --doc-field-border: var(--tc-mist-509);
   }
 }
 
 :root[data-theme='dark'] {
   --doc-ground: var(--site-background);
+  --doc-field-border: var(--tc-mist-509);
 }
 
 /* `tokens.css` pose `body { background: var(--site-background) }`. Même
@@ -428,7 +431,31 @@ body {
   gap: var(--space-2);
   min-block-size: var(--target-min);
   padding-inline: var(--space-3);
-  border: 1px solid var(--control-border);
+  /* `--doc-field-border` ET NON `--control-border`, PARCE QUE LE TRAIT SE
+     LISAIT COMME UN CONTOUR NOIR. `--control-border` vaut #59696d en clair,
+     soit 5,73:1 contre le sol blanc de la barre : à 1 px, sur du blanc, un
+     tel écart ne se lit pas comme la limite d'un champ mais comme un cerne.
+     En sombre il valait #8d9ea2, 6,42:1 — le même défaut à l'envers, un
+     trait clair qui détourait la pilule.
+
+     LE TRAIT N'EST PAS SUPPRIMÉ, IL EST RAMENÉ AU PLANCHER. Il ne peut pas
+     disparaître : c'est la seule information visuelle qui identifie le champ,
+     donc WCAG 1.4.11 lui demande 3:1. Le fond de la pilule ne peut pas
+     prendre le relais — `--panel-surface` est une encre à 0,05 sur le sol,
+     mesurée à 1,11:1 en clair : sans liseré, il ne reste qu'une loupe et un
+     texte de substitution posés dans la barre.
+
+     Mesuré contre `--doc-ground` : 3,11:1 en clair (#859599 sur #ffffff),
+     3,12:1 en sombre (#59696d sur #0f191c). Le plancher, pas un cran de
+     plus. Côté INTÉRIEUR le liseré tombe à 2,80:1 contre le lavis de la
+     pilule aplati (#f3f3f3) : c'est la face extérieure qui porte la limite,
+     et c'est la convention de mesure du dépôt pour `--control-border`.
+
+     Le panneau de suggestions GARDE `--control-border` : son commentaire
+     plus bas dit pourquoi — il flotte au-dessus du contenu et son ombre est
+     une encre sombre, donc invisible sur un sol sombre. Le bord y est
+     porteur, ici il ne faisait que cerner. */
+  border: 1px solid var(--doc-field-border);
   border-radius: var(--radius-pill);
   corner-shape: superellipse(1.2);
   background: var(--panel-surface);

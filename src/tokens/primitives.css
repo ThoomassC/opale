@@ -49,6 +49,13 @@
   --tc-mist-813: #aac8d0;
   --tc-mist-762: #9eb7bd;
   --tc-mist-687: #8d9ea2;
+  /* 658 EXISTE POUR UN LISERÉ DE CHAMP QUI NE SE LISE PAS COMME UN TRAIT
+     NOIR. Entre 687 (2,78:1 sur blanc — sous le seuil de 1.4.11) et 509
+     (5,73:1 — un contour dur à 1 px), la rampe n'avait rien : la vitrine
+     n'avait donc le choix qu'entre un champ non conforme et un champ
+     cerné. Mesurée sur blanc, cette marche vaut 3,11:1, c'est-à-dire le
+     plancher de 1.4.11 et pas un cran de plus. */
+  --tc-mist-658: #859599;
   --tc-mist-509: #59696d;
   --tc-mist-427: #3e5359;
   --tc-mist-375: #2b464c;
