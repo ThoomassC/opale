@@ -174,6 +174,10 @@ const Modal: React.FC<ModalProps> = ({
         enableLiquidAnimation={false}
         triggerAnimation={enableLiquidAnimation && shouldAnimate}
         className={cn(styles.modalContent, styles[size], className)}
+        /* `rootClassName` va sur le conteneur de `Glass`, `className` sur sa
+           couche de contenu. Le rayon et l'ombre de la modale doivent porter
+           sur le CONTENEUR, qui est celui qui rogne — voir Modal.module.scss. */
+        rootClassName={styles.modalShell}
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}

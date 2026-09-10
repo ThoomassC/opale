@@ -9,13 +9,61 @@
 }
 
 .modalOverlay {
-    @apply absolute inset-0 bg-slate-950/30 transition-opacity duration-200;
-    backdrop-filter: blur(10px);
+    /* ÉCART OPALE — moins de flou, plus de voile.
+       L'amont posait `blur(10px)` sur un voile à 30 % : la page derrière
+       devenait une bouillie sans que la modale s'en détache pour autant, le
+       flou emportant justement les arêtes qui auraient servi de repère. Le
+       flou tombe à 3 px — assez pour dire « ceci est derrière » — et le voile
+       monte à 60 %, qui est ce qui SÉPARE réellement. */
+    @apply absolute inset-0 bg-slate-950/60 transition-opacity duration-200;
+    backdrop-filter: blur(3px);
+}
+
+/* ÉCART OPALE — LA COQUILLE, ET POURQUOI ELLE N'EXISTAIT PAS.
+   `Modal` ne passait que `className` à `Glass`, qui l'applique à sa couche de
+   CONTENU. Le rayon et l'ombre atterrissaient donc sur un enfant du conteneur,
+   qui porte `overflow: hidden` — mesuré, le contenu sortait bien à 24 px mais
+   le conteneur le rognait à 8, et son ombre extérieure de 60 px était rognée
+   par le même `overflow`. La modale n'avait en pratique NI angle arrondi NI
+   ombre : sa seule démarcation était le voile.
+
+   Cette classe part donc sur `rootClassName`, c'est-à-dire sur le conteneur
+   lui-même. Elle bat `.glassContainer` par l'ordre de la feuille et non par le
+   poids — les deux pèsent (0,1,0), et cette feuille est émise après celle de
+   `Glass` : vérifié par le fait que `.modalContent` (24 px) l'emportait déjà
+   sur `.glassContent`. */
+.modalShell {
+    border-radius: 28px;
+
+    /* L'ARÊTE, ET POURQUOI ELLE DOIT ÊTRE PRESQUE OPAQUE.
+       Premier essai : 1 px de blanc à 38 %. Mesuré sur les pixels rendus, il
+       sortait à 1,13:1 contre le pourtour — invisible. La cause n'est pas
+       l'épaisseur : la modale est TRANSLUCIDE au-dessus du même voile que la
+       page, donc assombrir le voile fait descendre son remplissage avec lui et
+       le rapport ne bouge pas. Mesuré, remplissage 1,24:1 contre pourtour.
+       Seule une arête OPAQUE peut marquer cette limite.
+
+       Blanc à 75 % sur le remplissage compose #dcdde0, soit 3,87:1 contre le
+       pourtour : au-dessus du plancher de 3:1 que WCAG 1.4.11 demande à la
+       limite qui identifie un composant, et plus doux qu'un blanc pur. */
+    border: 1.5px solid rgba(255, 255, 255, 0.75);
+
+    /* Le filet sombre extérieur tient l'arête dans l'autre sens. Un liseré
+       clair seul disparaît si la page derrière est claire ; celui-ci sépare
+       alors la coquille de son fond. Les deux ombres sont sur le CONTENEUR, et
+       c'est ce qui les rend visibles : posées sur le contenu, l'`overflow:
+       hidden` du conteneur les rognait. */
+    box-shadow:
+        0 0 0 1px rgba(2, 6, 23, 0.55),
+        0 32px 70px rgba(2, 6, 23, 0.6);
 }
 
 .modalContent {
-    @apply relative text-white w-full rounded-3xl outline-none flex flex-col overflow-hidden p-8;
-    box-shadow: 0 28px 60px rgba(15, 23, 42, 0.45);
+    /* `rounded-3xl` retiré : le rayon vit désormais sur la coquille, et cette
+       couche le suit. En garder un ici redonnerait deux rayons concentriques
+       différents sur les mêmes 28 px. */
+    @apply relative text-white w-full outline-none flex flex-col overflow-hidden p-8;
+    border-radius: inherit;
 }
 
 // Size variants
