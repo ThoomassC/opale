@@ -452,6 +452,48 @@ publié `--site-background` reste `#deedf0`, mesuré, servi aux deux consommateu
 blanc dans la librairie invaliderait les vingt supports du contrat et retournerait la
 décision « les sols clairs sont du papier, pas de l'écran ».
 
+### La recherche
+
+La barre du haut porte un **champ de recherche à suggestions**, motif « Combobox » de l'APG
+dans sa forme à liste : `role="combobox"` sur le champ, la liste en `aria-controls`, et
+l'option courante désignée par **`aria-activedescendant`** — le focus ne quitte jamais le
+champ, donc la frappe continue d'y arriver et le lecteur d'écran annonce l'option sans perdre
+le contexte du champ.
+
+Les accents sont traités, et c'est ce qui compte dans une doc en français : `elevation` trouve
+**Élévation**, `acces` trouve **Accessibilité**. Personne ne tape les accents dans une barre
+de recherche.
+
+**Aucun raccourci global, et c'est une décision.** Un `⌘K` aurait fait moderne et détourne un
+raccourci du navigateur ; un `/` vole la frappe dès que le focus est dans un champ, et cette
+vitrine est pleine de spécimens d'`Input`.
+
+Ce que les audits ont trouvé et qui est corrigé — chacun mesuré, aucun visible à l'œil :
+
+| défaut | mesure | critère |
+| --- | --- | --- |
+| l'option désignée était invisible | 1,14:1 en clair, 1,09:1 en sombre, contre 4,87 / 3,40 après | 1.4.11 |
+| l'option désignée pouvait être hors du panneau | 382 px de rangées dans 223 px de lucarne, `scrollTop` à 0 | 1.4.11, 2.4.7 |
+| `listbox` sans enfant `option` | `axe-core`, `critical` | 1.3.1 |
+| `Début` / `Fin` volées à l'édition du texte | `selectionStart` immobile | APG |
+| la région live parlait à chaque frappe | 3 mutations pour « button », 1 après report | — |
+| la marque tombait à 0 px sous zoom de texte 200 % | 0 px, contre 32 × 44,8 après | 2.5.8 |
+
+Et une **régression que la correction de la troisième a introduite**, attrapée par l'audit
+qui la relisait : sorti de la `listbox`, le message « aucun résultat » est devenu un enfant
+flexible de la pilule, donc il s'est posé **dans** le champ — la barre passait de 72 à 122 px
+et le champ à 4 px de large. `src/styles/doc-search.structure.test.ts` épingle désormais les
+quatre déclarations qui font des deux calques des calques, parce que jsdom ne peint pas et
+qu'aucun des cent tests de la recherche ne pouvait la voir.
+
+### Les bascules
+
+La bascule de thème est réduite à son glyphe — ☾ en clair, ☀ en sombre. **Le glyphe suit
+l'état, le nom accessible non**, et les deux sont justes pour la même raison : une icône ne
+peut pas dire « sombre, activé », seulement montrer une direction, donc elle montre ce qu'un
+clic donnerait ; le nom dit la chose et `aria-pressed` dit le oui. Le libellé reste rendu,
+masqué visuellement. Pas de `title` : il ne s'affiche ni au clavier ni au toucher.
+
 La barre du haut porte **deux** bascules indépendantes — clair/sombre et aplat/verre — et
 tient sur une seule ligne de 320 px à 1440 px : sous 36 rem les libellés sont masqués
 visuellement, leur nom accessible conservé. Cette hauteur n'est pas cosmétique : le collant
