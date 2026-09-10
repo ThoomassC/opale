@@ -1,7 +1,7 @@
 import type { ComponentPropsWithoutRef, MouseEvent, Ref } from 'react';
 import { cx } from './cx.js';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'bubble';
 
 interface ButtonOwnProps {
   /**
@@ -9,6 +9,38 @@ interface ButtonOwnProps {
    * `secondary` : liseré `--control-border` sur un lavis `--panel-surface`.
    * `danger` : liseré rouge, fond transparent — l'aplat plein reste le
    * monopole du teal, une action destructrice ne se peint pas.
+   * `bubble` : le verre liquide, qui floute et déplace le fond derrière lui —
+   * donc **au-dessus** d'un contenu seulement, jamais dedans : « don't use
+   * Liquid Glass in the content layer ». Ce n'est pas un bouton de formulaire.
+   *
+   * La réfraction de `bubble` demande deux choses à l'application : un
+   * `<GlassLens />` monté UNE fois dans le document, et l'import de
+   * `@thomascaron/ui/lens.css`. Ni l'un ni l'autre n'est vérifié, et il n'y a
+   * rien à vérifier : mesuré, une référence vers un filtre absent est inerte
+   * dans Chromium — sans le composant le bouton reste correct et lisible, son
+   * fond n'est simplement pas déformé.
+   *
+   * **Le rendu sans déformation est le rendu de BASE, pas un mode dégradé.** La
+   * déformation n'existe que là où `backdrop-filter: url()` est honoré, et cela
+   * n'est mesuré que sur Chromium 151 : Safari et Firefox ne sont pas vérifiés,
+   * et `@supports` ne permet pas de trancher — il répond vrai dans les trois
+   * moteurs.
+   *
+   * Le voile est à alpha 0,32 et le flou à 8 px : c'est le couple le plus
+   * TRANSPARENT qui garde le libellé à 4,5:1 sans rien supposer du fond.
+   * Mesuré sur les pixels composités, au-dessus du pire fond constructible —
+   * damier 20 px noir/blanc surchargé de texte gras — il tient 5,39:1 en thème
+   * clair et 4,60:1 en sombre au repos, et MONTE avec l'état (5,85 / 5,48 au
+   * survol, 6,07 / 5,74 à l'appui). Un cran plus transparent (0,24) tient
+   * encore en clair et tombe à 4,09:1 en sombre, quel que soit le flou.
+   *
+   * `--lens-blur` EST UN JETON, ET C'EST FAIT POUR : le flou est ce qui rend le
+   * libellé lisible, et c'est aussi ce qui efface la déformation. Au-dessus
+   * d'une image ou d'un dégradé — le cas d'un bouton flottant — le mettre à 0
+   * donne la réfraction pleine et le libellé tient encore 9,82:1 en clair,
+   * 11,10:1 en sombre. Sur un fond haché, à 0, il tombe à 2,87:1. La table
+   * complète est dans `styles/lens.css`. Le défaut ne suppose rien ; le baisser
+   * demande de mesurer son propre fond.
    */
   variant?: ButtonVariant;
 }
@@ -169,6 +201,11 @@ function isAnchor(props: ButtonProps): props is ButtonAsAnchorProps {
  * <Button aria-disabled={isSending} aria-busy={isSending} onClick={send}>
  *   {isSending ? 'Envoi…' : 'Envoyer'}
  * </Button>
+ * @example
+ * <>
+ *   <GlassLens />
+ *   <Button variant="bubble" onClick={zoomIn}>Agrandir</Button>
+ * </>
  */
 export function Button(props: ButtonProps) {
   // Narrowing par prédicat, jamais par `as` : un `href={undefined}` explicite
