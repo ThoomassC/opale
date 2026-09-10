@@ -1004,6 +1004,62 @@ body {
   rotate: 90deg;
 }
 
+/* --- Le pli du sommaire ENTIER ---------------------------------------------
+   Même commande que pour un groupe, un cran au-dessus : le `<summary>` reprend
+   la mise du titre de groupe, en un ton plus fort parce qu'il les commande.
+
+   `--text-body` et non `--text-muted` : 10,08:1 sur le sol blanc de la vitrine
+   contre 8,12:1, donc la hiérarchie se lit sans qu'aucune des deux encres
+   descende vers le seuil. En sombre, `--text-body` tient 8,39:1 et
+   `--text-muted` 8,47:1 — les deux sont larges, et c'est la graisse plus que
+   l'encre qui porte la hiérarchie là-bas.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-nav__alltitle {
+  /* Même `display: block` que les titres de groupe, et pour la même raison
+     supposée : un `<summary>` qui quitte `list-item` peut perdre son dépliage
+     dans WebKit. Le risque n'est pas mesuré ici, l'éviter ne coûte rien. */
+  display: block;
+  margin-block-end: var(--space-3);
+  padding-block: var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--text-body);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  list-style: none;
+}
+
+.tc-doc-nav__alltitle::-webkit-details-marker {
+  display: none;
+}
+
+.tc-doc-nav__alltitle::before {
+  content: '\203a';
+  display: inline-block;
+  inline-size: 1ch;
+  margin-inline-end: var(--space-2);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  line-height: 1;
+  text-align: center;
+  transition: rotate var(--motion-move) var(--motion-ease);
+}
+
+.tc-doc-nav__all[open] > .tc-doc-nav__alltitle::before {
+  rotate: 90deg;
+}
+
+.tc-doc-nav__alltitle:focus-visible {
+  outline: 3px solid var(--focus-outer);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--focus-inner),
+    0 0 0 5px var(--focus-outer);
+}
+
 /* PAS DE BLOC `prefers-reduced-motion` ICI, ET C'EST VÉRIFIÉ PLUTÔT QUE
    SUPPOSÉ. Il y en a eu un, au motif que « `preferences.css` ne neutralise que
    les transitions qu'elle connaît ». Les deux moitiés de ce motif étaient
@@ -1157,6 +1213,20 @@ body {
     grid-template-columns: calc(var(--space-8) * 4.5) minmax(0, 1fr);
   }
 
+  /* LE SOMMAIRE REPLIÉ REND SA PISTE À LA PAGE. `auto` et non une largeur
+     fixe : la piste se réduit alors au contenu qui reste, c'est-à-dire la
+     note de version et le mot « Sommaire ».
+
+     `:has()` ET NON UN ATTRIBUT POSÉ PAR REACT, parce que le pli est un
+     `<details>` natif sans état React — c'est la feuille qui doit lire l'état
+     de l'élément, pas un rendu qui doit le recopier. Le sélecteur pèse
+     (0,2,0) contre (0,1,0) pour la règle de base, donc il gagne sans
+     `!important` et sans dépendre de l'ordre. `:has()` est déjà employé
+     quinze lignes plus haut par la pilule de recherche. */
+  .tc-doc-body:has(.tc-doc-nav__all:not([open])) {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
   .tc-doc-nav {
     position: sticky;
     /* JUSTE SOUS LA BARRE DU HAUT, sans un pixel de plus. Le décalage valait
@@ -1177,6 +1247,28 @@ body {
     border-block-end: 0;
     border-inline-end: 1px solid var(--rule);
     padding-block: var(--space-5) var(--space-7);
+  }
+
+  /* Replié, le sommaire n'a plus à occuper toute la hauteur : `block-size` en
+     dur laisserait une colonne vide de 100 dvh bordée d'un filet sur toute la
+     page. */
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open])) {
+    block-size: auto;
+  }
+
+  /* LA NOTE DE VERSION S'EFFACE AVEC LE PLI, ET C'EST CE QUI REND LA PLACE.
+     Mesuré : à 1280 px, replier le sommaire ne faisait passer la piste que de
+     288 à 244,8 px — 43 px, c'est-à-dire rien. La piste est en `auto`, donc sa
+     largeur est celle du contenu le plus large qui reste, et ce contenu était
+     « stable · React ≥ 19 » : la note épinglait la colonne à la largeur qu'on
+     venait de lui retirer.
+
+     LE NUMÉRO RESTE. C'est lui qu'on cherche sur un site de librairie — il dit
+     si la page décrit le paquet installé — et c'est la raison pour laquelle la
+     version est restée hors du pli. La note, elle, est une précision qu'on lit
+     une fois : elle revient au dépliage. */
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open])) .tc-doc-nav__versionnote {
+    display: none;
   }
 }
 

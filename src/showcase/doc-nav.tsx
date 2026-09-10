@@ -71,22 +71,49 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
         </span>
       </p>
 
-      {GROUPS.map((group) => {
-        const groupPages = pages.filter((page) => page.group === group.id);
+      {/* LE SOMMAIRE ENTIER SE PLIE, ET C'EST UN SECOND `<details>` AUTOUR DES
+          QUATRE PREMIERS. Les groupes se pliaient déjà un par un ; ce qui
+          manquait était de rendre la colonne au contenu d'un seul geste.
 
-        /* Un groupe vide ne rend NI son titre ni sa liste : un titre suivi de
+          EN `<details>` IMBRIQUÉ ET NON EN ÉTAT REACT, pour la raison qui a
+          déjà fait ce choix un cran plus bas : la largeur de la piste de
+          gauche est la seule chose que le pliage doit changer côté page, et
+          `:has(.tc-doc-nav__all:not([open]))` la lit depuis la feuille. Aucun
+          hook, aucun `useState`, donc aucun rendu à provoquer et rien qui
+          puisse rouvrir le sommaire dans le dos du visiteur — ce que
+          `open` écrit en dur garantit, et qui est vérifié : après un pli
+          manuel, `open` reste `false` à travers deux navigations.
+
+          LA VERSION RESTE DEHORS, au-dessus du `<summary>`. C'est la première
+          information qu'on cherche sur un site de librairie : la mettre dans
+          le pli l'aurait fait disparaître avec le sommaire, alors qu'elle ne
+          coûte qu'une ligne à garder. Le pli porte donc les quatre groupes,
+          rien de plus. */}
+      <details className="tc-doc-nav__all" open>
+        {/* Le nom est « Sommaire », comme le point de repère qui l'entoure, et
+            c'est assumé : un lecteur d'écran énonce « Sommaire, navigation »
+            puis « Sommaire, groupe ». La redondance est le prix d'un nom
+            stable — un `<summary>` dont le libellé changerait avec l'état
+            (« Masquer » / « Afficher ») rendrait la commande introuvable au
+            second coup d'œil, et l'état est DÉJÀ annoncé par `<details>`. */}
+        <summary className="tc-doc-nav__alltitle">Sommaire</summary>
+
+        {GROUPS.map((group) => {
+          const groupPages = pages.filter((page) => page.group === group.id);
+
+          /* Un groupe vide ne rend NI son titre ni sa liste : un titre suivi de
            rien s'annonce comme une section vide, et un `<ul>` sans `<li>` est
            une liste de zéro élément que le lecteur d'écran énonce quand même. */
-        if (groupPages.length === 0) return null;
+          if (groupPages.length === 0) return null;
 
-        return (
-          <details className="tc-doc-nav__group" key={group.id} open>
-            {/* Le chevron est peint par la feuille sur `::before` du `<summary>`
+          return (
+            <details className="tc-doc-nav__group" key={group.id} open>
+              {/* Le chevron est peint par la feuille sur `::before` du `<summary>`
                 et non écrit ici : c'est `[open]` qui le tourne, donc l'indice
                 d'état suit l'élément qui porte l'état. Le marqueur natif est
                 retiré côté CSS — il n'est pas stylable de la même façon dans
                 les trois moteurs. */}
-            {/* `aria-label` SUR LE `<summary>`, ET IL FERME DEUX TROUS D'UN COUP.
+              {/* `aria-label` SUR LE `<summary>`, ET IL FERME DEUX TROUS D'UN COUP.
                 Un `<summary>` est une COMMANDE : son nom se calcule depuis son
                 contenu, ce qu'un `<p>` inerte ne faisait pas.
 
@@ -107,29 +134,30 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
                 L'espace littéral est conservé par-dessus : il ne sert plus au
                 nom, il sert à ce que le DOM se lise correctement pour tout ce
                 qui ignorerait `aria-label`. */}
-            <summary className="tc-doc-nav__grouptitle" aria-label={group.label}>
-              {group.label}{' '}
-              {group.note ? <span className="tc-doc-nav__groupnote">{group.note}</span> : null}
-            </summary>
-            <ul className="tc-doc-nav__list" aria-label={group.label}>
-              {groupPages.map((page) => (
-                <li key={page.slug}>
-                  <a
-                    className="tc-doc-nav__link"
-                    href={hrefFor(page.slug)}
-                    /* `undefined` et non `'false'` : `aria-current="false"`
+              <summary className="tc-doc-nav__grouptitle" aria-label={group.label}>
+                {group.label}{' '}
+                {group.note ? <span className="tc-doc-nav__groupnote">{group.note}</span> : null}
+              </summary>
+              <ul className="tc-doc-nav__list" aria-label={group.label}>
+                {groupPages.map((page) => (
+                  <li key={page.slug}>
+                    <a
+                      className="tc-doc-nav__link"
+                      href={hrefFor(page.slug)}
+                      /* `undefined` et non `'false'` : `aria-current="false"`
                        est une valeur valide que certains lecteurs annoncent,
                        et l'attribut ne doit désigner qu'UN lien. */
-                    aria-current={page.slug === currentSlug ? 'page' : undefined}
-                  >
-                    {page.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </details>
-        );
-      })}
+                      aria-current={page.slug === currentSlug ? 'page' : undefined}
+                    >
+                      {page.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          );
+        })}
+      </details>
     </nav>
   );
 }
