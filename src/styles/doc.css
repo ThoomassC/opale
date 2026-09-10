@@ -71,18 +71,48 @@ html {
 :root {
   --doc-ground: var(--tc-white);
   --doc-field-border: var(--tc-mist-658);
+  /* L'intensité du lavis de tête de colonne. UN NOMBRE ET NON UNE COULEUR : les
+     deux teintes viennent de `--halo-tint` / `--halo-tint-warm`, qui sont déjà
+     thémées dans `materials.css` ; ce qui change d'un thème à l'autre est la
+     force, pas la couleur. `--halo-opacity` n'est pas réemployé — 0,9 / 0,8
+     dimensionne un disque plein sous du verre, pas un lavis derrière du texte.
+
+     0,32 EN CLAIR, ET LA VALEUR N'EST PAS UN GOÛT. À cette force, le pic du
+     lavis retombe sur les quatre ratios que `roles.css` PUBLIE pour
+     `--site-background` : mesuré 10,26 / 8,38 / 6,75:1 contre les 10,28 / 8,39
+     / 6,76 annoncés. Le lavis ne fait donc rien de plus que rendre au thème
+     clair, en tête de page, le sol que la vitrine lui a retiré en passant au
+     blanc. Aucun ratio nouveau à défendre : ce sont ceux du paquet. */
+  --doc-wash-strength: 0.32;
+  /* En clair l'ombre porte tout, en sombre c'est le liseré — c'est la loi que
+     `roles.css` écrit (ΔE OKLab 20,6 contre 18,5) et que la vitrine
+     n'appliquait à aucune de ses propres surfaces. D'où deux jetons et non un :
+     la carte de spécimen change de MOYEN de détachement avec le thème. */
+  --doc-card-edge: var(--border-subtle);
+  --doc-card-lift: var(--elevation-1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --doc-ground: var(--site-background);
     --doc-field-border: var(--tc-mist-509);
+    --doc-wash-strength: 0.5;
+    /* `--tc-veil-a22` n'est pas choisi ici : c'est la valeur exacte que
+       `--glass-border` prend en sombre, celle que `materials.css` mesure à
+       ΔE OKLab 18,5 comme « le liseré qui détache la carte quand l'ombre est
+       inopérante ». Mesuré composé sur la carte sombre : 1,85:1, contre 1,34:1
+       pour `--border-subtle`. */
+    --doc-card-edge: var(--tc-veil-a22);
+    --doc-card-lift: var(--elevation-0);
   }
 }
 
 :root[data-theme='dark'] {
   --doc-ground: var(--site-background);
   --doc-field-border: var(--tc-mist-509);
+  --doc-wash-strength: 0.5;
+  --doc-card-edge: var(--tc-veil-a22);
+  --doc-card-lift: var(--elevation-0);
 }
 
 /* `tokens.css` pose `body { background: var(--site-background) }`. Même
@@ -766,11 +796,94 @@ body {
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* --- LE LAVIS DE TÊTE DE COLONNE -------------------------------------------
+   LES DEUX COULEURS DE LA CHARTE, EN TÊTE DE CHAQUE PAGE. C'est la couche
+   décorative que la librairie possède déjà — les deux teintes de halo — et que
+   la vitrine n'avait jamais peinte hors de ses scènes de démonstration. Elle
+   se dissipe avant le premier spécimen.
+
+   POURQUOI SUR TOUTES LES PAGES ET NON SUR LE SEUL ACCUEIL : la charte se lit
+   comme un système, pas comme une page d'accueil suivie de vingt-cinq annexes.
+   Et il n'y a aucun crochet CSS de route — ni classe ni attribut sur
+   `.tc-doc-main` — donc un traitement propre à l'accueil demanderait une
+   ligne de `doc-shell.tsx` pour un gain qui n'est pas démontré.
+
+   SUR LA COLONNE ET NON SUR LA PAGE, et c'est ce qui protège deux mesures : le
+   sommaire est un FRÈRE de grille, donc le lavis ne passe ni sous lui ni sous
+   la barre du haut. Sous un lavis à 0,32, le liseré du champ de recherche
+   tomberait de 3,11 à 2,59:1 — sous le plancher de 1.4.11, pour un jeton battu
+   exprès pour l'atteindre.
+
+   AUCUNE ANIMATION. C'est un fond statique : WCAG 2.2.2 est hors sujet, et il
+   n'y a de toute façon aucune commande de pause dans la page.
+
+   LA BOÎTE FAIT 384 PX, LA PEINTURE S'ARRÊTE À 258. Les deux dégradés
+   atteignent `transparent` à 68 % et 64 % du rayon, et le rayon vertical vaut
+   100 % de la boîte : mesuré au pixel, le dernier rang teinté est à y=258 en
+   384 px de boîte. C'est ce qui met le premier bloc de code (279–369 px sous le
+   haut de colonne selon la page) et la première carte de spécimen HORS du
+   lavis, donc leurs ratios sont ceux qui leur ont été mesurés.
+
+   NE PAS « CORRIGER » LA BOÎTE À 256 PX pour coller à la peinture : les arrêts
+   sont des POURCENTAGES du rayon, donc réduire la boîte réduit le lavis. Mesuré
+   sur deux pages isolées, colonne du centre du halo froid : boîte 384 px →
+   dernier rang teinté y=258 ; boîte 256 px → y=172. La boîte déclare 50 % de
+   plus qu'elle ne peint, et c'est ce qui donne au dégradé sa longueur.
+
+   LA BORNE À CONNAÎTRE AVANT D'AJOUTER QUOI QUE CE SOIT DANS CETTE BANDE. Le
+   lavis ne recouvre aujourd'hui que du texte — `<h1>`, chapeau, prose, liens de
+   prose sur cinq pages, et le haut d'une carte OPAQUE sur `#/typographie` : ni
+   contrôle, ni liseré porteur, ni indicateur d'état, donc rien qui porte une
+   obligation 1.4.11. Mais `--accent` tombe de 3,28 à **2,65:1** sur le pic
+   sombre. Le jour où une plaque, un `.tc-btn--secondary` ou un `.tc-input`
+   remonte dans les 258 premiers pixels de la colonne, il passe sous le plancher
+   de 3:1 en thème sombre — et la protection écrite au paragraphe précédent est
+   GÉOMÉTRIQUE (le sommaire est un frère de grille), donc elle ne couvre pas ce
+   qui est DANS la colonne.
+   -------------------------------------------------------------------------- */
+
 .tc-doc-column {
   /* Sans lui, la largeur minimale automatique d'un élément de grille est celle
      de son contenu : un tableau à défilement horizontal élargirait la colonne
      au lieu de défiler. */
   min-inline-size: 0;
+  /* Ancre du pseudo-élément. `z-index: auto` — donc PAS de contexte
+     d'empilement créé : c'est ce qui permet au `z-index: -1` du lavis de
+     passer derrière le contenu de la colonne tout en restant devant le sol. */
+  position: relative;
+}
+
+.tc-doc-column::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: calc(var(--space-8) * 6);
+  opacity: var(--doc-wash-strength);
+  background-image:
+    radial-gradient(70% 100% at 12% 0%, var(--halo-tint) 0%, transparent 68%),
+    radial-gradient(52% 88% at 88% 4%, var(--halo-tint-warm) 0%, transparent 64%);
+  pointer-events: none;
+}
+
+/* LES DEUX REPLIS SONT OBLIGATOIRES ET NON DÉCORATIFS.
+   `prefers-reduced-transparency` est du Chromium seul, donc le second n'est pas
+   une redondance : c'est le seul levier universel. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .tc-doc-column::before {
+    display: none;
+  }
+}
+
+/* `forced-colors` force `background-color` mais PAS les images de fond : sans
+   ce bloc, les deux dégradés continueraient de peindre par-dessus le `Canvas`
+   forcé. C'est la raison que cette feuille écrit déjà pour les anciens replis
+   du verre du sommaire. */
+@media (forced-colors: active) {
+  .tc-doc-column::before {
+    display: none;
+  }
 }
 
 /* --- Barre de gauche --------------------------------------------------------
@@ -1308,7 +1421,17 @@ body {
      LE NUMÉRO RESTE. C'est lui qu'on cherche sur un site de librairie — il dit
      si la page décrit le paquet installé — et c'est la raison pour laquelle la
      version est restée hors du pli. La note, elle, est une précision qu'on lit
-     une fois : elle revient au dépliage. */
+     une fois : elle revient au dépliage.
+
+     CETTE RÈGLE EST DANS LE BLOC 60 REM, DONC LE MÊME GESTE A DEUX EFFETS. À
+     100 % de zoom sur un écran de 1280, replier le sommaire efface la note ;
+     à 200 % de zoom — 640 px de largeur CSS — le même geste la garde. C'est
+     assumé et non un oubli : sous 60 rem la page est en une colonne, le
+     sommaire occupe toute la largeur, et effacer la note n'y rendrait aucune
+     place. Ce qui est perdu est la cohérence du geste, ce qui est gagné est de
+     ne pas retirer une information sans contrepartie. Aucun critère AA n'est en
+     jeu : l'information revient au dépliage et n'est pas portée par la
+     couleur. */
   .tc-doc-nav:has(.tc-doc-nav__all:not([open])) .tc-doc-nav__versionnote {
     display: none;
   }
@@ -1702,10 +1825,18 @@ body {
    Seule la pile survit, sous le nom que `PageBody` lui donne.
    -------------------------------------------------------------------------- */
 
+/* 48 PX DEHORS CONTRE 24 DEDANS, SOIT UN RAPPORT DE 2. L'écart valait 32 px
+   entre deux spécimens et 24 px entre la tête d'un spécimen et sa scène : un
+   rapport de 1,33, c'est-à-dire aucun groupement lisible. La page se lisait
+   comme une colonne continue au lieu d'une pile d'objets — loi de proximité, et
+   c'est ce qui se voit avant la couleur.
+
+   Le prix est d'environ 16 px par spécimen, soit ~40 px sur une page moyenne.
+   Sur un site de documentation, c'est le bon échange. */
 .tc-doc-section__body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-7);
 }
 
 .tc-doc-aside {
@@ -1717,18 +1848,44 @@ body {
 
 /* --- Spécimens ------------------------------------------------------------- */
 
+/* LA CARTE REDEVIENT UN OBJET, AVEC LA BONNE POLARITÉ. Sur le sol blanc de la
+   vitrine, `--surface` ne lève que 1,12:1 et `--border-subtle` 1,34:1 : les
+   soixante-cinq cartes de spécimen n'avaient plus ni fond ni bord, et il ne
+   restait qu'une colonne d'encre. Les deux jetons de vitrine changent le MOYEN
+   de détachement avec le thème — ombre en clair, liseré en sombre. */
 .tc-doc-specimen {
   padding: var(--space-5);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--doc-card-edge);
   border-radius: var(--radius-md);
   background: var(--surface);
+  box-shadow: var(--doc-card-lift);
 }
 
+/* LA SERIF D'AFFICHAGE, SUR LES SOIXANTE-CINQ TITRES DE SPÉCIMEN. Elle ne
+   servait que dans trois règles de la feuille, jamais sur les titres qui se
+   répètent : le site s'ouvrait sur des étiquettes d'interface et se lisait
+   comme son propre panneau d'administration.
+
+   `--weight-bold` ET NON `semibold` : `Iowan Old Style` n'a pas de graisse 600,
+   elle serait synthétisée par le moteur. Ce jeu rend la règle IDENTIQUE à
+   `.tc-doc-plate__title`, qui existait déjà : un seul style de titre de
+   niveau 2 pour tout le site au lieu de deux qui divergent.
+
+   L'ENCRE NE CHANGE PAS, ET MES CHIFFRES CITAIENT LE MAUVAIS FOND. J'avais
+   écrit « 12,35:1 sur le sol clair et 12,01:1 en sombre » : ce sont les ratios
+   de `--text-strong` contre le SOL, or un titre de spécimen n'est jamais sur le
+   sol — il est sur `--surface`, dans la carte. Remesuré : **11,06:1 en clair et
+   12,43:1 en sombre**.
+
+   Sans conséquence, et il faut dire pourquoi plutôt que de s'en tirer par le
+   chiffre : 23 px en graisse 700 est du TEXTE DE GRANDE TAILLE au sens de
+   1.4.3, dont le plancher est 3:1. Conforme d'un facteur 3,7. */
 .tc-doc-specimen__title {
   margin: 0;
   color: var(--text-strong);
+  font-family: var(--font-display);
   font-size: var(--text-lg);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   line-height: var(--leading-heading);
 }
 
@@ -1739,8 +1896,15 @@ body {
   font-size: var(--text-sm);
 }
 
+/* Le filet reprend le dispositif de `.tc-doc-plate__head` — coussin puis trait
+   — donc la tête d'un spécimen se lit comme la tête d'une plaque : un seul
+   vocabulaire pour « titre, puis démonstration ». Le trait est décoratif
+   (1,41:1 en clair, 1,54:1 en sombre) ; 1.4.11 ne s'applique pas à un
+   séparateur. */
 .tc-doc-specimen__stage {
   margin-block-start: var(--space-5);
+  padding-block-start: var(--space-5);
+  border-block-start: 1px solid var(--rule);
 }
 
 .tc-doc-specimen__stage--inline {
@@ -1799,13 +1963,19 @@ body {
   gap: var(--space-5);
 }
 
+/* L'ombre est posée SANS condition de thème, et c'est justifié : les deux
+   premières plaques peignent des sols littéraux (#deedf0, #0f191c) qui
+   tranchent sur l'un comme sur l'autre thème. Seule la troisième suit le
+   lecteur, et c'est elle qui reçoit le liseré thémé juste en dessous. */
 .tc-doc-plate {
   padding: var(--space-5);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-2);
 }
 
 .tc-doc-plate--themed {
+  border-color: var(--doc-card-edge);
   background: var(--surface);
   color: var(--text-body);
 }
@@ -1866,9 +2036,13 @@ body {
   gap: var(--space-3);
 }
 
+/* 88 × 48 ET NON 48 × 48. Une pastille carrée de 48 px ne permet pas de juger
+   une teinte : c'est une puce, pas un échantillon, et l'échantillon est l'objet
+   central de la page palette. Les deux valeurs restent des sommes de pas
+   nommés. */
 .tc-doc-swatch__chip {
   flex: none;
-  inline-size: var(--space-7);
+  inline-size: calc(var(--space-8) + var(--space-5));
   block-size: var(--space-7);
   border: 1px solid;
   border-radius: var(--radius-sm);
@@ -2364,18 +2538,66 @@ body {
    un lien. Le plancher reste là où il a un sens — `.tc-doc-nav__link`,
    `.tc-doc-topbar__brand`, `.tc-doc-themetoggle`, `.tc-doc-skip` — qui sont
    des contrôles isolés, pas des mots dans une phrase. */
+/* LES LIENS DE PROSE NE RÉPONDAIENT PAS AU POINTEUR, et c'était un manque et
+   non un choix : l'élément interactif le plus fréquent du site ne déclarait
+   aucun `:hover`. (`:focus-visible`, lui, était bien couvert — par la règle
+   universelle de `tokens.css`.)
+
+   L'ÉPAISSEUR ET NON LA COULEUR, sur deux mesures. Assombrir au survol est le
+   réflexe et il échoue : `--accent-hover` en sombre donne 3,89:1 sur le sol,
+   sous les 4,5:1 de 1.4.3. Teinter le soulignement échoue aussi : `--accent` en
+   sombre vaut 3,28:1, donc il AFFAIBLIRAIT un trait qui est aujourd'hui à
+   `currentColor`, c'est-à-dire `--text-accent` — 7,93:1 en clair, 8,30:1 en
+   sombre. Il ne reste que l'épaisseur, et elle suffit.
+
+   La transition SURVIT à `prefers-reduced-motion` : `text-decoration-thickness`
+   est dans la liste blanche de `tokens.css`, dont l'intention écrite est
+   « moins de MOUVEMENT, pas moins de RETOUR D'INFORMATION ». */
 .tc-doc-link {
   color: var(--text-accent);
   font-weight: var(--weight-medium);
   text-underline-offset: 0.25em;
+  transition: text-decoration-thickness var(--motion-color) var(--motion-ease);
 }
 
+.tc-doc-link:hover {
+  text-decoration-thickness: 0.125em;
+}
+
+/* UNE GOUTTIÈRE CUIVRE SUR LES QUARANTE-SIX BLOCS DE CODE. Le bloc était un
+   rectangle à 1,11:1 sur une carte à 1,12:1 — c'est-à-dire rien du tout — alors
+   que c'est la surface qu'on vient chercher sur un site de doc.
+
+   LE CUIVRE EST ICI DANS SON MANDAT ÉCRIT : `roles.css` lui assigne « le décor
+   et l'éditorial, JAMAIS un contrôle », et un bloc de code n'est pas un
+   contrôle. Le même rail cuivre sert déjà à `.tc-doc-aside` : la gouttière
+   devient un langage — « ce qui est mis à part » — au lieu d'un accident.
+   L'ambre n'est PAS candidate : c'est `--warning`, et une couleur sémantique ne
+   vaut que par l'unicité de son emploi.
+
+   Le rayon est retiré du côté du rail, pour la raison que cette feuille écrit
+   déjà pour `.tc-doc-nav__link` : un rail arrondi ne se lit pas comme un rail.
+
+   Décoratif, donc aucun seuil ne s'applique ; mesuré quand même, et IL Y A DEUX
+   FONDS ET NON UN — ce que ma première rédaction laissait croire. Le bloc
+   apparaît dans une carte de spécimen, mais aussi directement sur le sol de la
+   page (`#/verre`, `#/composants/button` et d'autres n'ont aucun ancêtre à fond
+   opaque au-dessus du `<pre>`).
+
+     dans une carte : gouttière 6,95:1 clair / 5,39:1 sombre — encre 10,01 / 11,15
+     sur le sol      : gouttière 7,72:1 clair / 5,21:1 sombre — encre 11,13 / 10,76
+
+   Le pire cas des deux configurations est donc 5,21:1 pour la gouttière, qui est
+   décorative, et 10,01:1 pour l'encre. */
 .tc-doc-code {
   overflow-x: auto;
   margin: var(--space-4) 0 0;
   padding: var(--space-4);
   border: 1px solid var(--border-subtle);
+  border-inline-start: var(--space-1) solid var(--accent-secondary);
   border-radius: var(--radius-sm);
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
   background: var(--panel-surface);
   color: var(--text-strong);
   font-family: var(--font-mono);
