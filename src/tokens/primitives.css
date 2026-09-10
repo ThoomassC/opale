@@ -219,6 +219,51 @@
   --tc-white-a40: rgba(255, 255, 255, 0.4);
   --tc-pitch-a20: rgba(0, 4, 6, 0.2);
 
+  /* LE MÊME ALPHA DANS LES DEUX THÈMES, ET C'EST LA SEULE PAIRE DE CE FICHIER
+     QUI EN EST LÀ. Ces deux valeurs servent le voile de la LENTILLE
+     (`styles/lens.css`), dont le fond est flouté avant d'être voilé : la
+     séparation y est portée par le flou autant que par le voile.
+
+     0,32 EST UNE FRONTIÈRE MESURÉE. Au-dessus du pire fond que j'aie su
+     construire — damier de 20 px noir/blanc surchargé de texte gras — le
+     couple (voile 0,32 ; flou 8 px) tient 5,42:1 en clair et 4,81:1 en sombre,
+     et 5,39 / 4,60 à la position la plus défavorable du damier.
+     Un cran plus transparent, 0,24, tient encore en clair (4,82:1) et TOMBE en
+     sombre à 4,09:1 — et il y tombe quel que soit le flou : 4,03:1 à 12 px,
+     3,78:1 à 6 px. Le flou plafonne parce qu'il fait converger la plaque vers
+     la moyenne du fond, qu'un `--text-strong` clair ne peut pas quitter ;
+     seul le voile déplace cette moyenne. La mesure est dans les deux sens.
+
+     La symétrie des deux alphas n'est pas une élégance : c'est la conséquence
+     du flou, qui est absolu et non thémé. `--glass-fill` reste asymétrique
+     (0,40 / 0,20) parce que lui n'a pas de flou pour l'aider en clair. */
+  --tc-white-a32: rgba(255, 255, 255, 0.32);
+  --tc-pitch-a32: rgba(0, 4, 6, 0.32);
+
+  /* LE LAVIS D'ÉTAT DE LA LENTILLE, ET SA FAMILLE EST LA CORRECTION D'UNE
+     NON-CONFORMITÉ. Le survol et l'appui empruntaient `--panel-surface-hover`
+     et `-active`, c'est-à-dire l'échelle d'état des panneaux — qui CREUSE en
+     clair et ÉCLAIRCIT en sombre. C'est juste pour un panneau, dont l'encre
+     est du côté opposé ; c'est faux pour la lentille, dont le voile va dans
+     l'autre sens (blanc en clair, pitch en sombre) et dont l'encre suit le
+     voile. Chaque état rapprochait donc la plaque du libellé.
+
+     Mesuré au pixel, plaque nue sous le libellé sur damier hostile :
+     5,32:1 au repos → 4,47:1 au survol → 4,26:1 à l'appui en clair, et
+     4,72 → 3,60 → 3,30 en sombre. Deux états sous 4,5:1 en clair, trois en
+     sombre : la frontière (voile 0,32 ; flou 8 px) avait été calibrée sur le
+     seul état de REPOS. Avec ces quatre valeurs, remesuré : 5,39 → 5,85 →
+     6,07 en clair et 4,60 → 5,48 → 5,74 en sombre.
+
+     Ces quatre valeurs reprennent les ALPHAS de l'échelle d'état de la
+     librairie (0,10 et 0,13) dans la famille DU VOILE. Le retour visuel
+     épaissit donc le verre au lieu de le teinter, et il s'éloigne de l'encre :
+     le contraste MONTE au survol au lieu de tomber. */
+  --tc-white-a10: rgba(255, 255, 255, 0.1);
+  --tc-white-a13: rgba(255, 255, 255, 0.13);
+  --tc-pitch-a10: rgba(0, 4, 6, 0.1);
+  --tc-pitch-a13: rgba(0, 4, 6, 0.13);
+
   /* Lavis sémantiques. 0,10 en clair, 0,14 en sombre : le thème sombre a plus
      de course, et égaliser les deux raboterait son retour visuel. */
   --tc-red-339-a10: rgba(102, 21, 26, 0.1);
