@@ -1,8 +1,26 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as library from '../index';
+
+/* L'ENTRÉE RACINE DU PAQUET, ET ELLE A CHANGÉ DE FICHIER EN 2.0.
+   C'était `src/index.ts`, qui réexportait dix-huit composants écrits ici ;
+   c'est désormais `src/magic/index.ts`, que `package.json` déclare en
+   `exports["."] -> ./dist/magic/index.js`. Le test lit donc la MÊME chose
+   qu'avant — les exports réels de ce qu'un consommateur installe — à un chemin
+   près.
+
+   IMPORT RELATIF ET NON `@thomascaron/opale`, ET C'EST MESURÉ. Le paquet est
+   auto-référençable (son `package.json` a un `name` et un `exports`), donc
+   `@thomascaron/opale` RÉSOUT — mais vers `dist/`, le produit du build :
+   `tsc --traceResolution` le confirme (« successfully resolved to
+   .../dist/magic/index.d.ts »), et Vitest y charge `dist/magic/index.js`. La
+   suite éprouverait alors un artefact de build au lieu de la source, et
+   passerait au vert sur une source cassée tant que `dist/` est encore frais.
+   Le spécimen relatif désigne la source, dans les trois outils, sans
+   configuration. Voir la note de `vite.config.ts`. */
+import * as library from '../magic';
+
 import type { DocPage } from './doc-model';
-import { GROUPS, HOME_SLUG } from './doc-model';
+import { GROUPS, HOME_SLUG, parseSlug } from './doc-model';
 import { PAGES } from './pages';
 
 /* ============================================================================
@@ -11,7 +29,7 @@ import { PAGES } from './pages';
    La promesse de la vitrine — « une entrée de navigation par composant
    publié » — est une phrase, et une phrase ne s'exécute pas. Elle s'est déjà
    perdue une fois : la charte unique déroulait sept sections et documentait
-   ce que son auteur avait sous la main, pas ce que `src/index.ts` publiait.
+   ce que son auteur avait sous la main, pas ce que l'entrée racine publiait.
 
    Ce fichier la rend exécutable. Il lit les exports RÉELS de la librairie et
    exige une page pour chacun. Ajouter un composant sans page rougit ici, en
@@ -26,15 +44,21 @@ import { PAGES } from './pages';
 /**
  * Les composants documentés sur la page d'un AUTRE composant.
  *
- * `TimelineItem` ne se rend qu'à l'intérieur de `Timeline` — un élément de
- * frise seul n'a ni ligne, ni contexte, ni niveau de titre déductible — donc
- * sa documentation vit sur la page de `Timeline`. La correspondance est écrite
- * ici, et non retirée en silence de la liste des composants à documenter : une
+ * `ToastProvider` est le fournisseur de contexte du système de notification :
+ * seul, il ne rend rien de visible et n'a pas de spécimen à montrer. Ce qui
+ * s'emploie est le couple `ToastProvider` + `useToast`, et les deux se
+ * documentent donc sur la page « Toast ». La correspondance est écrite ici, et
+ * non retirée en silence de la liste des composants à documenter : une
  * exclusion muette est le mécanisme même par lequel un composant finit sans
  * page.
+ *
+ * `useToast` N'EST PAS DANS CETTE LISTE ET N'A PAS À Y ÊTRE : le filtre
+ * ci-dessous ne retient que les exports dont le nom commence par une majuscule,
+ * donc un hook n'est jamais compté. Il est documenté sur la même page, mais
+ * rien ici ne l'exige — c'est une limite connue de ce garde, pas un oubli.
  */
 const DOCUMENTED_WITH: Readonly<Record<string, string>> = {
-  TimelineItem: 'Timeline',
+  ToastProvider: 'Toast',
 };
 
 /** Ce qui doit finir dans une URL : minuscules, chiffres, tirets, barres. */
@@ -78,7 +102,7 @@ function isComponent(value: unknown): boolean {
 }
 
 /**
- * Les composants publiés par `src/index.ts`.
+ * Les composants publiés par l'entrée racine, `src/magic/index.ts`.
  *
  * Reconnus par la FORME de l'export et non par une liste recopiée : un export
  * dont le nom commence par une majuscule et dont la valeur est un composant.
@@ -95,10 +119,17 @@ const PUBLISHED_COMPONENTS: readonly string[] = Object.entries(library)
  *
  * Une borne large (« plus de dix ») tolérerait une perte silencieuse de
  * détection : le fichier passerait au vert en ne regardant plus que la moitié
- * des exports. En ajoutant un composant à `src/index.ts`, ce chiffre monte
- * d'un — et il faut aussi lui écrire une page, ce que le test suivant exige.
+ * des exports. En ajoutant un composant à `src/magic/index.ts`, ce chiffre
+ * monte d'un — et il faut aussi lui écrire une page, ce que le test suivant
+ * exige.
+ *
+ * DIX-HUIT EN 1.0, QUATORZE EN 2.0. Le chiffre a baissé parce que les dix-huit
+ * composants d'Opale sont supprimés et que l'entrée racine publie désormais les
+ * quatorze composants verre liquide. Les quatorze sont : `Badge`, `Button`,
+ * `Card`, `Checkbox`, `Glass`, `Input`, `Modal`, `Select`, `Sidebar`, `Slider`,
+ * `Switch`, `Tabs`, `ToastProvider`, `Topbar`.
  */
-const PUBLISHED_COMPONENT_COUNT = 18;
+const PUBLISHED_COMPONENT_COUNT = 14;
 
 /** Le libellé de la page attendue pour un composant. */
 function pageLabelFor(component: string): string {
@@ -116,8 +147,8 @@ const COMPONENT_PAGES: readonly DocPage[] = PAGES.filter((page) => page.group ==
  * Une page par cas, le slug d'abord.
  *
  * Le slug est passé en premier argument pour qu'il apparaisse dans le NOM du
- * test : sans lui, vingt-deux lignes identiques laissent chercher laquelle des
- * vingt-deux pages a cassé.
+ * test : sans lui, vingt et une lignes identiques laissent chercher laquelle
+ * des vingt et une pages a cassé.
  */
 const PAGE_CASES: readonly (readonly [slug: string, page: DocPage])[] = PAGES.map((page) => [
   page.slug === HOME_SLUG ? '(accueil)' : page.slug,
@@ -171,14 +202,14 @@ afterEach(() => {
 
 describe('Le registre des pages', () => {
   describe('la couverture des composants publiés', () => {
-    it('devrait trouver les 18 composants publiés par src/index.ts', () => {
+    it('devrait trouver les 14 composants publiés par l’entrée racine', () => {
       /* Garde-fou du garde-fou : si la reconnaissance des exports cassait, le
          test suivant passerait sur une liste tronquée et ne dirait plus rien. */
       expect(
         PUBLISHED_COMPONENTS,
         `${PUBLISHED_COMPONENTS.length} composants reconnus au lieu de ` +
           `${PUBLISHED_COMPONENT_COUNT} : ${PUBLISHED_COMPONENTS.join(', ')}\n` +
-          `— si vous venez d'AJOUTER un composant à src/index.ts, montez ` +
+          `— si vous venez d'AJOUTER un composant à src/magic/index.ts, montez ` +
           `PUBLISHED_COMPONENT_COUNT d'un et écrivez-lui sa page ;\n` +
           `— si vous n'avez rien ajouté, c'est la détection qui a cassé (memo, ` +
           `forwardRef et lazy rendent des objets, pas des fonctions).`,
@@ -306,11 +337,15 @@ describe('Le registre des pages', () => {
 
     beforeEach(() => {
       errors = [];
-      /* `console.error` est la façon dont trois composants signalent un
-         emploi fautif — `Pill` sans libellé lisible, `TimelineItem` à un
-         niveau de titre qu'il ne déclare pas, `Button` mal appelé. Un
-         spécimen qui les déclenche documente un mauvais usage sans le dire.
-         On l'espionne, on ne l'avale pas : le message part dans l'assertion. */
+      /* `console.error` reste espionné et non avalé : le message part dans
+         l'assertion. Les trois composants d'Opale qui s'en servaient pour
+         signaler un emploi fautif — `Pill` sans libellé lisible, `TimelineItem`
+         à un niveau de titre qu'il ne déclare pas, `Button` mal appelé — ne
+         sont plus publiés, donc CE GARDE NE COUVRE PLUS CE QU'IL COUVRAIT :
+         aucun des quatorze composants vendorés ne rapporte un emploi fautif,
+         ni par `console.error` ni autrement. Ce qu'il attrape encore est ce que
+         React écrit lui-même — clé manquante, prop inconnue sur un élément
+         du DOM, mise à jour hors du rendu —, et c'est la raison qui le garde. */
       vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
         errors.push(args.map((arg) => String(arg)).join(' '));
       });
@@ -340,6 +375,72 @@ describe('Le registre des pages', () => {
         own,
         `la page « ${page.slug} » rend ${own.length} <h1> (${own.join(', ')}) alors ` +
           `que la coquille rend déjà celui du titre « ${page.title} »`,
+      ).toEqual([]);
+    });
+
+    /* ========================================================================
+       LE GARDE AJOUTÉ PAR LA MIGRATION 2.0, ET IL A TROUVÉ ONZE DÉFAUTS.
+
+       Les quatorze pages de composants comparaient chacune leur composant à
+       « l'équivalent d'Opale », par un lien vers sa page : `composants/tag`,
+       `composants/pill`, `composants/field`, `composants/backdrop`,
+       `composants/message`, `composants/date-range`, `composants/timeline`,
+       `composants/glass-lens`, plus les quatre pages `magic/*` liées entre
+       elles. La 2.0 supprime les dix-sept pages d'Opale et déplace les
+       quatorze autres : chacun de ces liens serait tombé sur un fragment
+       inconnu, donc — la vitrine étant servie en statique — sur l'ACCUEIL,
+       silencieusement, sans 404 et sans rien de rouge.
+
+       Deux d'entre eux étaient pires qu'un lien mort : la page du `Card`
+       vendoré liait `composants/card` et celle de l'`Input` vendoré
+       `composants/input` pour désigner le composant d'Opale du même nom. Après
+       le déplacement, ces adresses existent — et désignent LA PAGE ELLE-MÊME.
+       Un lien « voir l'équivalent d'Opale » qui ramène où l'on est déjà ne
+       rougit sur aucun test d'existence ; c'est pourquoi le second cas est
+       vérifié à part, juste en dessous.
+
+       CE TEST LIT LE DOM RENDU et non le source : il attrape donc aussi les
+       `href="#palette"` écrits à la main, hérités du temps où la vitrine
+       tenait sur une page unique, que rien ne fait passer par `hrefFor`.
+       ==================================================================== */
+    it.each(PAGE_CASES)('la page « %s » ne devrait lier aucun slug inexistant', (_slug, page) => {
+      const { container } = render(<>{page.render()}</>);
+      const known = new Set(PAGES.map((entry) => entry.slug));
+
+      const broken = [...container.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')]
+        .map((anchor) => anchor.getAttribute('href') ?? '')
+        .filter((href) => !known.has(parseSlug(href)))
+        .map((href) => `« ${href} » → slug « ${parseSlug(href)} »`);
+
+      expect(
+        [...new Set(broken)],
+        `la page « ${page.slug} » lie des fragments qu'aucune page ne sert :\n  ` +
+          [...new Set(broken)].join('\n  ') +
+          `\n\nLa vitrine est servie en statique : un fragment inconnu ne rend pas une 404, ` +
+          `il se replie sur l'accueil. Un lien mort est donc INVISIBLE ici — il faut soit ` +
+          `corriger l'adresse, soit retirer le lien et dire en clair ce qui n'est plus ` +
+          `documenté.\n\nslugs servis : ${[...known].join(', ')}`,
+      ).toEqual([]);
+    });
+
+    /* Le second cas, celui qu'un test d'existence laisse passer : un lien qui
+       pointe sur la page qui le porte. Il ne casse rien et ne mène nulle part —
+       et c'est exactement ce qu'ont produit `composants/card` et
+       `composants/input` quand les pages vendorées ont pris l'adresse des
+       composants d'Opale auxquels elles renvoyaient. */
+    it.each(PAGE_CASES)('la page « %s » ne devrait pas se lier à elle-même', (_slug, page) => {
+      const { container } = render(<>{page.render()}</>);
+
+      const self = [...container.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')]
+        .map((anchor) => anchor.getAttribute('href') ?? '')
+        .filter((href) => parseSlug(href) === page.slug);
+
+      expect(
+        [...new Set(self)],
+        `la page « ${page.slug} » porte ${self.length} lien(s) vers elle-même : ` +
+          `${[...new Set(self)].join(', ')}.\nUn tel lien ne rougit sur aucun test ` +
+          `d'existence et ne mène nulle part — il vient en général d'un renvoi vers un ` +
+          `AUTRE composant qui portait le même nom.`,
       ).toEqual([]);
     });
 

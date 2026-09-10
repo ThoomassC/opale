@@ -1,325 +1,303 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
-import { Button } from '../../../components/button';
-import { Field } from '../../../components/field';
-import { IconTile } from '../../../components/icon-tile';
-import { Input } from '../../../components/input';
-import { Message } from '../../../components/message';
-import { Pill } from '../../../components/pill';
-import { Tag } from '../../../components/tag';
 import type { DocPage } from '../../doc-model';
 import { hrefFor } from '../../doc-model';
 import { Specimen } from '../../section';
-import { PageBody, UsageBlock } from '../api';
+import { PageBody } from '../api';
 
 /* =============================================================================
-   LE THÈME VERRE, DOCUMENTÉ PAR SON PÉRIMÈTRE.
+   CETTE PAGE A ÉTÉ RÉDUITE, PAS SUPPRIMÉE, ET LA DISTINCTION EST LE SUJET.
 
-   Cette page n'explique pas ce qu'est un `backdrop-filter` : elle dit QUELLES
-   surfaces en reçoivent un, lesquelles n'en reçoivent pas, et le chiffre qui a
-   tranché à chaque ligne. Le tableau est donc le cœur de la page, et les
-   spécimens n'en sont que la contre-épreuve à l'œil.
+   Elle documentait DEUX choses que la 2.0 sépare :
 
-   ELLE NE PEUT PAS MONTRER LES DEUX ÉTATS CÔTE À CÔTE, et c'est structurel :
-   le porteur est `data-material="glass"` sur `<html>`, donc il n'y a qu'un
-   matériau par document. Un aperçu « aplat » posé ici demanderait un second
-   document — une `<iframe>`, ou la recopie des sélecteurs de `glass.css` sous
-   une classe locale, c'est-à-dire une seconde vérité à tenir alignée à la main.
-   La page montre donc le thème COURANT et renvoie à la bascule de la barre du
-   haut, qui est la seule chose qui change l'attribut.
+   1. LE THÈME « verre liquide » d'Opale — un porteur `data-material="glass"`
+      sur `<html>`, la feuille `src/styles/glass.css` qui le lit, et sept
+      composants repeints par elle (`Button`, `Field`, `IconTile`, `Input`,
+      `Message`, `Pill`, `Tag`). Tout cela est supprimé : la feuille n'existe
+      plus, les composants non plus, et le porteur n'a plus AUCUN consommateur —
+      vérifié, `data-material` n'apparaît nulle part dans `src/tokens/**`, dans
+      `src/magic/**` ni dans `doc.css`. La bascule « Verre liquide » de la barre
+      du haut a donc été retirée avec le reste : un bouton `aria-pressed` qui
+      n'allume rien est un défaut, pas une commodité.
 
-   AUCUN ÉTAT, AUCUN HOOK ICI : la bascule vit dans `material-toggle.tsx`, et
-   `use-material.ts` explique pourquoi la librairie ne la publie pas.
+   2. LES JETONS DU MATÉRIAU — `--glass-fill`, `--glass-blur`, `--glass-border`,
+      `--glass-specular`… Ceux-là SURVIVENT : ils sont déclarés dans
+      `src/tokens/materials.css`, que `tokens.css` importe, donc ils sont
+      toujours publiés par `@thomascaron/opale/tokens.css`. Et ils sont toujours
+      MESURÉS : `src/contract/glass.contract.test.ts` lit `materials.css` et
+      recalcule ses onze sections à chaque exécution de la suite.
+
+   D'OÙ LE RENVERSEMENT DE CETTE PAGE. Elle montrait un matériau appliqué ; elle
+   documente désormais un matériau DISPONIBLE MAIS PLUS APPLIQUÉ. C'est une
+   nuance qu'un lecteur ne peut pas deviner d'une liste de jetons, et c'est
+   pourquoi le premier spécimen la dit avant tout le reste.
+
+   LE SEUL SPÉCIMEN VISUEL EST RECONSTRUIT À LA MAIN, et il est étiqueté comme
+   tel. Aucune feuille publiée ne compose plus ces jetons : les peindre ici
+   demande de réécrire en style en ligne ce que `glass.css` faisait, ce qui est
+   légitime pour une démonstration mais ne doit pas se lire comme une API. Les
+   valeurs employées sont toutes des `var(--glass-*)` — aucune couleur
+   littérale, la règle de `doc.css` vaut aussi pour ce qui est écrit en ligne.
    ========================================================================== */
 
-const USAGE = `// L'ORDRE EST UN INVARIANT : glass.css APRÈS tokens.css et ui.css.
-import '@thomascaron/opale/tokens.css';
-import '@thomascaron/opale/ui.css';
-import '@thomascaron/opale/glass.css';
-
-// Puis le porteur, sur <html> et nulle part ailleurs.
-document.documentElement.dataset.material = 'glass';
-
-// Le retour à l'aplat RETIRE l'attribut : il n'existe pas de data-material="flat".
-delete document.documentElement.dataset.material;`;
-
-/** L'identifiant du titre qui nomme le tableau des surfaces. */
-const SURFACES_TITLE_ID = 'verre-surfaces-title';
-
-interface GlassSurface {
-  /** Le composant, tel qu'il s'appelle dans `src/index.ts`. */
-  readonly component: string;
-  /** Le sélecteur ciblé — absent quand le composant n'a aucune surface propre. */
-  readonly selector?: string;
-  /** Ce que `glass.css` lui pose. */
-  readonly receives: string;
-  readonly why: ReactNode;
+interface MaterialToken {
+  readonly token: string;
+  /** La valeur telle qu'elle est déclarée dans `materials.css`. */
+  readonly value: string;
+  /** Ce que le jeton porte, et ce qui a été mesuré dessus. */
+  readonly role: ReactNode;
 }
 
-/**
- * Les vingt surfaces, dans l'ordre des trois traitements.
- *
- * Sept flous, neuf liserés, huit composants intacts — et les trois contrôles de
- * saisie sont DANS les sept flous mais hors des neuf liserés, ce qui est la
- * seule asymétrie du tableau.
- */
-const SURFACES: readonly GlassSurface[] = [
+/* Les valeurs sont RECOPIÉES de `src/tokens/materials.css` et non devinées ;
+   les chiffres de mesure viennent des commentaires de cette même feuille et des
+   sections de `glass.contract.test.ts` qui les rejouent. */
+const TOKENS: readonly MaterialToken[] = [
   {
-    component: 'Button — secondaire',
-    selector: '.tc-btn--secondary',
-    receives: 'Flou + liseré',
-    why: (
+    token: '--glass-fill',
+    value: 'var(--tc-white-a40)',
+    role: (
       <>
-        Son <code>--panel-surface</code> est déjà à alpha 0,05 : seul le filtre manquait.
+        Le remplissage : un blanc translucide à alpha 0,40. Mesuré, il lève la carte de{' '}
+        <strong>1,078:1</strong> contre le sol, quand le blanc pur ne monte qu’à 1,200:1 — il n’y a
+        donc plus rien à acheter en blanchissant. La § 2 du contrat rejoue ce plafond.
       </>
     ),
   },
   {
-    component: 'Button — danger',
-    selector: '.tc-btn--danger',
-    receives: 'Flou + liseré',
-    why: (
+    token: '--glass-fill-solid',
+    value: 'var(--surface)',
+    role: (
       <>
-        Fond transparent au repos, voile <code>--danger-quiet</code> au survol — rien d’opaque à
-        préserver.
+        Le repli <strong>opaque</strong>, servi quand <code>backdrop-filter</code> manque ou quand
+        la transparence réduite est demandée. C’est exactement <code>--surface</code> : un second
+        littéral promettrait une différence qui n’existe pas.
       </>
     ),
   },
   {
-    component: 'Input',
-    selector: '.tc-input',
-    receives: 'Flou seul',
-    why: (
+    token: '--glass-blur',
+    value: '32px',
+    role: <>Le flou des grandes surfaces. Non thémé — un flou n’a pas de thème.</>,
+  },
+  {
+    token: '--glass-blur-control',
+    value: '12px',
+    role: (
       <>
-        Un contrôle de formulaire <strong>ne génère pas de boîte de pseudo-élément</strong> : sondé,
-        le témoin <code>&lt;span&gt;</code> peint son anneau, les trois contrôles n’en peignent
-        aucun pixel.
+        Le flou des <strong>contrôles</strong>, plus petit parce qu’ils le sont. À 32 px sur un
+        contrôle de 44 px il ne reste que <strong>0,8 %</strong> de la modulation du fond — mesuré
+        au navigateur sur six rayons : le verre ne montre plus rien de ce qui passe derrière lui. À
+        12 px il en garde vingt fois plus.
       </>
     ),
   },
   {
-    component: 'Select',
-    selector: '.tc-select',
-    receives: 'Flou seul',
-    why: <>Même modèle de boîte : le liseré n’a nulle part où se peindre.</>,
+    token: '--glass-saturate',
+    value: '1.6',
+    role: <>La saturation du filtre d’arrière-plan, appliquée avec le flou.</>,
   },
   {
-    component: 'Textarea',
-    selector: '.tc-textarea',
-    receives: 'Flou seul',
-    why: <>Même modèle de boîte : le liseré n’a nulle part où se peindre.</>,
-  },
-  {
-    component: 'Message',
-    selector: '.tc-message',
-    receives: 'Flou + liseré',
-    why: (
+    token: '--glass-border',
+    value: 'var(--tc-shade-a25)',
+    role: (
       <>
-        Lavis à alpha 0,10 et 0,14 ; son bord de lecture fait <code>--space-1</code> et non 1 px,
-        donc l’anneau est décalé de 4 px de ce seul côté.
+        Le liseré, et c’est une encre — <strong>jamais un blanc</strong>. Un filet blanc ne peut pas
+        dessiner de bord sur un remplissage quasi blanc : il plafonne à ΔE OKLab 4,0, même à alpha
+        1,0. Celui-ci mesure <strong>ΔE 16,7</strong> contre le sol nu, et la § 8 du contrat exige
+        qu’il reste perceptible.
       </>
     ),
   },
   {
-    component: 'IconTile',
-    selector: '.tc-icontile',
-    receives: 'Flou + liseré',
-    why: (
+    token: '--glass-edge-width',
+    value: '3px',
+    role: (
       <>
-        Dégradé de 0,24 à 0,42, et la tuile d’action est à <code>--target-min</code> : c’est la plus
-        petite surface verrée, celle qui fixe le rayon à <code>--glass-blur-control</code> (12 px) —
-        à 32 px il ne reste 0,8 % de la modulation du fond, contre 16 % à 12 px.
+        Le <strong>ménisque</strong> : la bande de bord filtre son arrière-plan autrement que le
+        centre. C’est ce qui distingue ce verre d’un simple fond flouté. Trois jetons l’accompagnent
+        — <code>--glass-edge-blur</code> (2px), <code>--glass-edge-saturate</code> (2.4),{' '}
+        <code>--glass-edge-brightness</code> (1.08).
       </>
     ),
   },
   {
-    component: 'Button — primaire',
-    selector: '.tc-btn--primary',
-    receives: 'Liseré seul, aplat conservé',
-    why: (
+    token: '--glass-rim-width',
+    value: '1.5px',
+    role: <>L’épaisseur de l’anneau spéculaire, distincte de celle du ménisque.</>,
+  },
+  {
+    token: '--glass-specular',
+    value: 'linear-gradient(142deg, …)',
+    role: (
       <>
-        <code>--accent</code> exige alpha ≥ 0,892 pour que <code>--text-on-accent</code> tienne
-        4,5:1, et ≥ 0,811 pour que <code>--focus-inner</code> garde 3:1 : 11 % de transparence, que
-        personne ne verrait.
+        Le liseré <strong>directionnel</strong> : allumé en haut-gauche, éteint en bas-droite,
+        rappel au coin opposé. Sept arrêts de blanc, et <strong>aucun arrêt sombre</strong> — sur un
+        anneau de 1,5 px il se lirait comme un trait en travers de la carte.
       </>
     ),
   },
   {
-    component: 'Tag',
-    selector: '.tc-tag',
-    receives: 'Liseré seul, aplat conservé',
-    why: (
-      <>Cardinalité : quarante étiquettes dans une liste feraient quarante passes de composition.</>
+    token: '--glass-highlight',
+    value: 'radial-gradient(…), radial-gradient(…)',
+    role: (
+      <>Les deux halos de la surface. La § 3 du contrat vérifie qu’ils DÉGRADENT le contraste.</>
     ),
   },
   {
-    component: 'Pill — acquis',
-    selector: '.tc-pill--done',
-    receives: 'Liseré seul, aplat conservé',
-    why: <>Son blanc tombe à 3,74:1 dès alpha 0,60.</>,
-  },
-  {
-    component: 'Pill — en cours',
-    selector: '.tc-pill--progress',
-    receives: 'Liseré seul, aplat conservé',
-    why: (
+    token: '--glass-shadow',
+    value: 'var(--shadow-ink)',
+    role: (
       <>
-        <code>--status-progress-text</code> tombe à 4,48:1 dès alpha 0,70 — sous le seuil.
-      </>
-    ),
-  },
-  {
-    component: 'Pill — à venir',
-    selector: '.tc-pill--upcoming',
-    receives: 'Liseré seul, aplat conservé',
-    why: <>Plafond commun de la pastille : alpha ≈ 0,78, ce qui n’est pas du verre.</>,
-  },
-  {
-    component: 'Backdrop',
-    selector: '.tc-backdrop',
-    receives: 'Rien',
-    why: <>C’est le sol : il n’a rien derrière lui à filtrer.</>,
-  },
-  {
-    component: 'Card',
-    selector: '.tc-card--glass',
-    receives: 'Rien',
-    why: (
-      <>
-        Le verre y est déjà, avec son ménisque à deux anneaux, et{' '}
-        <a className="tc-doc-link" href={hrefFor('composants/card')}>
-          <code>variant=&quot;flat&quot;</code>
-        </a>{' '}
-        reste l’échappatoire opaque.
-      </>
-    ),
-  },
-  {
-    component: 'Checkbox',
-    selector: '.tc-checkbox__input',
-    receives: 'Rien',
-    why: (
-      <>
-        <a className="tc-doc-link" href={hrefFor('composants/checkbox')}>
-          Case dessinée par l’agent utilisateur
-        </a>{' '}
-        : la verrer exigerait <code>appearance: none</code>, donc perdre la coche système, le rendu{' '}
-        <code>forced-colors</code> et l’état indéterminé.
-      </>
-    ),
-  },
-  {
-    component: 'ChipList',
-    receives: 'Rien',
-    why: (
-      <>
-        Aucune <code>background</code> dans sa feuille : elle dispose des <code>Tag</code>, qui
-        portent le liseré.
-      </>
-    ),
-  },
-  {
-    component: 'DateRange',
-    receives: 'Rien',
-    why: <>Aucune surface propre : deux éléments de temps et un séparateur.</>,
-  },
-  {
-    component: 'Field',
-    receives: 'Rien',
-    why: <>Aucune surface propre : elle habille le contrôle, qui reçoit le flou.</>,
-  },
-  {
-    component: 'SectionHeading',
-    receives: 'Rien',
-    why: <>Aucune surface propre : un titre et son filet.</>,
-  },
-  {
-    component: 'Timeline',
-    receives: 'Rien',
-    why: (
-      <>
-        Aucune surface propre : l’entrée emprunte la classe de <code>Card</code> quand elle veut du
-        verre.
+        L’ombre portée, et c’est un <strong>alias</strong> : une carte de verre et une carte opaque
+        projettent la même ombre. La polarité s’inverse entre les thèmes — ΔE 20,6 contre le sol
+        clair, 2,2 seulement contre le sol sombre, où c’est le liseré qui détache (ΔE 18,5).
       </>
     ),
   },
 ];
 
+const TOKENS_TITLE_ID = 'verre-jetons-title';
+
+/* LA SCÈNE DE DÉMONSTRATION, ÉCRITE EN STYLE EN LIGNE ET ASSUMÉE COMME TELLE.
+   `doc.css` s'interdit toute couleur littérale et ne porte plus de règle de
+   verre ; ces trois objets composent les jetons comme le ferait un
+   consommateur, en `var()` uniquement. Le motif du fond est fait de deux rôles
+   de la charte pour que le flou ait quelque chose à flouter — sans arête
+   derrière lui, un `backdrop-filter` ne se voit pas. */
+const GROUND: CSSProperties = {
+  background: 'repeating-linear-gradient(115deg, var(--accent) 0 18px, var(--surface) 18px 36px)',
+  borderRadius: 'var(--radius-lg)',
+  padding: 'var(--space-6)',
+  display: 'flex',
+  justifyContent: 'center',
+};
+
+const PANE: CSSProperties = {
+  background: 'var(--glass-fill)',
+  backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+  border: 'var(--glass-rim-width) solid var(--glass-border)',
+  borderRadius: 'var(--radius-lg)',
+  boxShadow: 'var(--glass-shadow)',
+  padding: 'var(--space-5) var(--space-6)',
+  color: 'var(--text-strong)',
+  maxInlineSize: '28ch',
+};
+
 export const verrePage: DocPage = {
   slug: 'verre',
-  label: 'Verre liquide',
+  label: 'Verre',
   group: 'fondations',
-  title: 'Verre liquide',
+  title: 'Verre',
   lede: (
     <>
-      Un porteur sur <code>&lt;html&gt;</code>, <code>data-material=&quot;glass&quot;</code>, et une
-      feuille de plus : <strong>sept surfaces</strong> reçoivent un <code>backdrop-filter</code>,{' '}
-      <strong>neuf</strong> un liseré spéculaire, <strong>huit composants</strong> ne bougent pas.
-      Aucun fond, aucune encre et aucune bordure n’y est repeinte — la couleur reste au jeton, la
-      matière à la feuille.
+      Onze jetons de matériau — remplissage, flou, ménisque, liseré, spéculaire, ombre — toujours
+      publiés et toujours mesurés par le contrat. <strong>Plus rien ne les applique</strong> : la
+      feuille et les composants qui les consommaient ne sont pas dans la 2.0.
     </>
   ),
   render: () => (
     <PageBody>
-      <UsageBlock label="Activation du thème verre" code={USAGE} />
+      <Specimen
+        title="Ce qui reste, et ce qui est parti"
+        note={
+          <>
+            Cette page documentait un thème appliqué ; elle documente désormais un matériau{' '}
+            <strong>disponible</strong>.
+          </>
+        }
+      >
+        <ul className="tc-doc-checklist">
+          <li>
+            <strong>Les onze jetons restent publiés.</strong> Ils sont déclarés dans{' '}
+            <code>src/tokens/materials.css</code>, que <code>tokens.css</code> importe : un
+            consommateur de <code>@thomascaron/opale/tokens.css</code> les a tous.
+          </li>
+          <li>
+            <strong>Ils restent mesurés.</strong> <code>glass.contract.test.ts</code> lit cette
+            feuille et recalcule onze sections à chaque exécution de la suite — le plafond du
+            remplissage, la perceptibilité du liseré, le fait que les halos dégradent le contraste
+            au lieu de le fournir. Un chiffre faux fait échouer le build.
+          </li>
+          <li>
+            <strong>La feuille qui les composait est supprimée.</strong> <code>glass.css</code>{' '}
+            n’est plus publiée, et le point d’entrée <code>@thomascaron/opale/glass.css</code>{' '}
+            n’existe plus dans <code>exports</code>. Composer ces jetons est désormais le travail de
+            l’appelant.
+          </li>
+          <li>
+            <strong>
+              Le porteur <code>data-material=&quot;glass&quot;</code> n’a plus aucun lecteur.
+            </strong>{' '}
+            Vérifié : l’attribut n’apparaît ni dans <code>src/tokens/**</code>, ni dans{' '}
+            <code>src/magic/**</code>, ni dans <code>doc.css</code>. La bascule « Verre liquide » de
+            la barre du haut a donc été retirée de cette vitrine — un bouton qui annonce un état
+            sans rien changer est un défaut d’accessibilité, pas une commodité.
+          </li>
+          <li>
+            <strong>Les sept composants repeints par le thème ne sont plus publiés.</strong>{' '}
+            <code>Button</code>, <code>Field</code>, <code>IconTile</code>, <code>Input</code>,{' '}
+            <code>Message</code>, <code>Pill</code> et <code>Tag</code> sont supprimés avec le reste
+            de la 1.0.
+          </li>
+        </ul>
+      </Specimen>
 
-      <p className="tc-doc-prose">
-        <strong>L’ordre des imports est un invariant.</strong> Le bloc de jetons du verre pèse
-        (0,2,0), exactement le poids des deux blocs sombres de <code>roles.css</code> et de{' '}
-        <code>materials.css</code> : déclaré avant eux, le thème verre disparaîtrait{' '}
-        <em>en sombre seulement</em>.
-      </p>
-
-      <p className="tc-doc-prose">
-        La bascule de cette page est celle de la barre du haut, et la librairie{' '}
-        <strong>ne publie pas</strong> de sélecteur : les trois consommateurs ont des mécaniques de
-        thème incompatibles, donc ce qui est publié, c’est la feuille.
-      </p>
+      <Specimen
+        title="Ce que les jetons composent"
+        note={
+          <>
+            <strong>Reconstruit à la main pour cette page</strong>, en style en ligne : aucune
+            feuille publiée ne fait plus cela. Le fond rayé n’est pas décoratif — sans arête
+            derrière lui, un <code>backdrop-filter</code> ne se voit pas.
+          </>
+        }
+      >
+        <div style={GROUND}>
+          <div style={PANE}>
+            <p className="tc-doc-cardtext">
+              Remplissage, flou, saturation, liseré d’encre et ombre portée — cinq jetons, aucune
+              couleur littérale.
+            </p>
+          </div>
+        </div>
+      </Specimen>
 
       <div>
-        <h2 className="tc-doc-specimen__title" id={SURFACES_TITLE_ID}>
-          Ce qui devient du verre, et ce qui n’en devient pas
+        <h2 className="tc-doc-specimen__title" id={TOKENS_TITLE_ID}>
+          Les onze jetons
         </h2>
         <p className="tc-doc-specimen__note">
-          Un aplat qui porte du texte ne devient pas translucide : il reçoit le bord et le reflet,
-          jamais le flou — c’est aussi la doctrine d’Apple, où le verre est la couche de navigation
-          qui flotte au-dessus du contenu, jamais le contenu.
+          Valeurs recopiées de <code>src/tokens/materials.css</code>. Les filtres et la géométrie ne
+          sont <strong>pas thémés</strong> ; le remplissage, le liseré et l’ombre le sont.
         </p>
+        {/* Même recette que les autres tableaux de la vitrine : un conteneur à
+            défilement horizontal doit être atteignable au clavier (WCAG 2.1.1),
+            et la liste blanche par défaut de la règle `jsx-a11y` ne modélise
+            pas ce cas. */}
         <div
           className="tc-doc-tablewrap"
           tabIndex={0}
           role="group"
-          aria-label="Tableau des vingt surfaces, défilement horizontal"
+          aria-label="Tableau, défilement horizontal"
         >
-          <table className="tc-doc-table" aria-labelledby={SURFACES_TITLE_ID}>
+          <table className="tc-doc-table" aria-labelledby={TOKENS_TITLE_ID}>
             <thead>
               <tr>
-                <th scope="col">Le composant</th>
-                <th scope="col">Ce qu’il reçoit</th>
-                <th scope="col">Pourquoi</th>
+                <th scope="col">Jeton</th>
+                <th scope="col">Valeur</th>
+                <th scope="col">Rôle, et ce qui est mesuré</th>
               </tr>
             </thead>
             <tbody>
-              {SURFACES.map((surface) => (
-                <tr key={surface.component}>
-                  {/* Le sélecteur sur SA PROPRE LIGNE, et c'est ce qui l'a
-                      motivé : dans la colonne étroite du tableau, un
-                      `.tc-btn--secondary` posé à la suite du nom se coupait en
-                      « .tc-btn-- » / « secondary », soit un nom de classe rendu
-                      illisible à l'endroit exact où on vient le lire.
-                      `tc-doc-cardtext` est le seul bloc de `doc.css` à ne porter
-                      ni marge ni taille propre — il tient la ligne sans ajouter
-                      de gouttière dans la cellule. */}
+              {TOKENS.map((entry) => (
+                <tr key={entry.token}>
                   <th scope="row">
-                    {surface.component}
-                    {surface.selector ? (
-                      <p className="tc-doc-cardtext">
-                        <code>{surface.selector}</code>
-                      </p>
-                    ) : null}
+                    <code>{entry.token}</code>
                   </th>
-                  <td>{surface.receives}</td>
-                  <td>{surface.why}</td>
+                  <td>
+                    <code>{entry.value}</code>
+                  </td>
+                  <td>{entry.role}</td>
                 </tr>
               ))}
             </tbody>
@@ -327,104 +305,14 @@ export const verrePage: DocPage = {
         </div>
       </div>
 
-      <Specimen
-        title="Les surfaces filtrées, dans le thème courant"
-        note="Basculez « Verre liquide » dans la barre du haut pour voir la différence : le porteur est sur <html>, donc une page ne peut pas rendre les deux matériaux côte à côte."
-      >
-        <div className="tc-doc-stack">
-          <div className="tc-doc-specimen__stage tc-doc-specimen__stage--inline">
-            <Button variant="primary">Enregistrer l’étape</Button>
-            <Button variant="secondary">Annuler</Button>
-            <Button variant="danger">Supprimer l’étape</Button>
-            <IconTile>
-              <span>◆</span>
-            </IconTile>
-          </div>
-          <Field id="verre-etape" label="Nom de l’étape">
-            {(control) => <Input {...control} placeholder="Kyoto" />}
-          </Field>
-          <Message tone="ok">Étape enregistrée.</Message>
-        </div>
-      </Specimen>
-
-      <Specimen
-        title="La déformation, sur un fond qui a de la matière"
-        note="Une lentille ne montre rien sur un aplat uni : elle déplace des pixels identiques. Les bandes sont là pour que la courbure du bord se voie, pas pour illustrer un emploi — le libellé n’est pas censé se lire sur du rouge saturé."
-      >
-        <div className="tc-doc-stack">
-          <div className="tc-doc-lensstage">
-            <Button variant="secondary">Annuler</Button>
-            <Button variant="secondary">Un libellé nettement plus long</Button>
-          </div>
-          <p className="tc-doc-prose tc-doc-aside">
-            Sur les supports que la librairie déclare, la lentille ne coûte rien : le libellé du
-            secondary tient 9,32:1 en clair et 10,65:1 en sombre sur le sol, 8,88 et 10,21 sur le
-            décor — les mêmes valeurs à flou 0 comme à flou 12. Sur un fond chargé, c’est le flou
-            qui le tient, et il reste à 12 px pour cette raison. Sur les bandes ci-dessus, mesuré :
-            5,11:1 au pire pour le libellé long, 6,26:1 pour le court.
-          </p>
-        </div>
-      </Specimen>
-
-      <Specimen title="Les aplats, qui ne reçoivent que le bord" inline>
-        <Pill tone="done">Acquis</Pill>
-        <Pill tone="progress">En cours</Pill>
-        <Pill tone="upcoming">À venir</Pill>
-        <Tag>TypeScript</Tag>
-        <Tag variant="measured">Mesuré</Tag>
-      </Specimen>
-
-      <Specimen title="Les trois replis">
-        <ul className="tc-doc-checklist">
-          <li>
-            <code>@supports not</code> — sans <code>backdrop-filter</code>, les neuf liserés partent
-            et les sept surfaces retrouvent au pixel près leur rendu de mode normal, cette feuille
-            n’ayant posé aucun fond à restaurer.
-          </li>
-          <li>
-            <code>prefers-reduced-transparency: reduce</code> <strong>ou</strong>{' '}
-            <code>prefers-contrast: more</code> — les deux conditions, parce que la première n’est
-            implémentée que par Chromium : filtres et liserés partent ensemble.
-          </li>
-          <li>
-            <code>forced-colors: active</code> — un bloc à part, qui éteint <strong>aussi</strong>{' '}
-            les filtres : mesuré, ce mode ne pose ni <code>prefers-contrast: more</code> ni{' '}
-            <code>prefers-reduced-transparency</code>.
-          </li>
-        </ul>
-      </Specimen>
-
-      <Specimen title="Ce que le contrat ne mesure pas">
-        <ul className="tc-doc-checklist">
-          <li>
-            Le flou échantillonne au-delà des bords avant de découper à la boîte — 24 px de première
-            déviation standard pour un contrôle de 44 px — donc l’arrière-plan effectif inclut ce
-            qui est <strong>à côté</strong> et non seulement ce qui est <strong>derrière</strong> :
-            aucune arithmétique de couches ne l’exprime.
-          </li>
-          <li>
-            Deux <code>backdrop-filter</code> imbriqués ne sont pas spécifiés partout de la même
-            façon : selon le moteur, l’enfant échantillonne la sortie déjà filtrée du parent ou la
-            page brute.
-          </li>
-          <li>
-            <code>blur() saturate()</code> reste hors du domaine mesuré : les chiffres du dépôt sont
-            des <strong>estimations</strong> — c’est le mot du dépôt, et on le garde.
-          </li>
-          <li>
-            Le coût, lui, est connu : un <code>backdrop-filter</code> est une passe de composition{' '}
-            <strong>par élément</strong> et non par composant, d’où l’absence de flou sur{' '}
-            <code>Tag</code> et <code>Pill</code>, qui vivent dans des listes.
-          </li>
-        </ul>
-      </Specimen>
-
-      <p className="tc-doc-prose">
-        Le matériau assemblé — décor, cartes de verre et frise — se regarde sur la page{' '}
-        <a className="tc-doc-link" href={hrefFor('compositions/verre-et-frise')}>
-          Verre et frise
+      <p className="tc-doc-prose tc-doc-aside">
+        Le verre des quatorze composants publiés n’a <strong>rien à voir</strong> avec celui-ci : il
+        est écrit dans <code>src/magic/**</code>, n’emploie aucun de ces jetons, et n’est couvert
+        par aucun contrat — voir{' '}
+        <a className="tc-doc-link" href={hrefFor('composants/glass')}>
+          Glass
         </a>
-        .
+        . Deux matériaux du même nom, mesuré pour l’un, pas pour l’autre.
       </p>
     </PageBody>
   ),

@@ -13,7 +13,7 @@ import type { ErrorInfo, ReactNode } from 'react';
 
    La vitrine reproduisait exactement le même pari : `page.render()` était
    appelé au beau milieu du rendu de la coquille, sans filet. Une page sur
-   vingt-trois qui jette emportait la barre du haut, le sommaire et la bascule
+   vingt et une qui jette emportait la barre du haut, le sommaire et la bascule
    de thème avec elle — alors que la coquille, elle, est saine, et que le
    sommaire est précisément ce qui permet d'aller voir ailleurs.
 

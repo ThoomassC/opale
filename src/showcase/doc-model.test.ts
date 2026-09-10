@@ -109,15 +109,22 @@ describe('GROUPS', () => {
   });
 
   /* L'ordre est un contrat d'affichage : on entre par l'introduction, on
-     descend vers les fondations, puis les composants qui les consomment, puis
-     les compositions qui assemblent les composants. */
+     descend vers les fondations, puis vers les composants.
+
+     TROIS GROUPES ET NON CINQ, ET LA LISTE A ÉTÉ RÉDUITE PLUTÔT QUE RELÂCHÉE.
+     La 2.0 supprime `compositions` — ses deux pages assemblaient des composants
+     qui ne sont plus publiés — et supprime `magic` EN TANT QUE GROUPE, ses
+     quatorze pages étant montées dans `composants`. Le libellé de ce test
+     pourrait tenir sur `GROUPS.length`, et ce serait un test plus faible : ce
+     qu'on épingle est l'ORDRE et les NOMS, parce qu'un groupe renommé change
+     toutes les adresses du site.
+
+     ATTENTION : la note du groupe `composants` porte désormais l'avertissement
+     du défunt groupe `magic` (vendoré, hors contrat de couleur). Elle n'est pas
+     vérifiée ici — une note est de la prose — mais la supprimer retirerait la
+     seule mention de cette limite dans la barre de navigation. */
   it('devrait servir les groupes dans l’ordre d’affichage attendu', () => {
-    expect(GROUPS.map((group) => group.id)).toEqual([
-      'introduction',
-      'fondations',
-      'composants',
-      'compositions',
-    ]);
+    expect(GROUPS.map((group) => group.id)).toEqual(['introduction', 'fondations', 'composants']);
   });
 
   it('devrait donner un libellé non vide à chaque groupe', () => {

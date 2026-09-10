@@ -208,7 +208,14 @@ describe('searchPages — le classement, rang par rang', () => {
 
 describe('searchPages — la stabilité du tri', () => {
   const CARD = pageOf({ label: 'Card', group: 'composants' });
-  const CARTE = pageOf({ label: 'Carte', group: 'compositions' });
+  /* MÊME GROUPE QUE `CARD` DEPUIS LA 2.0, qui supprime « compositions ». Le
+     groupe n'entrait pour rien dans ce que ce bloc mesure — deux libellés de
+     MÊME rang doivent sortir dans l'ordre du tableau d'entrée — et les mettre
+     dans le même groupe isole même mieux la propriété : il ne reste plus que
+     l'ordre d'entrée pour les départager. Ni « composants » ni « compositions »
+     ne contiennent « car », donc l'indexation du nom de groupe ne pesait pas
+     sur le résultat. */
+  const CARTE = pageOf({ label: 'Carte', group: 'composants' });
   /** Rang inférieur : il doit passer derrière, sans déranger les deux autres. */
   const ECARTS = pageOf({ label: 'Écarts', group: 'fondations' });
 

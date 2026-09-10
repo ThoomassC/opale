@@ -1,15 +1,36 @@
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 
-import { GlassLens } from '../components/glass-lens';
 import type { DocPage } from './doc-model';
 import { HOME_SLUG, findPage, hrefFor } from './doc-model';
 import { DocNav } from './doc-nav';
 import { DocSearch } from './doc-search';
-import { MaterialToggle } from './material-toggle';
 import { PageBoundary } from './page-boundary';
 import { ThemeToggle } from './theme-toggle';
 import { useRoute } from './use-route';
+
+/* =============================================================================
+   DEUX ÉLÉMENTS ONT ÉTÉ RETIRÉS DE CETTE COQUILLE EN 2.0, ET AUCUN DES DEUX
+   N'ÉTAIT UN CHOIX D'APPARENCE.
+
+   `<GlassLens />` était monté ici, une fois pour tout le site, parce qu'il rend
+   un `<filter>` à `id` littéral et qu'un identifiant ne vaut qu'une fois par
+   document. Le composant n'est plus publié et `lens.css` n'existe plus : il n'y
+   a plus de bouton bulle à filtrer.
+
+   `<MaterialToggle />` était la bascule « Verre liquide » de la barre du haut.
+   Elle écrivait `data-material="glass"` sur `<html>`, et la SEULE feuille qui
+   lisait ce porteur était `src/styles/glass.css`, supprimée. Vérifié :
+   `data-material` n'apparaît plus dans `src/tokens/**`, dans `src/magic/**` ni
+   dans `doc.css` — zéro lecteur. Un bouton `aria-pressed` qui annonce un état
+   sans que rien ne change est pire qu'absent : il promet une commande à
+   quelqu'un qui ne peut pas vérifier qu'elle n'a pas marché. `material-toggle`
+   et `use-material` sont donc supprimés avec elle.
+
+   CE QUI N'EST PLUS OFFERT, DIT EN CLAIR : la vitrine n'a plus qu'UN axe de
+   présentation, le thème. Le matériau en était le second, et il ne reste de lui
+   que les jetons — voir la page « Verre », qui documente ce qui survit.
+   ========================================================================== */
 
 /** Le nom du paquet, affiché dans la barre du haut et dans `document.title`. */
 const SITE_NAME = '@thomascaron/opale';
@@ -182,10 +203,10 @@ export function DocShell({ pages }: DocShellProps) {
             laisse rétrécir jusqu'à un plancher plutôt que de la faire
             disparaître — une recherche absente sur téléphone est une
             fonctionnalité qu'on retire à ceux qui ont le plus de mal à
-            parcourir un sommaire de vingt-quatre entrées. */}
+            parcourir un sommaire de vingt et une entrées. */}
         <DocSearch pages={pages} />
         <div className="tc-doc-topbar__actions">
-          <ThemeToggle /> <MaterialToggle />
+          <ThemeToggle />
         </div>
       </header>
 
@@ -204,8 +225,8 @@ export function DocShell({ pages }: DocShellProps) {
             {page.lede ? <p className="tc-doc-prose tc-doc-page__lede">{page.lede}</p> : null}
             {/* La frontière n'entoure QUE le contenu de la page : le titre, le
                 sommaire et les deux bascules restent rendus quoi qu'il
-                arrive. Une page sur vingt-trois qui jette ne doit pas emporter
-                les vingt-deux autres avec elle — c'est l'incident que
+                arrive. Une page sur vingt et une qui jette ne doit pas
+                emporter les vingt autres avec elle — c'est l'incident que
                 `src/index.ts` documente, arrivé une fois avec un `Pill`. */}
             <PageBoundary resetKey={page.slug}>
               <PageContent page={page} />
@@ -223,20 +244,6 @@ export function DocShell({ pages }: DocShellProps) {
           </footer>
         </div>
       </div>
-
-      {/* LA LENTILLE, MONTÉE UNE SEULE FOIS POUR TOUT LE SITE.
-
-          Ici et dans aucune page : le composant rend un `<svg>` de taille nulle
-          portant un `<filter>` IDENTIFIÉ, et un identifiant ne vaut qu'une fois
-          par document. Posé dans une page — celle de `GlassLens`, celle du
-          bouton bulle — il serait monté une seconde fois dès qu'on l'ouvre, et
-          `#tc-lens` désignerait alors deux nœuds.
-
-          En fin de coquille, qui est l'endroit que le composant documente
-          lui-même : l'ordre du document ne change rien à la résolution d'un
-          `url(#…)`, et un `aria-hidden` sans boîte ne coûte ni un arrêt de
-          tabulation ni une annonce. Il est donc là où il ne gêne personne. */}
-      <GlassLens />
     </div>
   );
 }

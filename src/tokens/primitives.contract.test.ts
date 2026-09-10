@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import glassSource from '../styles/glass.css?raw';
-import lensSource from '../styles/lens.css?raw';
 import materialsSource from './materials.css?raw';
 import primitivesSource from './primitives.css?raw';
 import rolesSource from './roles.css?raw';
@@ -154,26 +152,33 @@ describe('la direction de dépendance entre couches', () => {
    * restent parfaitement autorisés.
    */
   /*
-   * `styles/glass.css` REJOINT LA LISTE, et ce n'est pas la même couche que les
-   * deux autres : c'est une feuille de MATIÈRE, qui ne cite que des jetons de
-   * matériau. Elle y est parce qu'elle est le seul endroit de la librairie où
-   * un hexadécimal passerait pour de la plomberie plutôt que pour une couleur —
-   * `card.css` écrit `linear-gradient(#000 0 0)` dans son masque de liseré, et
-   * rien ne le voit. Le masque de `glass.css` peint donc en `currentColor` : un
-   * masque ne lit que le canal alpha, la teinte y est arbitraire, et une valeur
-   * arbitraire n'a aucune raison d'être écrite en dur.
+   * `styles/glass.css` ET `styles/lens.css` FIGURAIENT DANS CETTE LISTE ET
+   * N'EXISTENT PLUS. La 2.0 ne publie plus que les composants verre liquide de
+   * `src/magic/**` ; les deux feuilles de matière de l'ancienne charte sont
+   * supprimées avec les composants qu'elles coiffaient.
    *
-   * `styles/lens.css` la rejoint pour la MÊME raison exactement : son liseré
-   * emploie la recette de masque de `glass.css`, donc le même `currentColor`,
-   * donc la même tentation d'y écrire un noir en dur. Elle y entre le jour où
-   * elle est écrite plutôt qu'après le premier hexadécimal — c'est tout
-   * l'intérêt d'une liste qui se relit à chaque feuille ajoutée.
+   * CE QUI N'EST DONC PLUS GARANTI, dit précisément : plus rien ne vérifie
+   * qu'une feuille de MATIÈRE — au sens « qui ne cite que des jetons de
+   * matériau, et où un hexadécimal passerait pour de la plomberie plutôt que
+   * pour une couleur » — est exempte d'hexadécimal. C'était leur seule raison
+   * d'être ici : leur masque de liseré peint en `currentColor`, parce qu'un
+   * masque ne lit que le canal alpha et qu'une teinte arbitraire n'a aucune
+   * raison d'être écrite en dur. La garde n'a plus de sujet dans ce dépôt : il
+   * ne reste aucune feuille de matière, et `src/magic/**` est hors du contrat
+   * de couleur d'Opale par construction (ses couleurs sont des littéraux
+   * assumés, voir `src/magic/README.md`) — l'y soumettre serait affirmer le
+   * contraire de ce que le paquet annonce.
+   *
+   * LA COUVERTURE DES JETONS PRIMITIFS EST INTACTE, et c'est vérifiable : les
+   * deux feuilles n'étaient lues QUE par ce test-ci. Aucun des tests de nommage
+   * OKLab, de teinte froide, d'unicité famille+luminosité ou de dérivation
+   * `-aNN` ne les consultait — tous partent de `primitivesSource`. Le jour où
+   * une feuille de matière revient, elle se rajoute ici : c'est tout l'intérêt
+   * d'une liste qui se relit à chaque feuille ajoutée.
    */
   it.each([
     ['roles.css', rolesSource],
     ['materials.css', materialsSource],
-    ['styles/glass.css', glassSource],
-    ['styles/lens.css', lensSource],
   ])('%s ne contient aucun hexadécimal : toute couleur y passe par un jeton', (file, source) => {
     const declarations = stripComments(source);
     const offenders = [...declarations.matchAll(HEX_ANYWHERE)].map((match) => {

@@ -1,81 +1,78 @@
-import { Backdrop } from '../../../components/backdrop';
-import { Card } from '../../../components/card';
+import { Badge, Button, Card } from '../../../magic';
 import type { DocPage } from '../../doc-model';
 import { hrefFor } from '../../doc-model';
 import { Specimen } from '../../section';
 import { PageBody, PropsTable, UsageBlock } from '../api';
 import type { PropRow } from '../api';
+import { MagicCell, MagicGroundNote, MagicPreamble, MagicStage } from './stage';
 
-interface ProjectCard {
-  readonly title: string;
-  readonly meta: string;
-  readonly text: string;
-}
+const USAGE = `import { Card } from '@thomascaron/opale';
+import '@thomascaron/opale/opale.css';
 
-/** Les trois cartes de verre. Contenu réel : ce sont les trois dépôts servis. */
-const GLASS_CARDS: readonly ProjectCard[] = [
-  {
-    title: 'travels_in_world',
-    meta: 'Next.js 16 · contenu en fichiers',
-    text: 'Carte SVG rendue côté serveur, frise par étapes, aucun appel hors origine. Premier consommateur de cette librairie.',
-  },
-  {
-    title: '@thomascaron/opale',
-    meta: 'la librairie que documente cette page',
-    text: 'Jetons mesurés, contrat de couleur exécutable, composants sans état — rendables tels quels en Server Components.',
-  },
-  {
-    title: 'portfolio',
-    meta: 'Vite · React 19 · CSS à jetons',
-    text: 'La source de cette palette : verre liquide, halos, tuiles d’icône et pastilles d’avancement en viennent tous.',
-  },
-];
+<Card>
+  <h3>Titre</h3>
+  <p>Une carte de verre.</p>
+</Card>
 
-const USAGE = `import { Backdrop, Card } from '@thomascaron/opale';
-
-<Backdrop>
-  <Card>
-    <h2>Titre</h2>
-  </Card>
-</Backdrop>
-
-<Card variant="flat" elevation={2}>Panneau flottant</Card>`;
+<Card size="large" direction="row" align="center" justify="space-between">
+  <span>Étape publiée</span>
+  <Button text="Ouvrir" />
+</Card>`;
 
 const PROPS: readonly PropRow[] = [
   {
-    name: 'variant',
-    type: "'glass' | 'flat'",
-    defaultValue: "'glass'",
+    name: 'size',
+    type: "'small' | 'medium' | 'large'",
+    defaultValue: "'medium'",
+    description: 'Le coussin intérieur. Trois crans.',
+  },
+  {
+    name: 'direction',
+    type: "'column' | 'row'",
+    defaultValue: "'col'",
     description: (
       <>
-        Le matériau : <code>glass</code> est le verre liquide, <code>flat</code> la surface opaque.
+        <strong>Le défaut est faux, et il est inoffensif.</strong> Le composant écrit{' '}
+        <code>direction = &apos;col&apos;</code> — une valeur qui n’est pas dans le type — puis
+        teste <code>direction === &apos;row&apos;</code>. Tout ce qui n’est pas{' '}
+        <code>&apos;row&apos;</code> retombe donc en colonne, y compris ce{' '}
+        <code>&apos;col&apos;</code> illégal. Défaut réel, gardé tel quel.
       </>
     ),
   },
   {
-    name: 'elevation',
-    type: '0 | 1 | 2 | 3',
-    defaultValue: '0',
+    name: 'align',
+    type: "'center' | 'start' | 'end'",
+    defaultValue: "'start'",
     description: (
       <>
-        Cran d’élévation, <strong>réservé à la variante opaque</strong> — <code>never</code> sur la
-        branche verre.
+        <code>align-items</code>. La classe est construite par concaténation de chaînes —{' '}
+        <code>items</code> + la valeur capitalisée — donc une valeur hors type sort en{' '}
+        <code>undefined</code> et n’aligne rien.
       </>
     ),
   },
   {
-    name: 'className',
-    type: 'string',
+    name: 'justify',
+    type: "'center' | 'start' | 'end' | 'space-between' | 'space-around'",
+    defaultValue: "'start'",
     description: (
       <>
-        Fusionné avec <code>tc-card</code> et la classe de matériau.
+        <code>justify-content</code>, même mécanique de construction, avec deux cas spéciaux pour{' '}
+        <code>space-between</code> et <code>space-around</code>.
       </>
     ),
   },
   {
-    name: 'ref',
-    type: 'Ref<HTMLDivElement>',
-    description: 'Atterrit sur le <div> racine.',
+    name: '…HTMLAttributes<HTMLDivElement> & GlassProps',
+    type: 'union',
+    description: (
+      <>
+        Tout part sur <code>Glass</code>, dont l’élément de contenu reste un{' '}
+        <code>&lt;div&gt;</code> : <code>as</code> est accepté par le type mais <code>Card</code> ne
+        le transmet pas.
+      </>
+    ),
   },
 ];
 
@@ -86,101 +83,89 @@ export const cardPage: DocPage = {
   title: 'Card',
   lede: (
     <>
-      Une surface de contenu, <strong>purement présentationnelle</strong> : elle n’impose aucun
-      rôle, et c’est à l’appelant de rendre le bon élément sémantique à l’intérieur. Le verre
-      liquide est le défaut, l’opaque se demande par <code>variant=&quot;flat&quot;</code> ou par le
-      cran d’élévation qui l’implique ; ni l’un ni l’autre n’exige d’arrière-plan.
+      Une surface de verre qui est aussi une <strong>boîte flexible</strong> : contrairement à la
+      carte d’Opale, elle décide de la disposition de ses enfants — direction, alignement,
+      justification. Purement présentationnelle par ailleurs : elle n’impose aucun rôle et c’est à
+      l’appelant de rendre la sémantique à l’intérieur.
     </>
   ),
   render: () => (
     <PageBody>
+      <MagicPreamble />
+
       <UsageBlock label="Import et appels représentatifs de Card" code={USAGE} />
 
-      <Specimen title="Le verre sur son décor — et l’aplat juste à côté">
-        <Backdrop className="tc-doc-scene">
-          <div className="tc-doc-scene__grid">
-            {GLASS_CARDS.map((project) => (
-              <Card key={project.title}>
-                <h3 className="tc-doc-cardtitle">{project.title}</h3>
-                <p className="tc-doc-cardmeta">{project.meta}</p>
-                <p className="tc-doc-cardtext">{project.text}</p>
+      <Specimen title="Les trois crans de coussin" note={<MagicGroundNote />}>
+        <MagicStage>
+          {(['small', 'medium', 'large'] as const).map((size) => (
+            <MagicCell key={size} label={<code>size=&quot;{size}&quot;</code>}>
+              {/* `<strong>` et non `<h3>` : ces cartes sont des figures de
+                  démonstration, pas du contenu. Un titre de niveau 3 par
+                  vignette rendrait « Étape small » navigable dans le plan de
+                  titres de la page, ce qui n'est pas une information. */}
+              <Card size={size}>
+                <strong>Étape {size}</strong>
+                <span>Trois jours à Kyoto.</span>
               </Card>
-            ))}
-
-            {/* La carte qui a fait bouger le décor. `flat` ne pose ni
-                `position` ni `isolation` : à `z-index: 0`, les disques du
-                Backdrop se peignaient PAR-DESSUS ce texte, sur un fond
-                pourtant opaque. Si ce texte se lit sans voile coloré au
-                travers, la mesure tient. */}
-            <Card variant="flat" elevation={1}>
-              <h3 className="tc-doc-cardtitle">Aplat opaque</h3>
-              <p className="tc-doc-cardmeta">variant=&quot;flat&quot; · elevation=1</p>
-              <p className="tc-doc-cardtext">
-                Ni <code>position</code> ni <code>isolation</code> : c’est elle que les halos
-                recouvraient à <code>z-index: 0</code>. Son intérieur doit rester net.
-              </p>
-            </Card>
-          </div>
-        </Backdrop>
-      </Specimen>
-
-      <Specimen title="Cartes — les quatre élévations">
-        <div className="tc-doc-grid tc-doc-grid--elev">
-          {([0, 1, 2, 3] as const).map((level) => (
-            <Card elevation={level} key={level}>
-              <h3 className="tc-doc-cardtitle">Élévation {level}</h3>
-              <p className="tc-doc-cardtext">
-                Fond <code>--surface</code>, liseré <code>--border-subtle</code>, rayon{' '}
-                <code>--radius-md</code>.
-              </p>
-            </Card>
+            </MagicCell>
           ))}
-        </div>
+        </MagicStage>
       </Specimen>
 
-      {/* Les deux écritures que l'union rend équivalentes, rendues côte à côte :
-          c'est la seule façon de vérifier à l'œil que l'inférence n'a pas
-          changé le matériau en chemin. */}
       <Specimen
-        title="Les trois écritures du même appel"
-        note="Les deux premières doivent être indiscernables — le verre est le défaut — et la troisième opaque, parce que passer un cran est en soi le choix du matériau."
+        title="La carte comme boîte flexible — direction et justification"
+        note={
+          <>
+            La seconde figure est le seul cas où <code>direction</code> change quelque chose :{' '}
+            <code>&apos;row&apos;</code>. Toute autre valeur, défaut compris, rend une colonne.
+          </>
+        }
       >
-        <div className="tc-doc-grid">
-          <Card>
-            <h3 className="tc-doc-cardtitle">Sans aucune prop</h3>
-            <p className="tc-doc-cardmeta">&lt;Card&gt;</p>
-            <p className="tc-doc-cardtext">
-              Verre liquide : fond <code>--glass-fill</code>, ménisque de bord, liseré spéculaire,
-              ombre en dur.
-            </p>
-          </Card>
-          <Card variant="glass">
-            <h3 className="tc-doc-cardtitle">Verre demandé</h3>
-            <p className="tc-doc-cardmeta">variant=&quot;glass&quot;</p>
-            <p className="tc-doc-cardtext">Le même rendu, exactement.</p>
-          </Card>
-          <Card elevation={0}>
-            <h3 className="tc-doc-cardtitle">Cran seul</h3>
-            <p className="tc-doc-cardmeta">elevation=&#123;0&#125;</p>
-            <p className="tc-doc-cardtext">Opaque, cran 0.</p>
-          </Card>
-        </div>
+        <MagicStage stack>
+          <MagicCell label="colonne (défaut)">
+            <Card>
+              <span>Kyoto</span>
+              <Badge variant="positive">publiée</Badge>
+            </Card>
+          </MagicCell>
+          <MagicCell
+            label={
+              <>
+                <code>direction=&quot;row&quot;</code> +{' '}
+                <code>justify=&quot;space-between&quot;</code> +{' '}
+                <code>align=&quot;center&quot;</code>
+              </>
+            }
+          >
+            <Card direction="row" justify="space-between" align="center">
+              <span>Kyoto</span>
+              <Button size="small" text="Ouvrir" />
+            </Card>
+          </MagicCell>
+        </MagicStage>
       </Specimen>
 
       <PropsTable
-        id="card"
+        id="magic-card"
         note={
           <>
-            <strong>Union discriminée sur le matériau</strong> — <code>CardGlassProps</code> déclare{' '}
-            <code>elevation?: never</code> — et les deux branches étendent{' '}
-            <code>ComponentPropsWithoutRef&lt;&apos;div&apos;&gt;</code>.
+            Quatre props propres, plus <code>HTMLAttributes&lt;HTMLDivElement&gt;</code>, plus{' '}
+            <code>GlassProps</code>. Aucune union discriminée et aucun matériau alternatif : cette
+            carte est <strong>toujours</strong> du verre.
           </>
         }
         rows={PROPS}
       />
 
+      {/* La comparaison renvoyait à la `Card` d'Opale, que la 2.0 ne publie
+          plus. Le lien qui SURVIT est celui des jetons d'élévation : ils sont
+          dans `src/tokens/materials.css`, donc toujours publiés — c'est la
+          feuille qui les consommait qui a disparu, pas eux. */}
       <p className="tc-doc-prose">
-        Les quatre crans et leurs jetons sont détaillés dans{' '}
+        La carte d’Opale séparait les deux responsabilités : une surface — verre ou aplat, quatre
+        crans d’élévation — qui laissait la disposition à l’appelant. La 2.0 ne la publie plus, et{' '}
+        <strong>cette carte-ci ne connaît qu’un matériau</strong> : elle est toujours du verre, et
+        n’a pas de cran. Les quatre crans, eux, restent des jetons publiés —{' '}
         <a className="tc-doc-link" href={hrefFor('elevation')}>
           Élévation
         </a>

@@ -87,11 +87,11 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
           LA VERSION RESTE DEHORS, au-dessus du `<summary>`. C'est la première
           information qu'on cherche sur un site de librairie : la mettre dans
           le pli l'aurait fait disparaître avec le sommaire, alors qu'elle ne
-          coûte qu'une ligne à garder. Le pli porte donc les quatre groupes,
+          coûte qu'une ligne à garder. Le pli porte donc les trois groupes,
           rien de plus. */}
       <details className="tc-doc-nav__all" open>
         {/* `aria-label` OBLIGATOIRE, ET SON ABSENCE ÉTAIT LE DÉFAUT LE PLUS SÉRIEUX
-            DE CE CHANGEMENT. Les quatre `<summary>` de groupe le portent depuis
+            DE CE CHANGEMENT. Les `<summary>` de groupe le portent depuis
             plusieurs versions, pour la raison écrite vingt lignes plus bas ; le
             cinquième, ajouté par-dessus, ne l'avait pas.
 

@@ -1597,18 +1597,7 @@ body {
    monde lise, donc son texte est gardé aussi longtemps que la barre le permet. */
 
 @media (width < 36rem) {
-  .tc-doc-materialtoggle__label {
-    position: absolute;
-    inset-inline-start: 0;
-    inline-size: 1px;
-    block-size: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-    border: 0;
-  }
+
 }
 
 .tc-doc-themetoggle:hover {
@@ -2300,43 +2289,6 @@ body {
   font-size: var(--text-sm);
 }
 
-/* --- États figés d'un spécimen ---------------------------------------------
-   La vitrine doit montrer un survol et un appui CÔTE À CÔTE, ce qu'aucun
-   pointeur ne peut faire. Ces deux classes rejouent les déclarations des
-   pseudo-classes ; elles n'existent que pour le catalogue et ne sont pas
-   exportées par la librairie.
-   -------------------------------------------------------------------------- */
-
-.tc-doc-state--hover.tc-btn--primary {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
-}
-
-.tc-doc-state--active.tc-btn--primary {
-  background: var(--accent-active);
-  border-color: var(--accent-active);
-  transform: translateY(1px);
-}
-
-.tc-doc-state--hover.tc-btn--secondary {
-  background: var(--accent-quiet);
-  border-color: var(--accent);
-}
-
-.tc-doc-state--active.tc-btn--secondary {
-  background: var(--accent-quiet);
-  border-color: var(--accent-active);
-  transform: translateY(1px);
-}
-
-.tc-doc-state--hover.tc-btn--danger,
-.tc-doc-state--active.tc-btn--danger {
-  background: var(--danger-quiet);
-}
-
-.tc-doc-state--active.tc-btn--danger {
-  transform: translateY(1px);
-}
 
 /* --- La scène où la réfraction se voit ------------------------------------
    UNE LENTILLE NE MONTRE RIEN SUR UN APLAT UNI : elle déplace des pixels
@@ -2370,32 +2322,7 @@ body {
    `backdrop-filter`, dont la région déborde sa boîte de 30 % pour que le bord
    de la lentille aille chercher le fond au-delà. Un conteneur qui clippe au ras
    coupe cet échantillon et la frange devient une arête. */
-.tc-doc-lensstage {
-  --text-strong: var(--tc-mist-324);
 
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-  align-items: center;
-  justify-content: center;
-  min-block-size: calc(var(--space-8) * 2);
-  padding: var(--space-6) var(--space-5);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-md);
-  background-image:
-    repeating-linear-gradient(0deg, var(--tc-shade-a16) 0 1px, transparent 1px 16px),
-    repeating-linear-gradient(90deg, var(--tc-shade-a16) 0 1px, transparent 1px 16px),
-    linear-gradient(
-      100deg,
-      var(--tc-teal-801) 0 18%,
-      var(--tc-green-812) 18% 36%,
-      var(--tc-amber-921) 36% 54%,
-      var(--tc-red-793) 54% 72%,
-      var(--tc-copper-819) 72% 100%
-    );
-  overflow: hidden;
-}
 
 /* --- Rebasculer le MATÉRIAU dans une plaque de thème -----------------------
    Les trois blocs de thème du dépôt sont tous portés par `:root` — c'est la
@@ -2423,32 +2350,7 @@ body {
    sombre reste celui du thème du document. Le jour où un spécimen en aura
    besoin, c'est la liste ci-dessous qui s'allonge, une valeur à la fois et
    mesurée — pas un `[data-theme]` imbriqué, qui ne marcherait pas. */
-.tc-doc-plate--darkmaterial {
-  /* Chaque ligne est la valeur que le bloc `:root[data-theme='dark']` de
-     `roles.css` — ou de `lens.css` pour la dernière — porte déjà. Aucune n'est
-     choisie ici, elles sont RECOPIÉES de leur bloc de thème. */
-  --surface: var(--tc-mist-188);
-  --glass-fill-solid: var(--tc-mist-188);
-  --text-strong: var(--tc-mist-865);
-  --text-muted: var(--tc-mist-762);
-  --control-border: var(--tc-mist-687);
-  --lens-veil: var(--tc-pitch-a32);
-  /* LE LISERÉ, ET C'EST CELUI QUI MANQUAIT LE PLUS : en clair il vaut une
-     encre quasi noire à 25 %, donc sur un sol sombre le contour du bouton
-     était INVISIBLE et le seul bord visible était le reflet spéculaire — celui
-     du thème clair, donc plus lumineux que la réalité. */
-  --glass-border: var(--tc-veil-a22);
-  --shadow-ink: var(--tc-soot-a50);
-  /* LE LAVIS D'ÉTAT, ET SON OUBLI DISSIMULAIT LE PIRE DÉFAUT DE LA VARIANTE :
-     avec les valeurs claires, la plaque sombre appliquait un lavis clair sur un
-     fond sombre, donc s'ÉLOIGNAIT de l'encre — le spécimen « les quatre états
-     figés » affirmait ainsi que l'état est anodin précisément là où il était le
-     plus grave. Depuis que le lavis suit la famille du voile, les deux
-     polarités sont justes ; ces deux lignes restent nécessaires pour que la
-     plaque montre les valeurs de SON thème. */
-  --lens-wash-hover: var(--tc-pitch-a10);
-  --lens-wash-active: var(--tc-pitch-a13);
-}
+
 
 /* CE QUE CETTE CLASSE NE REBASCULE PAS, ET QUI RESTE UN ÉCART ASSUMÉ :
    `--glass-specular` et `--glass-highlight`. Les deux sont des DÉGRADÉS
@@ -2467,50 +2369,40 @@ body {
    dispute pas, donc la question du poids ne se pose plus — elle se posait, et
    le commentaire qui vivait ici comparait d'ailleurs (0,2,0) à un « (0,1,0) »
    qui était en réalité (0,4,0). */
-.tc-doc-state--hover.tc-btn--bubble {
-  --lens-state-wash: var(--panel-surface-hover);
-}
 
-.tc-doc-state--active.tc-btn--bubble {
-  --lens-state-wash: var(--panel-surface-active);
-  transform: translateY(1px);
-}
-
-.tc-doc-states {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-5);
-}
 
 /* `<figure>` : la marge par défaut du navigateur est à remettre à zéro. */
-.tc-doc-states__cell {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-2);
-  margin: 0;
-}
 
-.tc-doc-states__label {
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-}
 
-/* --- Formulaires et piles de démonstration ---------------------------------- */
+/* --- CE QUI A ÉTÉ RETIRÉ DE CETTE FEUILLE EN 2.0 ---------------------------
+   Vingt-quatre règles sont parties avec les pages qui les employaient, et il
+   vaut mieux le lire ici que le déduire d'un `git log` :
 
-.tc-doc-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-  max-inline-size: calc(var(--space-8) * 8);
-}
+   - `.tc-doc-state--hover/-active` × 8, qui rejouaient un survol et un appui
+     CÔTE À CÔTE sur `.tc-btn--*`. Ni les boutons ni `ui.css` ne sont publiés.
+   - `.tc-doc-states`, `__cell`, `__label` — la grille qui les portait.
+   - `.tc-doc-greyrow` × 4, les deux panneaux « en couleur / en niveaux de
+     gris » de la page accessibilité. La garantie qu'ils démontraient (« la
+     couleur n'est qu'un renfort ») n'est plus tenue : voir cette page, qui le
+     dit en clair au lieu de laisser la démonstration disparaître en silence.
+   - `.tc-doc-lensstage` et `.tc-doc-plate--darkmaterial`, la scène de
+     réfraction du bouton bulle. `GlassLens` et `lens.css` ne sont plus publiés.
+   - `.tc-doc-scene` × 3, `.tc-doc-form`, `.tc-doc-stack` — mises en page des
+     spécimens des dix-sept composants supprimés.
+   - `.tc-doc-focusdemo .tc-field`, qui ciblait une classe d'`ui.css`.
+   - `.tc-doc-materialtoggle__label`, le repli sous 36 rem de la bascule
+     « Verre liquide ». Plus aucune feuille ne lit `data-material`, donc la
+     bascule a été retirée de la coquille.
 
-.tc-doc-stack {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
+   `.tc-doc-focusdemo` RESTE : la démonstration du focus existe toujours, sur
+   des éléments natifs non habillés — c'est même devenu la démonstration juste,
+   l'anneau venant de la règle universelle de `tokens.css` et d'aucun composant.
+
+   RESTENT DANS CETTE FEUILLE, ET ELLES ÉTAIENT DÉJÀ MORTES AVANT LA 2.0 :
+   `.tc-doc-eyebrow`, `.tc-doc-lede`, `.tc-doc-masthead`, `.tc-doc-title` et
+   `.tc-doc-toc`, héritées du temps où la vitrine tenait sur une page unique.
+   Elles ne sont pas retirées ici parce qu'elles ne sont pas de ce chantier.
+   -------------------------------------------------------------------------- */
 
 /* --- Démonstration du focus ------------------------------------------------- */
 
@@ -2525,9 +2417,6 @@ body {
   background: var(--panel-surface);
 }
 
-.tc-doc-focusdemo .tc-field {
-  flex: 1 1 calc(var(--space-8) * 4);
-}
 
 /* NI `inline-flex` NI PLANCHER DE 44 px, ET C'EST MESURÉ. WCAG 2.5.8 exempte
    explicitement la cible EN LIGNE — celle dont la taille est contrainte par
@@ -2607,31 +2496,6 @@ body {
 
 /* --- Couleur retirée -------------------------------------------------------- */
 
-.tc-doc-greyrow {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 5)), 1fr));
-  gap: var(--space-4);
-}
-
-.tc-doc-greyrow__panel {
-  padding: var(--space-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--panel-surface);
-}
-
-.tc-doc-greyrow__panel--grey {
-  filter: grayscale(1);
-}
-
-.tc-doc-greyrow__caption {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-semibold);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
 
 /* --- Cibles tactiles --------------------------------------------------------- */
 
@@ -2728,16 +2592,6 @@ body {
    donc les disques sont coupés en suivant le coin arrondi.
    -------------------------------------------------------------------------- */
 
-.tc-doc-scene {
-  border-radius: var(--radius-md);
-}
-
-.tc-doc-scene__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 3.5)), 1fr));
-  gap: var(--space-5);
-  padding: var(--space-6);
-}
 
 /* Une pile plutôt qu'une grille : la frise gère déjà l'écart entre ses entrées,
    il ne reste à donner que le coussin — celui de la grille ci-dessus, pour que
@@ -2751,6 +2605,70 @@ body {
    rogné, donc invisible. Sur une page réelle l'hôte fait plusieurs milliers de
    pixels et les six se répartissent. Cette scène-ci, plus haute, est celle qui
    ressemble à ce que verra un consommateur. */
-.tc-doc-scene__stack {
+
+
+/* --- Scène de /magic ---------------------------------------------------------
+   La plaque de spécimen d'Opale est un aplat CLAIR (`--surface`, rgb(235,244,246)
+   en thème clair, sur un sol `--doc-ground` blanc). Les quatorze composants de
+   `src/magic/**` écrivent leur libellé en `#ffffff` EN DUR : posés sur cette
+   plaque, ils y disparaissent. Mesuré : blanc sur `--surface` = 1,12:1, blanc
+   sur le sol blanc de la vitrine = 1,00:1. Chaque spécimen de `/magic` porte
+   donc sa propre scène sombre, et ce n'est pas une préférence de mise en scène :
+   c'est la condition sans laquelle le composant ne se voit pas.
+
+   LE FOND N'EST PAS ICI, ET C'EST DÉLIBÉRÉ. Ces règles ne portent que la mise
+   en page ; le dégradé est un `style` en ligne posé par
+   `showcase/pages/magic/stage.tsx`, avec ses trois hexadécimaux et ses trois
+   ratios mesurés en commentaire. C'est la MÊME dérogation que les plaques de la
+   page palette, pour la même raison : une scène qui documente le thème d'un
+   autre projet ne suit pas celui du lecteur, et `doc.css` garde sa règle
+   « aucune couleur littérale ». `/magic` est par ailleurs hors du contrat de
+   couleur d'Opale et n'emploie aucun jeton `--tc-*` — peindre sa scène avec un
+   jeton publié affirmerait le contraire.
+
+   `--tc-white` sur les LÉGENDES est l'exception qui confirme la frontière : ce
+   texte-là est de la prose de vitrine posée sur la scène, pas du composant
+   vendoré. C'est Opale qui l'écrit, donc c'est un jeton d'Opale qui le peint.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-magicstage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-5);
   padding: var(--space-6);
+  border-radius: var(--radius-md);
+  color: var(--tc-white);
+}
+
+/* Les scènes d'un composant qui prend toute la largeur — `Topbar`, `Tabs`,
+   `Modal` — s'empilent au lieu de s'aligner. */
+.tc-doc-magicstage--stack {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* `Sidebar` et `Modal` ont besoin de hauteur pour se juger : une barre latérale
+   haute de son seul contenu ne ressemble pas à une barre latérale, et un modal
+   se peint par-dessus la page entière. 256 px = quatre pas de `--space-8`. */
+.tc-doc-magicstage--tall {
+  min-block-size: calc(var(--space-8) * 4);
+}
+
+/* La rangée d'une scène : plusieurs variantes d'affilée, chacune légendée. */
+.tc-doc-magicstage__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+/* La légende d'une figure de scène. En mono et en `--text-xs` comme les
+   légendes de `.tc-doc-states__label`, mais en blanc : le fond est sombre. */
+.tc-doc-magicstage__label {
+  color: var(--tc-white);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
 }

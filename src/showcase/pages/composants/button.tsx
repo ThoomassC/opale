@@ -1,101 +1,73 @@
-import { Button } from '../../../components/button';
-import type { ButtonVariant } from '../../../components/button';
+import { Button } from '../../../magic';
 import type { DocPage } from '../../doc-model';
 import { hrefFor } from '../../doc-model';
 import { Specimen } from '../../section';
 import { PageBody, PropsTable, UsageBlock } from '../api';
 import type { PropRow } from '../api';
+import { MagicCell, MagicGroundNote, MagicPreamble, MagicStage } from './stage';
 
-interface ButtonSpec {
-  readonly variant: ButtonVariant;
-  readonly title: string;
-  readonly note: string;
-}
+type MagicButtonVariant = 'default' | 'positive' | 'negative' | 'warning';
+type MagicButtonSize = 'small' | 'medium' | 'large';
 
-/* Les trois variantes, avec la règle de dosage de la charte — elle dit ce
-   qu'aucun tableau ne dit : combien de fois par vue on a le droit de s'en
-   servir. */
-const BUTTON_SPECS: readonly ButtonSpec[] = [
-  {
-    variant: 'primary',
-    title: 'Primary — l’aplat teal',
-    note: 'Un seul par vue : c’est la sortie attendue de l’écran.',
-  },
-  {
-    variant: 'secondary',
-    title: 'Secondary — le liseré teal',
-    note: 'Toutes les autres actions.',
-  },
-  {
-    variant: 'danger',
-    title: 'Danger — le liseré rouge',
-    note: 'Jamais un aplat : l’aplat plein est le monopole du teal.',
-  },
-];
-
-interface StateCell {
-  /** La légende de la figure — l'état, pas le libellé du bouton. */
-  readonly label: string;
-  readonly text: string;
-  /** Le survol et l'appui sont FORCÉS par une classe : on ne peut pas
-      demander au lecteur de maintenir la souris sur cinq boutons à la fois. */
-  readonly className?: string;
-  readonly busy?: true;
-  readonly inert?: true;
-}
-
-const STATE_CELLS: readonly StateCell[] = [
-  { label: 'repos', text: 'Enregistrer' },
-  { label: 'survol', text: 'Enregistrer', className: 'tc-doc-state--hover' },
-  { label: 'appui', text: 'Enregistrer', className: 'tc-doc-state--active' },
-  { label: 'aria-busy', text: 'Envoi', busy: true },
-  { label: 'aria-disabled', text: 'Enregistrer', inert: true },
-];
+const VARIANTS: readonly MagicButtonVariant[] = ['default', 'positive', 'negative', 'warning'];
+const SIZES: readonly MagicButtonSize[] = ['small', 'medium', 'large'];
 
 const USAGE = `import { Button } from '@thomascaron/opale';
+import '@thomascaron/opale/opale.css';
 
-<Button variant="secondary" onClick={close}>Annuler</Button>
-<Button href="/contact" variant="secondary">Me contacter</Button>
-<Button aria-disabled={isSending} aria-busy={isSending} onClick={send}>
-  {isSending ? 'Envoi…' : 'Envoyer'}
-</Button>`;
+// \`text\` OU des enfants — les enfants gagnent.
+<Button text="Envoyer" />
+<Button variant="negative" size="large" onClick={remove}>Supprimer</Button>
+<Button rounded disabled text="Indisponible" />`;
 
 const PROPS: readonly PropRow[] = [
   {
-    name: 'variant',
-    type: "'primary' | 'secondary' | 'danger' | 'bubble'",
-    defaultValue: "'primary'",
-    description: (
-      <>
-        L’aplat teal, le liseré teal, le liseré rouge — ou le verre liquide. <code>bubble</code> se
-        pose <strong>au-dessus</strong> d’un contenu et jamais dedans : ce n’est pas un bouton de
-        formulaire, et il ne se juge que sur un fond qui a de la matière —{' '}
-        <a className="tc-doc-link" href={hrefFor('compositions/bouton-bulle')}>
-          voir Bouton bulle
-        </a>
-        .
-      </>
-    ),
-  },
-  {
-    name: 'href',
+    name: 'text',
     type: 'string',
     description: (
       <>
-        Présent et non vide, le composant rend un <code>&lt;a&gt;</code> au lieu d’un{' '}
-        <code>&lt;button&gt;</code> ; vide, il retombe sur le bouton et le signale en{' '}
-        <code>console.error</code>.
+        Le libellé, <strong>si aucun enfant n’est passé</strong> : le composant rend{' '}
+        <code>children ?? text</code>. Les deux ensemble sont donc licites et l’un des deux est
+        silencieusement ignoré.
       </>
     ),
   },
   {
-    name: 'type',
-    type: "'button' | 'submit' | 'reset'",
-    defaultValue: "'button'",
+    name: 'variant',
+    type: "'default' | 'positive' | 'negative' | 'warning'",
     description: (
       <>
-        Branche <code>&lt;button&gt;</code> seulement : refusé dès qu’un <code>href</code> est
-        présent.
+        Sans défaut : <strong>absente, aucune classe de fond n’est posée</strong> et le bouton garde
+        le seul verre. Présente, elle ajoute la classe globale non préfixée{' '}
+        <code>bg-&lt;variant&gt;</code>.
+      </>
+    ),
+  },
+  {
+    name: 'size',
+    type: "'small' | 'medium' | 'large'",
+    defaultValue: "'medium'",
+    description: 'Coussin et taille de texte. Trois crans, aucune hauteur plancher.',
+  },
+  {
+    name: 'rounded',
+    type: 'boolean',
+    defaultValue: 'false',
+    description: (
+      <>
+        Pilule complète. Pose une classe sur le contenu <em>et</em> sur l’enveloppe du verre — les
+        deux sont nécessaires, sans quoi le rayon serait rogné par l’enveloppe.
+      </>
+    ),
+  },
+  {
+    name: 'enableClickAnimation',
+    type: 'boolean',
+    defaultValue: 'true',
+    description: (
+      <>
+        Arme l’ondulation de <code>Glass</code>. Combinée à <code>disabled</code> : l’ondulation est
+        désarmée dès que le bouton est désactivé.
       </>
     ),
   },
@@ -104,43 +76,21 @@ const PROPS: readonly PropRow[] = [
     type: 'boolean',
     description: (
       <>
-        Branche <code>&lt;button&gt;</code> seulement, et retire le bouton de l’ordre de tabulation.
-      </>
-    ),
-  },
-  {
-    name: 'aria-disabled',
-    type: "boolean | 'true' | 'false'",
-    description: (
-      <>
-        Rend le contrôle inerte <em>sans</em> le retirer du clavier ; sur une ancre, plus aucun{' '}
-        <code>href</code> n’est émis.
-      </>
-    ),
-  },
-  {
-    name: 'aria-busy',
-    type: "boolean | 'true' | 'false'",
-    description: (
-      <>
-        Marque l’attente, et ne neutralise <em>rien</em> : posez aussi <code>aria-disabled</code>{' '}
-        pour refuser le second clic.
-      </>
-    ),
-  },
-  {
-    name: 'className',
-    type: 'string',
-    description: (
-      <>
-        Fusionné avec <code>tc-btn</code> et la classe de variante, jamais substitué.
+        Le vrai attribut HTML — le bouton <strong>sort de l’ordre de tabulation</strong>. Le
+        composant filtre en outre <code>onClick</code> lui-même, donc le gestionnaire n’est appelé
+        ni par la souris ni par le clavier.
       </>
     ),
   },
   {
     name: 'ref',
-    type: 'Ref<HTMLButtonElement> | Ref<HTMLAnchorElement>',
-    description: 'Atterrit sur l’élément réellement rendu, bouton ou ancre.',
+    type: 'Ref<HTMLButtonElement>',
+    description: (
+      <>
+        Atterrit sur le <code>&lt;button&gt;</code> de contenu, pas sur l’enveloppe. C’est ce qui
+        permet à <code>Tabs.Trigger</code> de piloter le focus.
+      </>
+    ),
   },
 ];
 
@@ -151,114 +101,166 @@ export const buttonPage: DocPage = {
   title: 'Button',
   lede: (
     <>
-      Le bouton de la charte : hauteur plancher <code>--target-button</code> (48&nbsp;px), bordure
-      en pilule, aucun état React — survol, appui, focus, attente et désactivation sont des
-      sélecteurs CSS. <code>href</code> discrimine une union, parce qu’une navigation doit être un
-      lien, et <code>aria-disabled</code> est préféré à <code>disabled</code> pour que le contrôle
-      reste atteignable au clavier.
+      Un <code>&lt;button type=&quot;button&quot;&gt;</code> de verre, quatre variantes et trois
+      crans de taille. <code>type</code> est écrit en dur par le composant :{' '}
+      <strong>il ne peut pas soumettre un formulaire</strong>. Il est aussi la brique de{' '}
+      <code>Tabs.Trigger</code>, qui le rend avec <code>role=&quot;tab&quot;</code>.
     </>
   ),
   render: () => (
     <PageBody>
+      <MagicPreamble />
+
       <UsageBlock label="Import et appels représentatifs de Button" code={USAGE} />
 
-      {/* `<figure>` / `<figcaption>` plutôt qu'un `<span>` frère : quinze
-          boutons nommés « Enregistrer » sont rigoureusement indiscernables
-          dans une liste de liens et de contrôles, et un `<span>` posé à côté
-          n'est relié à rien. La légende d'une figure, elle, nomme la figure —
-          l'état devient lisible sans qu'on invente un `aria-label` qui
-          mentirait sur le libellé réel du bouton. */}
-      {BUTTON_SPECS.map((spec) => (
-        <Specimen title={spec.title} note={spec.note} key={spec.variant}>
-          <div className="tc-doc-states">
-            {STATE_CELLS.map((cell) => (
-              <figure className="tc-doc-states__cell" key={cell.label}>
-                <Button
-                  variant={spec.variant}
-                  className={cell.className}
-                  aria-busy={cell.busy}
-                  aria-disabled={cell.inert}
-                >
-                  {cell.text}
-                </Button>
-                <figcaption className="tc-doc-states__label">{cell.label}</figcaption>
-              </figure>
-            ))}
-          </div>
-        </Specimen>
-      ))}
-
-      <Specimen title="Les boutons — et le bouton qui est un lien" inline>
-        <Button>Publier l’étape</Button>
-        <Button variant="secondary">Enregistrer le brouillon</Button>
-        <Button variant="danger">Supprimer l’étape</Button>
-        <Button href={hrefFor('palette')} variant="secondary">
-          Revenir à la palette
-        </Button>
-        <Button aria-disabled="true">Publier l’étape</Button>
+      <Specimen
+        title="Les quatre variantes, et le bouton sans variante"
+        note={
+          <>
+            <code>variant</code> n’a <strong>aucun défaut</strong>, donc la première figure n’est
+            pas <code>variant=&quot;default&quot;</code> : c’est un bouton auquel aucune classe de
+            fond n’a été posée. Les deux premières figures sont pourtant{' '}
+            <strong>identiques, et c’est mesuré</strong> — voir sous le tableau. <MagicGroundNote />
+          </>
+        }
+      >
+        <MagicStage>
+          <MagicCell label="prop absente — verre seul">
+            <Button text="Enregistrer" />
+          </MagicCell>
+          {VARIANTS.map((variant) => (
+            <MagicCell key={variant} label={<code>variant=&quot;{variant}&quot;</code>}>
+              <Button variant={variant} text="Enregistrer" />
+            </MagicCell>
+          ))}
+        </MagicStage>
       </Specimen>
 
-      {/* Le spécimen qui manque partout ailleurs, et c'est le seul endroit où
-          la correction se constate : les deux ancres ci-dessous sont peintes à
-          l'identique, et une seule des deux est encore un lien. */}
       <Specimen
-        title="Le lien inerte — sous aria-disabled, le href n’est plus émis"
-        note='Intercepter onClick ne pouvait pas suffire — le clic du milieu, « ouvrir dans un nouvel onglet » et le glisser vers la barre d’adresse n’émettent pas de clic — donc sous aria-disabled le composant n’émet plus href du tout, et rétablit role="link" et tabIndex=0.'
+        title="Les trois crans, et la pilule"
+        note={
+          <>
+            Aucun de ces crans ne garantit la cible de 44 px que le{' '}
+            <a className="tc-doc-link" href={hrefFor('accessibilite')}>
+              contrat d’accessibilité d’Opale
+            </a>{' '}
+            impose à <code>tc-btn</code> : <code>small</code> descend nettement en dessous.
+          </>
+        }
       >
-        <div className="tc-doc-states">
-          <figure className="tc-doc-states__cell">
-            <Button href={hrefFor('accessibilite')} variant="secondary">
-              Le contrat d’accessibilité
-            </Button>
-            <figcaption className="tc-doc-states__label">
-              lien vivant — un <code>&lt;a href&gt;</code>, aucun <code>role</code> posé
-            </figcaption>
-          </figure>
-          <figure className="tc-doc-states__cell">
-            <Button href={hrefFor('accessibilite')} variant="secondary" aria-disabled="true">
-              Le contrat d’accessibilité
-            </Button>
-            <figcaption className="tc-doc-states__label">
-              lien inerte — pas de <code>href</code>, <code>role=&quot;link&quot;</code>,{' '}
-              <code>tabIndex=0</code>
-            </figcaption>
-          </figure>
-        </div>
+        <MagicStage>
+          {SIZES.map((size) => (
+            <MagicCell key={size} label={<code>size=&quot;{size}&quot;</code>}>
+              <Button size={size} text="Publier" />
+            </MagicCell>
+          ))}
+          <MagicCell label={<code>rounded</code>}>
+            <Button rounded text="Publier" />
+          </MagicCell>
+        </MagicStage>
+      </Specimen>
+
+      <Specimen
+        title="Désactivé, et l’ondulation au clic"
+        note={
+          <>
+            Cliquez le second bouton : l’onde part du point cliqué et vit 800 ms. Le premier est
+            inerte — <code>disabled</code> désarme aussi l’animation.
+          </>
+        }
+      >
+        <MagicStage>
+          <MagicCell label={<code>disabled</code>}>
+            <Button disabled text="Indisponible" />
+          </MagicCell>
+          <MagicCell label="ondulation au clic — armée par défaut">
+            <Button variant="positive" text="Cliquez-moi" />
+          </MagicCell>
+          <MagicCell label={<code>enableClickAnimation={'{false}'}</code>}>
+            <Button variant="positive" enableClickAnimation={false} text="Sans onde" />
+          </MagicCell>
+        </MagicStage>
       </Specimen>
 
       <PropsTable
-        id="button"
+        id="magic-button"
         note={
           <>
-            <strong>
-              Union discriminée sur <code>href</code>
-            </strong>{' '}
-            : sans lui, <code>ComponentPropsWithoutRef&lt;&apos;button&apos;&gt;</code> ; avec lui,{' '}
-            <code>
-              Omit&lt;ComponentPropsWithoutRef&lt;&apos;a&apos;&gt;, &apos;href&apos; |
-              &apos;type&apos;&gt;
-            </code>{' '}
-            — donc ni <code>type</code> ni <code>disabled</code>.
+            <code>ComponentPropsWithoutRef&lt;&apos;button&apos;&gt;</code> plus six props propres,
+            plus <code>GlassProps&lt;&apos;button&apos;&gt;</code>. Pas d’union discriminée : ce
+            bouton ne connaît pas <code>href</code> et ne devient jamais un lien.
           </>
         }
         rows={PROPS}
       />
 
+      {/* CE PARAGRAPHE A ÉTÉ RÉÉCRIT PARCE QUE LE DÉFAUT A ÉTÉ CORRIGÉ ENTRE
+          TEMPS, et il aurait été plus facile de recopier l'ancienne version.
+          Il affirmait « `variant="default"` ne peint rien », ce qui était vrai
+          et mesuré : `.bg-default` était absente de la feuille produite, la
+          classe étant construite par interpolation `` `bg-${variant}` `` que
+          l'extracteur de Tailwind ne lit pas. Une `safelist` a depuis été
+          ajoutée à `tailwind.config.ts`, et la règle est émise. RE-MESURÉ au
+          navigateur sur la feuille construite du jour, et non déduit de la
+          présence de la safelist. */}
       <p className="tc-doc-prose">
-        <code>Pill</code> applique la même politique sur un <code>href</code> vide —{' '}
-        <a className="tc-doc-link" href={hrefFor('composants/pill')}>
-          voir sa page
-        </a>
-        . La quatrième variante, <code>bubble</code>, n’est pas montrée ici parce qu’un aplat uni ne
-        laisse rien voir de sa réfraction : elle a sa page,{' '}
-        <a className="tc-doc-link" href={hrefFor('compositions/bouton-bulle')}>
-          Bouton bulle
-        </a>
-        , et son filtre est{' '}
-        <a className="tc-doc-link" href={hrefFor('composants/glass-lens')}>
-          GlassLens
-        </a>
-        .
+        <strong>
+          <code>variant=&quot;default&quot;</code> peint désormais quelque chose — et ce n’est pas
+          un dégradé.
+        </strong>{' '}
+        Fonds <strong>calculés</strong> relevés au navigateur sur les figures du premier spécimen :
+      </p>
+
+      <ul className="tc-doc-checklist">
+        <li>
+          prop absente — <code>background-color: rgba(0, 0, 0, 0)</code>,{' '}
+          <code>background-image: none</code>
+        </li>
+        <li>
+          <code>default</code> — <code>background-color: rgba(255, 255, 255, 0.133)</code>, et{' '}
+          <strong>aucune image de fond</strong> : un voile blanc à 13 %, pas un aplat de variante
+        </li>
+        <li>
+          <code>positive</code>, <code>negative</code>, <code>warning</code> — un{' '}
+          <code>linear-gradient(135deg, …)</code> chacun, et un <code>background-color</code>{' '}
+          transparent
+        </li>
+      </ul>
+
+      <p className="tc-doc-prose">
+        <strong>Ce qui a changé, et ce qui n’a pas changé.</strong> Le composant construit sa classe
+        par interpolation — <code>{'`bg-${variant}`'}</code> —, une forme que l’extracteur de
+        Tailwind ne peut pas lire : <code>.bg-default</code> était donc absente de la feuille
+        produite et la variante sortait sans aucun fond. Une <code>safelist</code> de quatre entrées
+        a été ajoutée à <code>tailwind.config.ts</code>, et la règle{' '}
+        <code>.bg-default {'{ background-color: var(--color-default) }'}</code> est bien émise —
+        relevée à l’<strong>offset 1578</strong> du <code>magic.css</code> publié (ligne 51), et à
+        l’offset 11 509 dans le CSS de cette vitrine.
+      </p>
+
+      <p className="tc-doc-prose">
+        L’<strong>asymétrie de mécanisme reste entière</strong>, elle. <code>default</code> est la
+        seule des quatre variantes qui passe par un utilitaire Tailwind ; les trois autres viennent
+        d’un bloc <code>:global</code> de <code>Badge.module.scss</code> — oui, la feuille du{' '}
+        <em>badge</em> — qui n’a pas de règle pour <code>default</code>. Une variante de bouton
+        peinte par la feuille d’un autre composant est un couplage qu’aucune safelist ne corrige, et
+        c’est ce qu’il faudrait remonter en amont. <code>src/magic/README.md</code> garde la trace
+        du défaut d’origine.
+      </p>
+
+      {/* CE QUE LA COMPARAISON DISAIT, ET POURQUOI ELLE NE PEUT PLUS ÊTRE UN
+          LIEN. Ce paragraphe renvoyait au `Button` d'Opale pour opposer trois
+          décisions. La 2.0 ne le publie plus, donc le lien tomberait à vide —
+          mais les trois décisions perdues valent d'être nommées : c'est la
+          liste de ce que ce bouton-ci NE fait pas. */}
+      <p className="tc-doc-prose">
+        <strong>Trois garanties de la 1.0 que ce bouton ne reprend pas.</strong> Le bouton d’Opale
+        rendait un <code>&lt;a&gt;</code> dès qu’un <code>href</code> était présent ; celui-ci ne
+        connaît pas <code>href</code> et ne devient jamais un lien. Il préférait{' '}
+        <code>aria-disabled</code> à <code>disabled</code>, pour qu’un contrôle indisponible reste
+        atteignable au clavier et puisse expliquer pourquoi ; celui-ci emploie <code>disabled</code>
+        , qui le retire de l’ordre de tabulation. Et il garantissait une hauteur plancher de 48 px —{' '}
+        <code>--target-button</code> ; celui-ci n’a aucun plancher de cible.
       </p>
     </PageBody>
   ),

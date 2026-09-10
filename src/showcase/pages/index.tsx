@@ -9,26 +9,20 @@ import { palettePage } from './fondations/palette';
 import { typographiePage } from './fondations/typographie';
 import { verrePage } from './fondations/verre';
 
-import { backdropPage } from './composants/backdrop';
+import { badgePage } from './composants/badge';
 import { buttonPage } from './composants/button';
 import { cardPage } from './composants/card';
 import { checkboxPage } from './composants/checkbox';
-import { chipListPage } from './composants/chip-list';
-import { dateRangePage } from './composants/date-range';
-import { fieldPage } from './composants/field';
-import { glassLensPage } from './composants/glass-lens';
-import { iconTilePage } from './composants/icon-tile';
+import { glassPage } from './composants/glass';
 import { inputPage } from './composants/input';
-import { messagePage } from './composants/message';
-import { pillPage } from './composants/pill';
-import { sectionHeadingPage } from './composants/section-heading';
+import { modalPage } from './composants/modal';
 import { selectPage } from './composants/select';
-import { tagPage } from './composants/tag';
-import { textareaPage } from './composants/textarea';
-import { timelinePage } from './composants/timeline';
-
-import { boutonBullePage } from './compositions/bouton-bulle';
-import { verreEtFrisePage } from './compositions/verre-et-frise';
+import { sidebarPage } from './composants/sidebar';
+import { sliderPage } from './composants/slider';
+import { switchPage } from './composants/switch';
+import { tabsPage } from './composants/tabs';
+import { toastPage } from './composants/toast';
+import { topbarPage } from './composants/topbar';
 
 /* =============================================================================
    LE REGISTRE — l'unique liste des pages du site, et donc de sa navigation.
@@ -40,14 +34,27 @@ import { verreEtFrisePage } from './compositions/verre-et-frise';
    L'ORDRE DE CE TABLEAU EST L'ORDRE DE LA NAVIGATION à l'intérieur de chaque
    groupe. Les fondations suivent l'ordre de lecture — la couleur avant les
    échelles, l'accessibilité en fin de chapitre. Les composants sont ALPHABÉTIQUES
-   et pas thématiques : c'est une colonne de vingt entrées où l'on vient chercher
-   un nom qu'on connaît déjà, jamais une progression pédagogique.
+   et pas thématiques : c'est une colonne de quatorze entrées où l'on vient
+   chercher un nom qu'on connaît déjà, jamais une progression pédagogique.
+
+   CE QUI A CHANGÉ EN 2.0, ET CE QUE LE REGISTRE EN GARDE. Ce tableau comptait
+   cinq familles et vingt-quatre entrées : dix-sept pages de composants d'Opale,
+   deux compositions, et quatorze pages reléguées dans un cinquième groupe
+   « Magic » parce qu'elles ne documentaient pas Opale. Les dix-sept composants
+   et les deux compositions sont supprimés ; les quatorze pages de `magic/` sont
+   MONTÉES dans `composants/`, parce que ces composants sont désormais ceux que
+   publie l'entrée racine. Leurs adresses ont donc changé — `#/magic/button`
+   est devenu `#/composants/button` —, et rien ne redirige l'ancienne : la
+   vitrine est servie en statique, un fragment inconnu se replie sur l'accueil.
 
    `registry.test.tsx` garde deux promesses sur ce tableau : chaque composant
-   exporté par `src/index.ts` y a sa page, et chaque page se rend sans jeter ni
-   écrire dans `console.error`. Un composant publié sans page fait rougir la
-   suite — c'est le seul moyen que « une entrée de nav par composant » reste
-   vrai au dixième composant.
+   exporté par l'entrée racine (`src/magic/index.ts`) y a sa page, et chaque
+   page se rend sans jeter ni écrire dans `console.error`. Un composant publié
+   sans page fait rougir la suite — c'est le seul moyen que « une entrée de nav
+   par composant » reste vrai au quinzième composant. Il garde aussi, depuis
+   cette migration, qu'aucun lien interne de page ne pointe vers un slug
+   inexistant : c'est ce garde qui a trouvé les onze liens laissés vers les
+   composants supprimés.
    ========================================================================== */
 export const PAGES: readonly DocPage[] = [
   introductionPage,
@@ -59,24 +66,24 @@ export const PAGES: readonly DocPage[] = [
   verrePage,
   accessibilitePage,
 
-  backdropPage,
+  /* LES QUATORZE COMPOSANTS PUBLIÉS. Ils sont copiés de `react-magic-ui` (MIT,
+     @tweeedlex) et gardés fidèles au caractère : hors du contrat de couleur,
+     sans un seul jeton `--tc-*`, et aucun de leurs ratios n'a été mesuré.
+     Chaque page le dit en tête par `MagicPreamble` — le préfixe `Magic` des
+     briques partagées nomme cette PROVENANCE, qui reste vraie, et non le
+     groupe de la vitrine, qui n'existe plus. */
+  badgePage,
   buttonPage,
   cardPage,
   checkboxPage,
-  chipListPage,
-  dateRangePage,
-  fieldPage,
-  glassLensPage,
-  iconTilePage,
+  glassPage,
   inputPage,
-  messagePage,
-  pillPage,
-  sectionHeadingPage,
+  modalPage,
   selectPage,
-  tagPage,
-  textareaPage,
-  timelinePage,
-
-  boutonBullePage,
-  verreEtFrisePage,
+  sidebarPage,
+  sliderPage,
+  switchPage,
+  tabsPage,
+  toastPage,
+  topbarPage,
 ];
