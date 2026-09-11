@@ -1530,14 +1530,15 @@ body {
     display: none;
   }
 
-  /* La commande est retirée du flux pour rester en haut de la colonne. Le
-     remplissage du pli conserve l'espace nécessaire aux groupes dépliés. */
+  /* La commande est retirée du flux pour rester en haut de la colonne. En mode
+     ouvert, le header occupe déjà cette zone : aucun espace supplémentaire ne
+     doit être réservé avant « Introduction ». */
   .tc-doc-nav__panel {
     position: relative;
   }
 
   .tc-doc-nav__all {
-    padding-block-start: calc(var(--target-min) + var(--space-2));
+    padding-block-start: 0;
   }
 
   .tc-doc-nav__alltitle {
@@ -1556,6 +1557,12 @@ body {
   .tc-doc-nav:has(.tc-doc-nav__all:not([open])) .tc-doc-nav__alltitle {
     inset-block-start: 0;
     inset-inline-start: 0;
+  }
+
+  /* En mode plié, la flèche devient le seul contenu visible : on lui réserve
+     sa hauteur pour que le rail compact ne s'écrase pas. */
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open])) .tc-doc-nav__all {
+    padding-block-start: calc(var(--target-min) + var(--space-2));
   }
 
   /* LA GRILLE DE CENTRAGE A ÉTÉ RETIRÉE, ET SON ABSENCE EST LE CORRECTIF.
@@ -2011,6 +2018,32 @@ body {
 .tc-doc-specimen__note {
   margin: var(--space-2) 0 0;
   max-inline-size: var(--measure);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+/* Les pages de composants vont droit à l'essentiel : installation, import et
+   démonstration. Les détails d'API, les chapeaux et les commentaires restent
+   dans le source, mais ne prennent plus de place dans la vitrine. */
+.tc-doc-main--components .tc-doc-prose,
+.tc-doc-main--components .tc-doc-specimen__note,
+.tc-doc-main--components .tc-doc-specimen__title,
+.tc-doc-main--components .tc-doc-props {
+  display: none;
+}
+
+.tc-doc-main--components .tc-doc-section__body {
+  gap: var(--space-5);
+}
+
+.tc-doc-main--components .tc-doc-specimen__stage {
+  margin-block-start: 0;
+  padding-block-start: 0;
+  border-block-start: 0;
+}
+
+.tc-doc-install {
+  margin: 0;
   color: var(--text-muted);
   font-size: var(--text-sm);
 }
@@ -2827,7 +2860,13 @@ body {
 }
 
 .tc-doc-nav__glass {
+  --doc-shell-ground: transparent;
+  --doc-shell-edge: transparent;
+  --lg-bg-color: var(--tc-white-a10);
+  --lg-highlight: rgba(255, 255, 255, 0.25);
   --lg-radius: var(--radius-lg);
+  background: transparent;
+  border-color: transparent;
 }
 
 .tc-doc-topbar__bar {
@@ -2909,10 +2948,19 @@ body {
   white-space: nowrap;
 }
 
+.tc-doc-nav__items {
+  gap: 0;
+}
+
 .tc-doc-nav__version {
   align-items: center;
-  margin-block: var(--space-4) var(--space-3);
-  padding-block: 0 var(--space-3);
+  margin-block: 0 var(--space-2);
+  padding-block: 0 var(--space-2);
+}
+
+.tc-doc-nav__versionnumber,
+.tc-doc-nav__versionnote {
+  transform: translateY(calc(-1 * var(--space-2)));
 }
 
 .tc-doc-nav__versionnumber {

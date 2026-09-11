@@ -67,6 +67,15 @@ describe('DocNav — le pli du sommaire entier', () => {
     expect(groupes()).toHaveLength(GROUPS.length);
   });
 
+  it('devrait garder le sommaire réduit aux libellés de groupe', () => {
+    renderNav();
+
+    const nav = screen.getByRole('navigation', { name: 'Sommaire' });
+
+    expect(nav).not.toHaveTextContent('Ce que les composants consomment');
+    expect(nav).not.toHaveTextContent('Vendorés');
+  });
+
   it('devrait laisser le numéro de version HORS du pli', () => {
     /* La version est la première chose qu'on cherche sur un site de librairie
        — elle dit si la page décrit le paquet installé. La mettre dans le pli

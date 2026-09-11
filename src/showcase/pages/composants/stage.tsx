@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 /* =============================================================================
    L'IMPORT DE `magic.scss` A ÉTÉ RETIRÉ D'ICI, ET IL FAUT DIRE POURQUOI.
@@ -27,8 +27,6 @@ import type { ReactNode } from 'react';
    sur `dist-showcase/` reconstruit : la feuille est bien dans le bundle (voir
    la mesure au pied de ce commentaire dans le rapport de migration).
    ========================================================================== */
-
-import { hrefFor } from '../../doc-model';
 
 /* =============================================================================
    LES BRIQUES PARTAGÉES PAR LES QUATORZE PAGES DE COMPOSANTS.
@@ -83,11 +81,13 @@ export interface MagicStageProps {
   readonly stack?: boolean;
   /** Impose 256 px de hauteur — pour `Sidebar` et `Modal`, qui n'en ont pas. */
   readonly tall?: boolean;
+  /** Fond ponctuel d'une démonstration, quand le dégradé ne suffit pas. */
+  readonly background?: CSSProperties['background'];
   readonly children: ReactNode;
 }
 
 /** La scène sombre sur laquelle un composant vendoré se voit. */
-export function MagicStage({ stack = false, tall = false, children }: MagicStageProps) {
+export function MagicStage({ stack = false, tall = false, background, children }: MagicStageProps) {
   const classNames = [
     'tc-doc-magicstage',
     stack ? 'tc-doc-magicstage--stack' : '',
@@ -97,7 +97,7 @@ export function MagicStage({ stack = false, tall = false, children }: MagicStage
     .join(' ');
 
   return (
-    <div className={classNames} style={{ background: MAGIC_STAGE_GROUND }}>
+    <div className={classNames} style={{ background: background ?? MAGIC_STAGE_GROUND }}>
       {children}
     </div>
   );
@@ -155,24 +155,8 @@ export function MagicGroundNote() {
  */
 export function MagicPreamble() {
   return (
-    <p className="tc-doc-prose">
-      Composant <strong>vendoré</strong> depuis{' '}
-      <a
-        className="tc-doc-link"
-        href="https://github.com/tweeedlex/react-magic-ui"
-        rel="noreferrer noopener"
-      >
-        react-magic-ui
-      </a>{' '}
-      de <code>@tweeedlex</code> — licence MIT, Copyright (c) 2025 tweeedlex. Publié sous{' '}
-      <code>@thomascaron/opale</code>, et <strong>hors du contrat de couleur d’Opale</strong> : il
-      n’emploie aucun jeton <code>--tc-*</code>, ses couleurs sont des blancs semi-transparents et
-      cinq dégradés de variante, et <strong>aucun ratio de contraste n’y a été mesuré</strong>. Il
-      est gardé fidèle au caractère, défauts compris — ne les corrigez pas ici. La{' '}
-      <a className="tc-doc-link" href={hrefFor('accessibilite')}>
-        garantie d’accessibilité d’Opale
-      </a>{' '}
-      ne couvre pas ces quatorze composants.
+    <p className="tc-doc-install">
+      <code>npm i &quot;@thomascaron/opale@github:ThoomassC/opale#v2.0.0&quot;</code>
     </p>
   );
 }

@@ -4,15 +4,17 @@
    contract and is not styled with Opale's tokens. See src/magic/README.md. */
 /* eslint-disable @typescript-eslint/no-unused-vars, jsx-a11y/no-static-element-interactions -- écart assumé au profit de la fidélité.
    Deux défauts réels de leur `Slider`, gardés tels quels :
-   - `showValue` et `enableClickAnimation` sont déstructurés mais jamais lus :
-     ces deux props n'ont aucun effet ;
+   - `showValue` est déstructuré mais jamais lu : cette prop n'a aucun effet ;
    - la piste est un `<div>` avec `onMouseDown`, sans rôle, sans tabindex et
      sans clavier : le curseur est inutilisable sans souris.
+   La surface Glass est ajoutée par Opale pour aligner ce dernier composant sur
+   le matériau liquide commun ; elle ne change pas la mécanique de la piste.
    À corriger en amont chez tweeedlex, pas par une divergence locale. */
 
 import React, { useState, useRef, type MouseEvent } from "react";
 import styles from "./style/Slider.module.scss";
 import clsx from "clsx";
+import Glass from "../glass/Glass";
 
 export type SliderProps = {
     disabled?: boolean;
@@ -97,13 +99,15 @@ const Slider: React.FC<SliderProps> = ({
     }, [isDragging]);
 
     return (
-        <div
+        <Glass
+            rootStyle={{ width: "100%" }}
+            enableLiquidAnimation={!disabled && enableClickAnimation}
+            {...props}
             className={clsx(
                 styles.sliderContainer,
                 styles[size],
                 disabled && styles.disabled
             )}
-            {...props}
         >
             <div
                 ref={sliderRef}
@@ -121,7 +125,7 @@ const Slider: React.FC<SliderProps> = ({
                     style={{ left: `${percentage}%` }}
                 />
             </div>
-        </div>
+        </Glass>
     );
 };
 

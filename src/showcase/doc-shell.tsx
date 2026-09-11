@@ -261,11 +261,14 @@ export function DocShell({ pages }: DocShellProps) {
               son `href="#contenu"` doit continuer de déplacer le focus si le
               gestionnaire de clic n'a pas encore été attaché. Le focus visé
               par le code, lui, est le titre juste en dessous. */}
-          <main className="tc-doc-main" id="contenu" tabIndex={-1}>
+          <main
+            className={`tc-doc-main${page.group === 'composants' ? ' tc-doc-main--components' : ''}`}
+            id="contenu"
+            tabIndex={-1}
+          >
             <h1 className="tc-doc-page__title" ref={titleRef} tabIndex={-1}>
               {page.title}
             </h1>
-            {page.lede ? <p className="tc-doc-prose tc-doc-page__lede">{page.lede}</p> : null}
             {/* La frontière n'entoure QUE le contenu de la page : le titre, le
                 sommaire et les deux bascules restent rendus quoi qu'il
                 arrive. Une page sur vingt et une qui jette ne doit pas
@@ -275,16 +278,6 @@ export function DocShell({ pages }: DocShellProps) {
               <PageContent page={page} />
             </PageBoundary>
           </main>
-
-          <footer className="tc-doc-footer">
-            <div className="tc-doc-shell">
-              <p className="tc-doc-prose">
-                Les ratios affichés sont recalculés en intégration continue à partir de la feuille
-                de jetons par <code>src/contract/</code>. Un chiffre faux fait échouer la suite : ce
-                ne sont pas des annotations.
-              </p>
-            </div>
-          </footer>
         </div>
       </div>
     </div>

@@ -319,8 +319,8 @@ describe('DocShell — les entrées du sommaire', () => {
     const nav = sommaire();
 
     /* CIBLÉ PAR LE `<summary>` ET SON `aria-label`, et non par le texte : le
-       libellé d'un groupe se retrouve aussi dans sa note et dans des libellés
-       de page, si bien qu'un `queryByText` en trouve plusieurs. C'est le même
+       libellé d'un groupe se retrouve aussi dans des libellés de page, si bien
+       qu'un `queryByText` en trouve plusieurs. C'est le même
        idiome que `doc-nav.test.tsx`, et il est EXACT — l'`aria-label` vaut le
        libellé nu, précisément parce que le chevron du `::before` entrerait
        sinon dans le nom accessible. */
@@ -508,13 +508,13 @@ describe('DocShell — le rendu de la page', () => {
     ).toHaveLength(1);
   });
 
-  it('devrait rendre le titre, le chapeau puis le corps de la page', () => {
+  it('devrait rendre le titre puis le corps de la page', () => {
     render(<DocShell pages={FIXTURE_PAGES} />);
 
     expect(
       screen.getByRole('main').textContent,
-      `le contenu principal ne se lit pas « titre, chapeau, corps »`,
-    ).toBe('Le socleUn chapeau d’accueil.corps de l’accueil');
+      `le contenu principal ne se lit pas « titre, corps »`,
+    ).toBe('Le soclecorps de l’accueil');
   });
 
   it('ne devrait rien insérer entre le titre et le corps quand la page n’a pas de chapeau', () => {

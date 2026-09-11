@@ -119,10 +119,8 @@ describe('GROUPS', () => {
      qu'on épingle est l'ORDRE et les NOMS, parce qu'un groupe renommé change
      toutes les adresses du site.
 
-     ATTENTION : la note du groupe `composants` porte désormais l'avertissement
-     du défunt groupe `magic` (vendoré, hors contrat de couleur). Elle n'est pas
-     vérifiée ici — une note est de la prose — mais la supprimer retirerait la
-     seule mention de cette limite dans la barre de navigation. */
+     Les groupes restent volontairement réduits à leur libellé : les détails
+     appartiennent aux pages, pas à la barre de navigation. */
   it('devrait servir les groupes dans l’ordre d’affichage attendu', () => {
     expect(GROUPS.map((group) => group.id)).toEqual(['introduction', 'fondations', 'composants']);
   });

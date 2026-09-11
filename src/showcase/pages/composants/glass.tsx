@@ -104,9 +104,8 @@ export const glassPage: DocPage = {
   title: 'Glass',
   lede: (
     <>
-      La primitive dont <strong>douze</strong> des treize autres descendent — et non les treize :{' '}
-      <code>Slider</code> ne l’emploie pas, c’est le seul, et il est donc le seul sans verre. Elle
-      rend cinq nœuds : un <code>&lt;svg&gt;</code> caché portant le filtre <code>#lg-dist</code>,
+      La primitive dont les composants de la librairie descendent. Elle rend cinq nœuds : un{' '}
+      <code>&lt;svg&gt;</code> caché portant le filtre <code>#lg-dist</code>,
       puis une enveloppe qui empile un calque de distorsion, un voile, un liseré spéculaire et enfin
       votre contenu. C’est ce filtre SVG, combiné à un <code>backdrop-filter</code>, qui fait le
       verre liquide : sans lui il ne reste qu’un blanc translucide.

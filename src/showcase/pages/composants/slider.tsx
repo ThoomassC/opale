@@ -10,7 +10,7 @@ import '@thomascaron/opale/opale.css';
 
 const [zoom, setZoom] = useState(50);
 
-// \`showValue\` et \`enableClickAnimation\` sont acceptés et IGNORÉS.
+// \`enableClickAnimation\` active la déformation liquide au clic.
 <Slider value={zoom} onChange={setZoom} min={0} max={100} step={5} />`;
 
 const PROPS: readonly PropRow[] = [
@@ -76,12 +76,7 @@ const PROPS: readonly PropRow[] = [
     defaultValue: 'true',
     description: (
       <>
-        <strong>Sans aucun effet</strong> non plus, et pour cause : <code>Slider</code> est le seul
-        composant de la librairie qui{' '}
-        <strong>
-          n’emploie pas <code>Glass</code>
-        </strong>
-        . Il n’y a donc pas de verre à faire onduler.
+        Active la déformation liquide au clic. À <code>false</code>, la surface reste statique.
       </>
     ),
   },
@@ -94,10 +89,8 @@ export const sliderPage: DocPage = {
   title: 'Slider',
   lede: (
     <>
-      Un curseur de valeur — et <strong>le seul composant de la librairie sans verre</strong> :
-      piste, remplissage et pointeau sont trois <code>&lt;div&gt;</code> en CSS pur. Il est
-      inutilisable au clavier, et deux de ses sept props ne font rien : les deux défauts sont réels,
-      documentés, et gardés tels quels.
+      Un curseur de valeur sur une surface Liquid Glass. La piste reste inutilisable au clavier, et
+      <code>showValue</code> n’a aucun effet : ces défauts sont conservés tels quels.
     </>
   ),
   render: () => (
