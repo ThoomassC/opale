@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <!--
-      LA MARQUE, ET POURQUOI CES TROIS COULEURS-LÀ.
+      LA MARQUE, ET POURQUOI CES DEUX COULEURS-LÀ.
 
       Le fichier qui était ici n'était pas celui d'Opale : un éclair violet
       exporté de Figma, arrivé avec le PREMIER commit du dépôt (`aeaad09`) en
@@ -17,23 +17,17 @@
       "à venir", et à rien d'autre ».
 
       Le dessin actuel est une goutte, parce que c'est ce que la librairie est
-      devenue en 2.0 : du verre liquide. Ses trois couleurs sont des jetons, et
+      devenue en 2.0 : du verre liquide. Ses deux couleurs sont des jetons, et
       chacune est mesurée :
 
         fond      `--tc-teal-515`    #087487
         goutte    `--tc-mist-936`    #deedf0   ->  4,53:1 sur le fond
-        le feu    `--tc-copper-425`  #723e32   ->  7,13:1 sur la goutte
 
       LE FOND EST LE SEUL PRIMITIF DE LA CHARTE QUI NE BASCULE PAS. `roles.css`
       sert `--tc-teal-515` pour `--accent` dans ses TROIS blocs de thème
       (lignes 146, 291 et 349). Une tuile pleine dans cette teinte se lit donc
       à l'identique sur un onglet clair et sur un onglet sombre, sans requête de
       préférence — qu'un favicon ne pourrait de toute façon pas honorer partout.
-      Et le 7,13:1 du cuivre n'est pas un calcul de plus : c'est EXACTEMENT le
-      ratio que `roles.css` ligne 155 publie pour `--accent-secondary`, le fond
-      clair de la charte valant précisément `--tc-mist-936`. La charte se
-      recalcule d'elle-même.
-
       DEUX FICHIERS ET NON UN, parce qu'iOS n'accepte pas le SVG pour une icône
       d'écran d'accueil. Le PNG est donc à FOND PERDU, sans coins arrondis :
       c'est iOS qui applique son propre masque, et une tuile déjà arrondie s'y

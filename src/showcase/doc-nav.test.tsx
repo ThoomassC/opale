@@ -86,7 +86,9 @@ describe('DocNav — le pli du sommaire entier', () => {
     const avant = within(pli()).getAllByRole('link');
     expect(avant.length).toBeGreaterThan(0);
 
-    await user.click(screen.getByText('Sommaire', { selector: 'summary' }));
+    const resume = pli().querySelector('summary');
+    if (!(resume instanceof HTMLElement)) throw new Error('pli sans contrôle');
+    await user.click(resume);
 
     expect(pli().open).toBe(false);
   });
@@ -121,7 +123,8 @@ describe('DocNav — le pli du sommaire entier', () => {
        pouvoir le constater. */
     const user = userEvent.setup();
     renderNav();
-    const resume = screen.getByText('Sommaire', { selector: 'summary' });
+    const resume = pli().querySelector('summary');
+    if (!(resume instanceof HTMLElement)) throw new Error('pli sans contrôle');
 
     expect(
       resume.hasAttribute('tabindex'),
@@ -254,8 +257,8 @@ describe('DocNav — le pli par groupe', () => {
 
     expect(
       pli().querySelector('summary')?.getAttribute('aria-label'),
-      'le pli doit être nommé « Sommaire », comme le point de repère qui l’entoure.',
-    ).toBe('Sommaire');
+      'la flèche doit rester nommée pour annoncer la commande de pliage.',
+    ).toBe('Afficher ou masquer le sommaire');
   });
 
   it('devrait nommer chaque groupe sans le chevron du `::before`', () => {

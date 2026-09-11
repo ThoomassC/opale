@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 
+import { Topbar } from '../magic';
 import type { DocPage } from './doc-model';
 import { HOME_SLUG, findPage, hrefFor } from './doc-model';
 import { DocNav } from './doc-nav';
@@ -173,42 +174,84 @@ export function DocShell({ pages }: DocShellProps) {
         Aller au contenu
       </a>
 
-      {/* La barre du haut porte l'identité et LES DEUX BASCULES DE
-          PRÉSENTATION — le thème et le matériau — et rien d'autre : le sommaire
-          est en colonne, il n'a pas de doublon ici.
+      {/* =====================================================================
+          LA BARRE DU HAUT EST LE `Topbar` DE LA LIBRAIRIE, ET LE `<div>` QUI
+          L'ENTOURE N'EST PAS DÉCORATIF.
 
-          DEUX AXES INDÉPENDANTS, DEUX BOUTONS `aria-pressed`, et non un
-          sélecteur à quatre entrées : clair et sombre se croisent librement
-          avec aplat et verre. Un `<select>` aurait fait de leur produit une
-          liste de quatre lignes dont trois auraient menti sur ce qui a été
-          choisi. Le second bouton reprend la classe du premier ; la raison est
-          dans `material-toggle.tsx`. */}
-      <header className="tc-doc-topbar">
-        <a className="tc-doc-topbar__brand" href={hrefFor(HOME_SLUG)}>
-          <span className="tc-doc-topbar__glyph" aria-hidden="true">
-            ◆
-          </span>
-          {SITE_NAME}
-        </a>
-        {/* Le conteneur n'est pas décoratif : il pousse les bascules en fin de
-            ligne, annule la marge haute que `.tc-doc-themetoggle` portait pour
-            l'ancien grand en-tête, et porte le `gap` qui sépare les deux
-            cibles — `doc.css` le déclare en boîte flexible avec
-            `gap: var(--space-3)`, mesuré à 12 px. L'espace-mot du JSX entre les
-            deux éléments ne pèse plus rien : un enchaînement purement blanc
-            entre deux éléments flexibles n'est pas rendu. */}
-        {/* LA RECHERCHE EST ENTRE LA MARQUE ET LES BASCULES, et c'est ce qui
-            lui donne la place : elle est le seul élément de la barre qui doive
-            s'étirer, les deux bascules ayant une largeur fixe. `doc.css` la
-            laisse rétrécir jusqu'à un plancher plutôt que de la faire
-            disparaître — une recherche absente sur téléphone est une
-            fonctionnalité qu'on retire à ceux qui ont le plus de mal à
-            parcourir un sommaire de vingt et une entrées. */}
-        <DocSearch pages={pages} />
-        <div className="tc-doc-topbar__actions">
-          <ThemeToggle />
-        </div>
-      </header>
+          `Topbar` rend son `<header>` À L'INTÉRIEUR d'un `Glass`, dont
+          l'enveloppe porte depuis peu `z-index: 0` — donc un contexte
+          d'empilement. Une barre collante posée sur le composant serait
+          enfermée à 0 dans son propre contexte, et le `z-index` qui la met
+          au-dessus du contenu ne peut pas vivre là : c'est l'élément qu'on
+          positionne AUTOUR qui doit le porter. `.tc-doc-topbar` est donc le
+          calque collant (`position: sticky; z-index: 2`) et le sol opaque ; le
+          composant est le matériau posé dessus.
+
+          CE `<div>` NE VOLE PAS LE POINT DE REPÈRE. `<header>` prend le rôle
+          `banner` dès qu'il n'est pas dans un `article`, `aside`, `main`,
+          `nav` ou `section` — un `<div>` n'en fait pas partie, donc la barre
+          reste le `banner` du document. Vérifié : `getByRole('banner')` de
+          `doc-shell.test.tsx` continue de la trouver.
+
+          LE SOL OPAQUE EST AUSSI CE QUI REND LE VERRE SÛR. `Glass` floute son
+          arrière-plan (`backdrop-filter: blur(2px)`) : sur un fond
+          TRANSPARENT, ce serait le contenu de la page qui remonterait sous
+          l'encre de la barre — le défaut exact que `doc.css` mesurait pour
+          refuser le verre sur la barre en 1.x (encre de marque à 2,64:1
+          au-dessus d'une plaque sombre qui défile). Avec un sol opaque, le
+          flou n'échantillonne qu'un aplat : la surface composée est constante,
+          et c'est elle qui est mesurée.
+
+          `elevated={false}`, ET CE N'EST PAS UN CHOIX D'APPARENCE : l'ombre
+          d'`elevated` est posée sur le `<header>`, c'est-à-dire À L'INTÉRIEUR
+          de l'enveloppe de verre, qui porte `overflow: hidden`. Elle est donc
+          rognée par son propre parent et ne se voit pas. La demander serait
+          annoncer une élévation que rien ne peint.
+          ================================================================== */}
+      <div className="tc-doc-topbar">
+        <Topbar
+          className="tc-doc-topbar__bar"
+          rootClassName="tc-doc-topbar__glass"
+          size="spacious"
+          elevated={false}
+        >
+          {/* `Topbar.Brand` EST EMPLOYÉ, MAIS NI `icon`, NI `title`, NI
+              `subtitle`, et c'est la même raison que pour `Sidebar.Item` :
+              les trois rendent des `<span>`. Or la marque est LE LIEN DE
+              RETOUR À L'ACCUEIL — clic milieu, « copier le lien », ouverture
+              dans un onglet, et une annonce « lien » plutôt que « texte ». Le
+              `<a>` est donc passé en enfants, avec l'icône du favicon dedans pour
+              qu'il fasse partie de la cible ; le composant apporte la boîte
+              (`min-w-0`, l'alignement, la gouttière). */}
+          <Topbar.Brand className="tc-doc-topbar__side">
+            <a className="tc-doc-topbar__brand" href={hrefFor(HOME_SLUG)}>
+              <img className="tc-doc-topbar__glyph" src="/favicon.svg" alt="" aria-hidden="true" />
+              {SITE_NAME}
+            </a>
+          </Topbar.Brand>
+
+          {/* LA RECHERCHE EST LA SECTION ÉLASTIQUE, et `grow` est exactement ce
+              que `doc.css` écrivait à la main : `flex: 1 1 auto` avec un
+              plancher. Elle reste ENTRE la marque et les contrôles — c'est ce
+              qui lui donne la place, la marque se tronquant et la bascule
+              ayant une largeur fixe. Le combobox lui-même n'a pas changé d'une
+              ligne : il est déplacé, pas réécrit. */}
+          <Topbar.Section className="tc-doc-topbar__field" grow align="center">
+            <DocSearch pages={pages} />
+          </Topbar.Section>
+
+          {/* LE SÉPARATEUR EST DANS LES ACTIONS ET NON ENTRE ELLES ET LE CHAMP,
+              et c'est de la géométrie et non du rangement : les deux pistes
+              latérales sont égales par construction (`flex: 1 1 0`), donc la
+              section du milieu est centrée sur la barre quoi qu'elles portent.
+              Un `Topbar.Divider` posé en FRÈRE ajouterait sa largeur et sa
+              gouttière — 17 px mesurés — d'un seul côté, et le champ cesserait
+              d'être centré. */}
+          <Topbar.Actions className="tc-doc-topbar__side tc-doc-topbar__actions">
+            <ThemeToggle />
+          </Topbar.Actions>
+        </Topbar>
+      </div>
 
       <div className="tc-doc-body">
         <DocNav pages={pages} currentSlug={page.slug} />
