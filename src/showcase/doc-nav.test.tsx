@@ -59,7 +59,7 @@ describe('DocNav — le pli du sommaire entier', () => {
     expect(pli().open, 'le sommaire doit être déplié au chargement').toBe(true);
   });
 
-  it('devrait contenir les quatre groupes, et non l’inverse', () => {
+  it('devrait contenir tous les groupes, et non l’inverse', () => {
     /* L'imbrication est le tout du dispositif : si les groupes n'étaient pas
        DANS le pli, replier le sommaire ne replierait rien. Le test regarde
        donc la relation d'ancêtre et pas seulement la présence des deux. */
@@ -86,7 +86,9 @@ describe('DocNav — le pli du sommaire entier', () => {
     const avant = within(pli()).getAllByRole('link');
     expect(avant.length).toBeGreaterThan(0);
 
-    await user.click(screen.getByText('Sommaire', { selector: 'summary' }));
+    const resume = pli().querySelector('summary');
+    if (!(resume instanceof HTMLElement)) throw new Error('pli sans contrôle');
+    await user.click(resume);
 
     expect(pli().open).toBe(false);
   });
@@ -121,7 +123,8 @@ describe('DocNav — le pli du sommaire entier', () => {
        pouvoir le constater. */
     const user = userEvent.setup();
     renderNav();
-    const resume = screen.getByText('Sommaire', { selector: 'summary' });
+    const resume = pli().querySelector('summary');
+    if (!(resume instanceof HTMLElement)) throw new Error('pli sans contrôle');
 
     expect(
       resume.hasAttribute('tabindex'),
@@ -192,7 +195,7 @@ describe('DocNav — le pli du sommaire entier', () => {
 });
 
 describe('DocNav — le pli par groupe', () => {
-  it('devrait ouvrir les quatre groupes au premier rendu', () => {
+  it('devrait ouvrir tous les groupes au premier rendu', () => {
     renderNav();
     expect(groupes().map((groupe) => groupe.open)).toEqual(GROUPS.map(() => true));
   });
@@ -222,7 +225,7 @@ describe('DocNav — le pli par groupe', () => {
     expect(premier.open, 'une navigation a rouvert un groupe replié').toBe(false);
   });
 
-  it('devrait nommer le pli par `aria-label`, comme les quatre groupes', () => {
+  it('devrait nommer le pli par `aria-label`, comme les groupes', () => {
     /* LE DÉFAUT QUE CE FICHIER N'A PAS VU EN NAISSANT. Le pli a été ajouté
        sans `aria-label`, et l'arbre d'accessibilité de Chromium donnait :
 
@@ -238,7 +241,8 @@ describe('DocNav — le pli par groupe', () => {
        non plus, sa `accessibleText` ne lisant pas les pseudo-éléments — vérifié,
        elle rendait « Sommaire ». Le défaut n'est visible que dans l'arbre
        d'accessibilité d'un vrai moteur. Ce qui SE vérifie ici, c'est la présence
-       de l'attribut qui le ferme, sur les CINQ `<summary>` et non sur quatre. */
+       de l'attribut qui le ferme, sur TOUS les `<summary>` — les trois groupes
+       plus le pli — et non sur les seuls groupes. */
     renderNav();
 
     const nonNommes = [...pli().parentElement!.querySelectorAll('summary')].filter(
@@ -253,8 +257,8 @@ describe('DocNav — le pli par groupe', () => {
 
     expect(
       pli().querySelector('summary')?.getAttribute('aria-label'),
-      'le pli doit être nommé « Sommaire », comme le point de repère qui l’entoure.',
-    ).toBe('Sommaire');
+      'la flèche doit rester nommée pour annoncer la commande de pliage.',
+    ).toBe('Afficher ou masquer le sommaire');
   });
 
   it('devrait nommer chaque groupe sans le chevron du `::before`', () => {

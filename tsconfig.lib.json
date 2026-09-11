@@ -1,4 +1,33 @@
 {
+  /* Le CONTRAT DE COULEUR, et plus rien d'autre.
+
+     Ce projet ne compilait pas que le contrat : il avait `include: ["src"]` et
+     n'excluait que la vitrine, `src/magic`, `src/main.tsx` et les tests. C'était
+     tenable tant que `src/index.ts` et `src/components/**` existaient — ils
+     étaient émis par `tsc`, à plat dans `dist/`, et le paquet publiait ce
+     `tsc`-là. La 2.0 ne publie plus de composant compilé par `tsc` : les
+     quatorze composants verre liquide vivent dans `src/magic/**`, importent des
+     `*.module.scss`, et sortent d'un build Vite en mode librairie
+     (`build:magic`). `tsc` n'a plus qu'un sujet ici, le contrat.
+
+     `include` NOMME `src/contract` PLUTÔT QUE D'EXCLURE LE RESTE, et l'effet
+     n'est pas cosmétique. Avec `include: ["src"]`, ce projet DÉCOUVRAIT
+     `src/magic/**` — un `exclude` n'empêche pas `tsc` de suivre un import, mais
+     surtout `src/magic` n'était même pas atteint par import : il était ramassé
+     par le `include`, puis émis À PLAT dans `dist/magic/`, où il écrasait ce que
+     le build Vite venait y mettre. C'est ce que documente le commentaire
+     `emptyOutDir: false` de `vite.magic.config.ts` : le `rm -rf dist/magic` en
+     tête de `build:magic` existe précisément pour jeter « l'émission à plat
+     inutilisable que `tsc -p tsconfig.lib.json` dépose ici, parce que ce projet
+     a encore `src` dans son `include` ». Cette phrase n'a plus de sujet : la
+     collision est supprimée à la source, et non plus balayée après coup.
+
+     `rootDir` RESTE `./src` et non `./src/contract` : c'est lui qui place la
+     sortie sur `dist/contract/index.js`, le chemin que `exports["./contract"]`
+     déclare. Le raccourcir enverrait l'émission à plat dans `dist/`.
+
+     `src/contract/**` n'importe rien hors de lui-même (vérifié : aucun `../`
+     dans les quatre fichiers non-test), donc aucune dépendance à rajouter. */
   "extends": "./tsconfig.app.json",
   "compilerOptions": {
     "noEmit": false,
@@ -10,6 +39,6 @@
     "allowImportingTsExtensions": false,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.lib.tsbuildinfo"
   },
-  "include": ["src"],
-  "exclude": ["src/showcase", "src/main.tsx", "src/test", "src/**/*.test.ts", "src/**/*.test.tsx"]
+  "include": ["src/contract"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }

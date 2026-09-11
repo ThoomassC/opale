@@ -300,18 +300,59 @@ describe('DocShell — les entrées du sommaire', () => {
 
   /* `doc-nav.tsx` le promet explicitement : un groupe vide ne rend ni son
      titre ni sa liste, parce qu'un lecteur d'écran énonce une liste de zéro
-     élément. Le registre de test n'a aucune page de « compositions ». */
+     élément.
+
+     CE TEST VISAIT « COMPOSITIONS », ET LA 2.0 L'AURAIT RENDU VACUEUX. Il
+     s'appuyait sur le fait que `FIXTURE_PAGES` n'avait aucune page de ce
+     groupe — or « compositions » n'est plus un groupe du tout, si bien que
+     l'assertion « Compositions n'apparaît pas » serait devenue vraie quoi que
+     fasse `doc-nav.tsx`. Les trois groupes restants sont TOUS peuplés par
+     `FIXTURE_PAGES`, donc le registre complet ne peut plus servir à mesurer
+     ça : le test construit maintenant son propre registre en retirant le seul
+     page de « fondations », et vérifie que le groupe disparaît AVEC elle.
+     Vérifié par mutation — en rendant le titre d'un groupe vide, il rougit. */
   it('ne devrait rendre ni titre ni liste pour un groupe sans page', () => {
+    const sansFondations = FIXTURE_PAGES.filter((page) => page.group !== 'fondations');
+
+    render(<DocShell pages={sansFondations} />);
+
+    const nav = sommaire();
+
+    /* CIBLÉ PAR LE `<summary>` ET SON `aria-label`, et non par le texte : le
+       libellé d'un groupe se retrouve aussi dans sa note et dans des libellés
+       de page, si bien qu'un `queryByText` en trouve plusieurs. C'est le même
+       idiome que `doc-nav.test.tsx`, et il est EXACT — l'`aria-label` vaut le
+       libellé nu, précisément parce que le chevron du `::before` entrerait
+       sinon dans le nom accessible. */
+    expect(
+      nav.querySelector('summary[aria-label="Fondations"]'),
+      `le groupe « Fondations » n'a plus aucune page dans ce registre et ne doit ` +
+        `pas apparaître dans la barre`,
+    ).toBeNull();
+    /* DEUX listes et non trois : « introduction » et « composants ». Le
+       chiffre est épinglé plutôt que déduit de `GROUPS.length - 1`, pour que
+       l'ajout d'un groupe fasse relire ce test au lieu de le suivre. */
+    expect(within(nav).getAllByRole('list')).toHaveLength(2);
+  });
+
+  /* Le pendant du précédent : avec les trois groupes peuplés, les trois sont
+     rendus. Sans lui, un `doc-nav.tsx` qui ne rendrait JAMAIS de groupe
+     passerait le test ci-dessus. */
+  it('devrait rendre une liste par groupe peuplé', () => {
     render(<DocShell pages={FIXTURE_PAGES} />);
 
     const nav = sommaire();
 
     expect(
-      within(nav).queryByText('Compositions', { exact: false }),
-      `le groupe « Compositions » n'a aucune page dans ce registre et ne doit ` +
-        `pas apparaître dans la barre`,
-    ).toBeNull();
-    expect(within(nav).getAllByRole('list')).toHaveLength(3);
+      within(nav).getAllByRole('list'),
+      `les trois groupes de FIXTURE_PAGES ne rendent pas trois listes`,
+    ).toHaveLength(3);
+    for (const label of ['Introduction', 'Fondations', 'Composants']) {
+      expect(
+        nav.querySelector(`summary[aria-label="${label}"]`),
+        `le groupe « ${label} » a des pages dans ce registre et n'apparaît pas`,
+      ).not.toBeNull();
+    }
   });
 
   it('ne devrait rendre aucune entrée pour un registre vide', () => {
@@ -356,41 +397,29 @@ describe('DocShell — la page courante', () => {
 });
 
 /* ============================================================================
-   LES DEUX BASCULES DE LA BARRE DU HAUT.
+   LA BASCULE DE LA BARRE DU HAUT — UNE, ET PLUS DEUX.
 
-   Deux AXES indépendants — le thème (clair / sombre) et le matériau (aplat /
-   verre) — et un bouton `aria-pressed` par axe, jamais un sélecteur du produit
-   des deux : clair et sombre se croisent librement avec aplat et verre, et une
-   liste de quatre entrées aurait menti sur trois d'entre elles.
+   CE QUE CE BLOC GARDAIT ET QU'IL NE PEUT PLUS GARDER. Il tenait deux AXES
+   indépendants — le thème (clair / sombre) et le matériau (aplat / verre) — et
+   sa vraie valeur était l'INDÉPENDANCE : qu'un clic sur l'un ne bouge pas
+   l'autre. Le mode de défaillance visé était le copier-coller, deux boutons
+   câblés sur le même hook s'annonçant encore correctement chacun de leur côté.
 
-   Ce que ces gardes tiennent, et que les tests des deux composants pris
-   séparément ne peuvent pas tenir : que la coquille porte bien LES DEUX, et
-   qu'un clic sur l'une ne bouge PAS l'autre. Le mode de défaillance visé est le
-   copier-coller — deux boutons câblés sur le même hook s'annonceraient encore
-   correctement chacun de leur côté.
+   L'axe du matériau est supprimé en 2.0 : la seule feuille qui lisait
+   `data-material` était `glass.css`, qui n'est plus publiée, si bien que la
+   bascule n'allumait plus rien. Il n'y a donc plus deux axes à croiser, et le
+   garde d'indépendance n'a plus d'objet — il est retiré, pas affaibli. Ce qui
+   RESTE vérifié ici, et qui ne l'était pas séparément par `theme-toggle` :
+   que la coquille porte bien la bascule, qu'elle n'en porte qu'UNE (une
+   seconde qui réapparaîtrait sans axe serait exactement le défaut qu'on vient
+   de retirer), et que le clic écrit sur `<html>` et non seulement dans l'état
+   React.
    ========================================================================== */
-describe('DocShell — les deux bascules de la barre du haut', () => {
+describe('DocShell — la bascule de la barre du haut', () => {
   const THEME_NAME = 'Thème sombre';
-  const MATERIAL_NAME = 'Verre liquide';
 
   function topbar() {
     return within(screen.getByRole('banner'));
-  }
-
-  /**
-   * L'état enfoncé de chaque axe, cherché PAR NOM ACCESSIBLE.
-   *
-   * Rendre `null` pour un nom absent plutôt que jeter : c'est ce qui fait dire
-   * à l'assertion quel axe manque, au lieu de mourir sur un `getByRole` en
-   * échec avant d'avoir rien comparé.
-   */
-  function pressedByAxis(): Record<string, string | null> {
-    return Object.fromEntries(
-      [THEME_NAME, MATERIAL_NAME].map((name) => [
-        name,
-        topbar().queryByRole('button', { name })?.getAttribute('aria-pressed') ?? null,
-      ]),
-    );
   }
 
   /** Le texte des boutons de la barre, glyphes compris — pour les messages. */
@@ -400,7 +429,13 @@ describe('DocShell — les deux bascules de la barre du haut', () => {
       .map((button) => button.textContent ?? '');
   }
 
-  /** Les deux attributs de présentation posés sur `<html>`. */
+  /**
+   * Les attributs de présentation posés sur `<html>`.
+   *
+   * `data-material` EST ENCORE LU ICI, et c'est délibéré : le test doit dire si
+   * quelqu'un remet une bascule de matériau sans remettre la feuille qui la
+   * lit. Sa valeur attendue est `null` en permanence.
+   */
   function documentAxes(): Record<string, string | null> {
     return {
       'data-theme': document.documentElement.getAttribute('data-theme'),
@@ -408,72 +443,52 @@ describe('DocShell — les deux bascules de la barre du haut', () => {
     };
   }
 
+  function pressed(): string | null {
+    return (
+      topbar().queryByRole('button', { name: THEME_NAME })?.getAttribute('aria-pressed') ?? null
+    );
+  }
+
   async function clickToggle(name: string) {
     const user = userEvent.setup();
     await user.click(topbar().getByRole('button', { name }));
   }
 
-  it('devrait porter exactement les deux bascules', () => {
+  it('devrait porter exactement une bascule', () => {
     render(<DocShell pages={FIXTURE_PAGES} />);
 
     expect(
       toggleTexts(),
       `boutons de la barre du haut : ${toggleTexts().join(' | ') || '(aucun)'} — la ` +
-        `barre porte un axe par bouton, ni plus ni moins`,
-    ).toHaveLength(2);
-    expect(
-      pressedByAxis(),
-      `un axe manque dans la barre du haut : ${toggleTexts().join(' | ') || '(aucun bouton)'}`,
-    ).toEqual({ [THEME_NAME]: 'false', [MATERIAL_NAME]: 'false' });
+        `barre porte un axe par bouton, et il n'en reste qu'un depuis que l'axe du ` +
+        `matériau a été retiré. Un second bouton ici est soit une bascule sans ` +
+        `feuille pour la lire, soit un axe qu'il faut venir déclarer dans ce test`,
+    ).toHaveLength(1);
+    expect(pressed(), `la bascule de thème manque dans la barre du haut`).toBe('false');
   });
 
   /* Le setup global fournit un `matchMedia` figé sur `matches: false`, donc un
-     système en clair, et vide le stockage avant chaque test : aucun des deux
-     axes n'a été choisi. */
-  it('ne devrait enfoncer aucune bascule quand rien n’a été choisi', () => {
+     système en clair, et vide le stockage avant chaque test : l'axe n'a pas
+     été choisi. */
+  it('ne devrait pas enfoncer la bascule quand rien n’a été choisi', () => {
     render(<DocShell pages={FIXTURE_PAGES} />);
 
-    expect(pressedByAxis()).toEqual({ [THEME_NAME]: 'false', [MATERIAL_NAME]: 'false' });
+    expect(pressed()).toBe('false');
     expect(documentAxes()).toEqual({ 'data-theme': 'light', 'data-material': null });
   });
 
-  it('ne devrait enfoncer QUE la bascule de thème au clic sur elle', async () => {
+  it('devrait écrire le thème sur le document au clic, et rien d’autre', async () => {
     render(<DocShell pages={FIXTURE_PAGES} />);
 
     await clickToggle(THEME_NAME);
 
-    expect(
-      pressedByAxis(),
-      `un clic sur « ${THEME_NAME} » a bougé l'autre axe : les deux boutons sont ` +
-        `câblés sur le même état`,
-    ).toEqual({ [THEME_NAME]: 'true', [MATERIAL_NAME]: 'false' });
-    expect(documentAxes()).toEqual({ 'data-theme': 'dark', 'data-material': null });
-  });
-
-  it('ne devrait enfoncer QUE la bascule de matériau au clic sur elle', async () => {
-    render(<DocShell pages={FIXTURE_PAGES} />);
-
-    await clickToggle(MATERIAL_NAME);
-
-    expect(pressedByAxis(), `un clic sur « ${MATERIAL_NAME} » a bougé l'autre axe`).toEqual({
-      [THEME_NAME]: 'false',
-      [MATERIAL_NAME]: 'true',
-    });
+    expect(pressed()).toBe('true');
     expect(
       documentAxes(),
-      `le matériau a déplacé le thème sur le document — un clic qui ne le ` +
-        `demandait pas ferait basculer la page entière`,
-    ).toEqual({ 'data-theme': 'light', 'data-material': 'glass' });
-  });
-
-  it('devrait enfoncer les deux quand les deux axes sont choisis', async () => {
-    render(<DocShell pages={FIXTURE_PAGES} />);
-
-    await clickToggle(THEME_NAME);
-    await clickToggle(MATERIAL_NAME);
-
-    expect(pressedByAxis()).toEqual({ [THEME_NAME]: 'true', [MATERIAL_NAME]: 'true' });
-    expect(documentAxes()).toEqual({ 'data-theme': 'dark', 'data-material': 'glass' });
+      `le clic sur « ${THEME_NAME} » a écrit un second attribut de présentation sur ` +
+        `<html> : aucune feuille publiée ne lit plus « data-material », donc rien ` +
+        `ne doit le poser`,
+    ).toEqual({ 'data-theme': 'dark', 'data-material': null });
   });
 });
 
@@ -886,7 +901,7 @@ describe('DocShell — la frontière d’erreur du contenu', () => {
     });
   });
 
-  it('devrait garder le sommaire et les deux bascules quand une page jette', () => {
+  it('devrait garder le sommaire et la bascule quand une page jette', () => {
     render(<DocShell pages={BOUNDARY_PAGES} />);
 
     navigate(hrefFor(FAULTY_BODY_FIXTURE.slug));
@@ -896,10 +911,10 @@ describe('DocShell — la frontière d’erreur du contenu', () => {
       `le sommaire a disparu avec la page fautive — c'est précisément ce qui ` +
         `permet d'aller voir ailleurs`,
     ).toEqual(['Accueil', 'La palette', 'Pill', 'Tag']);
-    /* Les deux bascules aussi : une page fautive ne doit pas laisser le
-       visiteur bloqué dans le thème ou le matériau où il se trouvait. */
+    /* La bascule aussi : une page fautive ne doit pas laisser le visiteur
+       bloqué dans le thème où il se trouvait. Il n'y en a plus qu'une — l'axe
+       du matériau a été retiré avec la feuille qui le lisait. */
     expect(screen.getByRole('button', { name: /Thème sombre/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Verre liquide/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /@thomascaron\/opale/ })).toBeInTheDocument();
   });
 
@@ -933,7 +948,7 @@ describe('DocShell — la frontière d’erreur du contenu', () => {
     expect(
       screen.queryByRole('alert'),
       `la frontière reste en erreur sur une page saine — un seul incident ` +
-        `condamnerait les vingt-deux autres pages`,
+        `condamnerait les vingt autres pages`,
     ).toBeNull();
     expect(screen.getByText('corps de la palette')).toBeInTheDocument();
   });

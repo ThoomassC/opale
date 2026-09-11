@@ -11,9 +11,16 @@ import { PAGES } from './pages';
  * `CharterPage`, donc le nom reste, et il n'y a qu'un endroit à changer si le
  * registre déménage.
  *
- * Le document reste une instance de lui-même : il n'utilise que ses propres
- * jetons et ses propres composants, et il est rendu dans la palette qu'il
- * documente. Si une règle est fausse, la page se dégrade avec elle.
+ * LE DOCUMENT RESTE UNE INSTANCE DE LUI-MÊME, MAIS PLUS QU'À MOITIÉ, et la
+ * nuance compte depuis la 2.0. Il est bien rendu dans la palette qu'il
+ * documente — `doc.css` ne cite que des `var(--tc-*)` et n'en déclare aucun,
+ * donc un jeton faux dégrade la vitrine avec lui. En revanche il n'emploie
+ * plus aucun COMPOSANT de la librairie : les dix-huit composants d'Opale sont
+ * supprimés, et les quatorze composants publiés à leur place n'habillent que
+ * les spécimens, jamais la coquille — ils sont hors du contrat de couleur, et
+ * bâtir la navigation avec eux ferait dépendre la lisibilité du site de code
+ * dont aucun ratio n'est mesuré. La barre du haut, le sommaire et la recherche
+ * sont donc du HTML natif habillé par `doc.css`.
  */
 export function CharterPage() {
   return <DocShell pages={PAGES} />;

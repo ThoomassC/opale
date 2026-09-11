@@ -10,7 +10,7 @@ import { GROUPS } from './doc-model';
    composant, lui, n'a plus qu'à câbler un clavier sur le résultat.
 
    AUCUN INDEX, AUCUNE DÉPENDANCE. Vingt-quatre pages : un balayage linéaire
-   coûte vingt-quatre comparaisons de chaînes par frappe, soit un temps qu'on ne
+   coûte vingt et une comparaisons de chaînes par frappe, soit un temps qu'on ne
    sait pas mesurer. Un index inversé, une distance de Levenshtein ou un paquet
    de recherche floue seraient trois façons de payer pour rien — et le dernier
    entrerait dans le budget de tous les consommateurs de la vitrine.
@@ -97,7 +97,7 @@ export interface Suggestion {
  * (`max-block-size: 60dvh; overflow-y: auto`) et le composant amène l'option
  * désignée dans la lucarne à chaque flèche. Ce qui est borné n'est donc pas ce
  * qu'on voit, c'est ce qu'on parcourt — huit rangées se parcourent aux flèches
- * sans qu'on perde le compte, vingt-quatre non.
+ * sans qu'on perde le compte, vingt et une non.
  *
  * Une requête d'une lettre peut évidemment correspondre à plus de huit pages :
  * le composant annonce alors le TOTAL et affiche les huit premières, plutôt que
@@ -138,7 +138,7 @@ const EMPTY: SearchResult = { suggestions: [], total: 0 };
 /**
  * Les pages qui correspondent à `query`, classées et plafonnées.
  *
- * UNE REQUÊTE VIDE NE REND RIEN, et surtout pas les vingt-quatre pages. Le
+ * UNE REQUÊTE VIDE NE REND RIEN, et surtout pas les vingt et une pages. Le
  * sommaire de gauche est déjà la liste complète : un panneau qui l'aurait
  * recopiée sous la barre de recherche aurait mis deux navigations concurrentes
  * à l'écran, dont une qui recouvre le contenu. Une requête d'espaces est vide

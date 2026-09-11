@@ -451,12 +451,13 @@ const WORST_CASES: readonly WorstCase[] = [
       'pose pas sur un lavis d’APPUI au-dessus d’un halo, dans aucun des deux thèmes : c’est ' +
       'l’arbitrage que le portfolio avait fait à la main, son lavis d’appui ne portant que ' +
       '--text-strong (6,85:1 clair, 6,12:1 sombre sur ce même support). En LISERÉ (WCAG 1.4.11, ' +
-      '3:1) le même couple est LÉGITIME, et la librairie l’emploie : ' +
-      '`.tc-btn--secondary:hover` pose `border-color: var(--text-accent)`, `:active` passe le ' +
-      'fond à --panel-surface-active, et le survol persiste sous la souris — donc le teal borde ' +
-      'bien un lavis d’appui, mesuré 4,40:1 en clair et 4,23:1 en sombre, soit 1,40 et 1,23 de ' +
-      'marge sur le seuil applicable. La note précédente interdisait en toutes lettres ce que ' +
-      'la feuille de bouton fait à bon droit.',
+      '3:1) le même couple est LÉGITIME, mesuré 4,40:1 en clair et 4,23:1 en sombre, soit 1,40 ' +
+      'et 1,23 de marge sur le seuil applicable — la note d’origine interdisait donc en toutes ' +
+      'lettres un emploi licite. L’exemple qui l’avait fait tomber était ' +
+      '`.tc-btn--secondary:hover`, qui posait `border-color: var(--text-accent)` sur un lavis ' +
+      'd’appui ; cette feuille a été SUPPRIMÉE en 2.0 avec les dix-huit composants d’Opale, et ' +
+      'aucun composant du paquet n’exerce plus ce couple — `/magic` n’emploie aucun jeton. Le ' +
+      'plancher reste celui du TEXTE : il tient le jeton, pas son unique usage passé.',
   },
   {
     ink: '--accent-secondary',
@@ -476,9 +477,12 @@ const WORST_CASES: readonly WorstCase[] = [
    * L'EXEMPTION DE `--warning` A ÉTÉ RETIRÉE, ET C'EST LE § 9 QUI L'A FAIT
    * TOMBER. Elle disait « une mention d'avertissement se pose sur une carte
    * NUE, où son pire cas est 4,75:1 » — une consigne que la librairie ne
-   * pouvait pas tenir, puisque `.tc-message--warn` ne se pose pas sur une carte
-   * nue : il peint son propre lavis, et `Backdrop` l'autorise à le faire
-   * au-dessus d'un halo sans carte du tout. Mesurée, cette chaîne valait 3,35:1.
+   * pouvait pas tenir, puisque `.tc-message--warn` ne se posait pas sur une
+   * carte nue : il peignait son propre lavis, et `Backdrop` l'autorisait à le
+   * faire au-dessus d'un halo sans carte du tout. Mesurée, cette chaîne valait
+   * 3,35:1. Les deux composants nommés ici ont été supprimés en 2.0 ; la chaîne
+   * de superposition qui les a fait tomber, elle, reste calculable depuis
+   * `materials.css`, et c'est elle que la table rejoue — pas eux.
    * L'ambre clair a donc été remplacé par `--tc-amber-300` dans `roles.css` (et
    * l'ambre juste, à ouvrir en primitive, est nommé là-bas). Le pire cas de
    * cette table remonte du même coup de 3,65 à 5,395 — et non à 7,65 comme
@@ -556,7 +560,10 @@ describe('7. L’enveloppe : le pire cas de chaque encre, étiqueté de son supp
    * d'appui (mesuré au (b) ci-dessus, sous 4,5:1) et il y porte légitimement un
    * LISERÉ (WCAG 1.4.11, 3:1). La seconde moitié était une affirmation en
    * prose ; sans ce bloc, la table pouvait interdire ce que
-   * `.tc-btn--secondary:hover` fait à bon droit sans que rien ne le signale.
+   * `.tc-btn--secondary:hover` faisait à bon droit sans que rien ne le
+   * signale. Ce bouton n'existe plus depuis la 2.0, et le bloc reste : il ne
+   * garde pas un composant, il garde le fait qu'un liseré d'accent sur un lavis
+   * d'appui est licite — vrai pour le prochain composant qui l'emploiera.
    *
    * Le `floor` de la table reste AA_TEXT, et c'est correct : une encre qui sert
    * DEUX emplois est tenue par le plus exigeant, et la note nomme l'autre.

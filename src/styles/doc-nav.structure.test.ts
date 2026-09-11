@@ -10,19 +10,15 @@ import docSource from './doc.css?raw';
    contient les quatre groupes, il laisse la version dehors, il survit à une
    navigation. Tout ça se rend en jsdom.
 
-   Ce qui ne s'y rend pas, c'est le seul intérêt du pli : RENDRE LA LARGEUR À LA
-   PAGE. Elle est produite par deux règles CSS et par rien d'autre — une piste
-   de grille qui passe en `auto`, et la note de version qui s'efface pour ne pas
-   épingler la colonne. jsdom ne peint pas, donc les cent tests du sommaire
-   resteraient verts si les deux disparaissaient : le sommaire se replierait
-   toujours, et la colonne garderait ses 288 px.
+   Ce qui ne s'y rend pas, c'est le seul intérêt visuel du pli : RENDRE LA
+   LARGEUR À LA PAGE ET DÉPLACER LA FLÈCHE. La piste de grille passe de 288 px à
+   un rail de 76 px, tandis que les éléments du sommaire et la version
+   disparaissent ; jsdom ne peint pas, donc ce garde vérifie la piste compacte
+   et la règle qui masque la note de version.
 
-   MESURÉ AU NAVIGATEUR, à 1280 px : piste 288,0 → 140,5 px, contenu 992,0 →
-   1139,5 px, 26 liens visibles → 0. Et l'étape intermédiaire vaut d'être
-   écrite, parce qu'elle est la raison de la seconde règle : sans l'effacement
-   de la note, le pli ne faisait passer la piste que de 288 à 244,8 px — 43 px,
-   c'est-à-dire rien. La note « stable · React ≥ 19 » épinglait la colonne à la
-   largeur qu'on venait de lui retirer.
+   MESURÉ AU NAVIGATEUR, à 1280 px : piste 288,0 → 76,0 px, contenu 992,0 →
+   1204,0 px, 26 liens visibles → 0. La transition CSS anime cette différence
+   et la commande passe du haut droit au haut gauche.
 
    Ce garde ne remplace pas un harnais navigateur — il rend impossible de
    retirer en silence les deux déclarations qui font tout le travail.
@@ -52,42 +48,44 @@ function ruleBody(selector: string, within?: string): string | null {
 
 const TRACK = '.tc-doc-body:has(.tc-doc-nav__all:not([open]))';
 const NOTE = '.tc-doc-nav:has(.tc-doc-nav__all:not([open])) .tc-doc-nav__versionnote';
+const ROOT = ".tc-doc-nav:has(.tc-doc-nav__all:not([open])) > [class*='glassContainer']";
+const NAV = '.tc-doc-nav';
 const TITLE = '.tc-doc-nav__alltitle';
 
 describe('le pli du sommaire — ce que jsdom ne voit pas', () => {
-  it('devrait rétrécir la piste de gauche quand le sommaire est replié', () => {
+  it('devrait réduire la piste de gauche quand le sommaire est replié', () => {
     /* `:has()` ET NON UN ATTRIBUT POSÉ PAR REACT : le pli est un `<details>`
        natif sans état React, donc c'est la feuille qui lit l'état de
-       l'élément. Sans cette règle, le sommaire se replie et la colonne reste
-       à sa largeur dépliée — un pli qui ne rend rien. */
+       l'élément. Cette règle réduit la piste pendant que les règles de
+       visibilité masquent le contenu. */
     expect(
       ruleBody(TRACK, LARGE),
       `aucune règle ne cible « ${TRACK} » DANS « ${LARGE} » : le sommaire se replie sans ` +
-        'rendre sa piste à la page. Mesuré, la colonne resterait à 288 px au lieu de 140,5.',
+        'rendre sa piste au contenu.',
     ).not.toBeNull();
 
-    /* LES DEUX PISTES, ET NON LA PREMIÈRE SEULE. Cette assertion ne regardait
-       que « auto », donc écraser la piste de CONTENU à `minmax(0, 0px)` la
-       laissait verte — et rend la page illisible dès qu'on plie. La seconde
-       piste est justement celle que l'en-tête de ce fichier mesure
-       (« contenu 992,0 → 1139,5 px ») : elle doit être assertée. */
+    /* LES DEUX PISTES, ET NON LA PREMIÈRE SEULE. La seconde piste reprend la
+       largeur libérée par le rail compact. */
     expect(
       ruleBody(TRACK, LARGE) ?? '',
-      `${TRACK} ne redéclare pas « grid-template-columns: auto minmax(0, 1fr) » : la piste ` +
-        'de contenu doit reprendre toute la place rendue, pas une largeur fixe.',
-    ).toMatch(/grid-template-columns:\s*auto\s+minmax\(\s*0\s*,\s*1fr\s*\)/);
+      `${TRACK} ne redéclare pas la piste compacte et sa piste de contenu : la page ` +
+        'doit récupérer la largeur du sommaire plié.',
+    ).toMatch(
+      /grid-template-columns:\s*calc\(\s*var\(--target-min\)\s*\+\s*\(\s*2\s*\*\s*var\(--space-4\)\s*\)\s*\)\s+minmax\(\s*0\s*,\s*1fr\s*\)/,
+    );
+
+    expect(ruleBody(ROOT, LARGE) ?? '', `${ROOT} doit conserver le remplissage du rail.`).toMatch(
+      /inline-size:\s*100%/,
+    );
   });
 
   it('devrait effacer la note de version, qui sinon épingle la colonne', () => {
-    /* La piste est en `auto` : sa largeur est celle du contenu le plus large
-       qui reste. Le numéro de version reste — c'est ce qu'on cherche sur un
-       site de librairie — mais la note, elle, mesurait plus large que tout le
-       reste du sommaire replié. */
+    /* La piste compacte ne doit pas être épinglée par la version. Le numéro de
+       version reste dans le DOM, mais la note est masquée avec le sommaire. */
     expect(
       ruleBody(NOTE, LARGE),
       `aucune règle ne cible « ${NOTE} » DANS « ${LARGE} » : la note de version reste visible ` +
-        'sous un sommaire replié, et une piste en `auto` prend alors sa largeur. Mesuré : le ' +
-        'pli ne rendait que 43 px au lieu de 147,5.',
+        'sous un sommaire replié et élargit inutilement le rail.',
     ).not.toBeNull();
 
     expect(ruleBody(NOTE, LARGE) ?? '', `${NOTE} ne déclare pas « display: none ».`).toMatch(
@@ -119,7 +117,7 @@ describe('le pli du sommaire — ce que jsdom ne voit pas', () => {
     }
   });
 
-  it('devrait garder le `<summary>` en `display: block`, contre le défaut WebKit', () => {
+  it('devrait garder la flèche en `display: block`, contre le défaut WebKit', () => {
     /* RISQUE SUPPOSÉ ET NON MESURÉ, et c'est écrit comme tel dans `doc.css` :
        WebKit a un défaut ancien où un `<summary>` dont le `display` quitte
        `list-item` peut perdre son dépliage — le `<details>` ne s'ouvre plus du
@@ -148,13 +146,31 @@ describe('le pli du sommaire — ce que jsdom ne voit pas', () => {
     ).not.toBeNull();
   });
 
-  it('devrait tourner le chevron sur l’état, et non sur une classe', () => {
-    /* L'indice d'état est porté par `[open]`, c'est-à-dire par l'élément qui
-       PORTE l'état. Une classe posée par un script serait une seconde source
-       de vérité à tenir synchronisée avec le natif. */
+  it('devrait indiquer l’état par une flèche horizontale', () => {
+    /* Le sommaire est latéral : fermé, la flèche pointe vers la droite pour
+       inviter à l’ouvrir ; ouvert, elle pointe vers la gauche pour inviter à
+       le replier. L’état reste porté par `[open]`, c’est-à-dire par l’élément
+       natif qui porte réellement le pliage. */
+    expect(ruleBody(`${TITLE}::before`) ?? '').toMatch(/content:\s*'\\203a'/);
     expect(
-      ruleBody(`.tc-doc-nav__all[open] > ${TITLE}::before`),
-      'le chevron du pli ne tourne pas sur `[open]` : l’indice d’état ne suit plus l’état.',
-    ).not.toBeNull();
+      ruleBody(`.tc-doc-nav__all[open] > ${TITLE}::before`) ?? '',
+      'la flèche ouverte doit pointer horizontalement vers la gauche.',
+    ).toMatch(/content:\s*'\\2039'/);
+  });
+
+  it('devrait déplacer la flèche en haut selon l’état, avec une transition', () => {
+    const navBody = ruleBody(NAV, LARGE) ?? '';
+    const titleBody = ruleBody(TITLE, LARGE) ?? '';
+    const collapsedTitle =
+      ruleBody('.tc-doc-nav:has(.tc-doc-nav__all:not([open])) .tc-doc-nav__alltitle', LARGE) ?? '';
+
+    expect(navBody).toMatch(/transition:\s*padding-inline\s+var\(--motion-move\)/);
+    expect(titleBody).toMatch(/position:\s*absolute/);
+    expect(titleBody).toMatch(/inset-block-start:\s*var\(--space-2\)/);
+    expect(titleBody).toMatch(
+      /inset-inline-start:\s*calc\(100%\s*-\s*var\(--target-min\)\s*-\s*var\(--space-2\)\)/,
+    );
+    expect(collapsedTitle).toMatch(/inset-inline-start:\s*0/);
+    expect(collapsedTitle).toMatch(/inset-block-start:\s*0/);
   });
 });

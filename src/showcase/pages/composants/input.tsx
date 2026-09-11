@@ -1,41 +1,82 @@
-import { Field } from '../../../components/field';
-import { Input } from '../../../components/input';
+import { Input } from '../../../magic';
 import type { DocPage } from '../../doc-model';
-import { hrefFor } from '../../doc-model';
 import { Specimen } from '../../section';
 import { PageBody, PropsTable, UsageBlock } from '../api';
 import type { PropRow } from '../api';
+import { MagicCell, MagicGroundNote, MagicPreamble, MagicStage } from './stage';
 
-const USAGE = `import { Field, Input } from '@thomascaron/opale';
+const USAGE = `import { Input } from '@thomascaron/opale';
+import '@thomascaron/opale/opale.css';
 
-<Field id="altitude" label="Altitude" hint="En mètres.">
-  {(control) => <Input {...control} inputMode="numeric" name="altitude" />}
-</Field>
+// Non contrôlé : \`defaultValue\`, et on lit la valeur à la soumission.
+<Input defaultValue="Kyoto" aria-label="Ville" />
 
-<Input aria-label="Recherche" type="search" />`;
+// \`type\` est écrit en dur AVANT le spread, donc il se surcharge.
+<Input type="email" placeholder="vous@exemple.fr" aria-label="Courriel" />`;
 
 const PROPS: readonly PropRow[] = [
   {
-    name: 'type',
-    type: 'HTMLInputTypeAttribute',
-    defaultValue: "'text'",
-    description: <>Le type natif, avec un défaut posé par le composant.</>,
-  },
-  {
-    name: 'className',
-    type: 'string',
+    name: 'size',
+    type: "'small' | 'medium' | 'large'",
+    defaultValue: "'medium'",
     description: (
       <>
-        Fusionné avec <code>tc-input</code>, jamais substitué.
+        Le coussin et la taille de texte.{' '}
+        <code>ComponentPropsWithoutRef&lt;&apos;input&apos;&gt;</code> est <code>Omit</code>-é de
+        son propre <code>size</code> pour laisser la place à celui-ci — l’attribut HTML{' '}
+        <code>size</code> n’est donc pas transmissible.
       </>
     ),
   },
   {
-    name: 'ref',
-    type: 'Ref<HTMLInputElement>',
+    name: 'type',
+    type: 'string',
+    defaultValue: "'text'",
     description: (
       <>
-        Atterrit sur l’<code>&lt;input&gt;</code>.
+        Écrit <strong>avant</strong> le spread des props, donc surchargeable — un{' '}
+        <code>type=&quot;email&quot;</code> passe.
+      </>
+    ),
+  },
+  {
+    name: 'placeholder',
+    type: 'string',
+    description: (
+      <>
+        Transmis tel quel. <strong>Il ne remplace pas une étiquette</strong> : il disparaît à la
+        saisie et n’est pas un nom accessible fiable.
+      </>
+    ),
+  },
+  {
+    name: 'disabled',
+    type: 'boolean',
+    description: 'Le vrai attribut, plus une classe qui atténue le champ.',
+  },
+  {
+    name: 'enableClickAnimation',
+    type: 'boolean',
+    defaultValue: 'true',
+    description: (
+      <>
+        Arme l’ondulation sur l’enveloppe de verre — donc{' '}
+        <strong>un clic dans le champ fait onduler le verre</strong>, ce qui est inhabituel pour une
+        zone de saisie.
+      </>
+    ),
+  },
+  {
+    name: '…ComponentPropsWithoutRef<"input">',
+    type: 'union (sans size)',
+    description: (
+      <>
+        Tout le reste part sur le <code>&lt;input&gt;</code>.{' '}
+        <strong>
+          Pas de <code>ref</code>
+        </strong>{' '}
+        : le composant n’est pas un <code>forwardRef</code>, donc l’élément n’est pas atteignable
+        par référence — un focus par programme est impossible.
       </>
     ),
   },
@@ -48,121 +89,92 @@ export const inputPage: DocPage = {
   title: 'Input',
   lede: (
     <>
-      Un champ de saisie sur une ligne : même liseré, même hauteur (<code>--target-min</code>,
-      44&nbsp;px) et même rayon (<code>--radius-sm</code>) que{' '}
-      <a className="tc-doc-link" href={hrefFor('composants/select')}>
-        Select
-      </a>{' '}
-      et{' '}
-      <a className="tc-doc-link" href={hrefFor('composants/textarea')}>
-        Textarea
-      </a>
-      , pour qu’ils s’alignent au pixel dans un même formulaire. L’état d’erreur se déclare par{' '}
-      <code>aria-invalid</code>, posé automatiquement quand le champ est monté dans un{' '}
-      <a className="tc-doc-link" href={hrefFor('composants/field')}>
-        Field
-      </a>{' '}
-      porteur d’un <code>error</code>.
+      Un vrai <code>&lt;input&gt;</code>, posé dans une enveloppe de verre. C’est le seul contrôle
+      de la librairie qui repose sur un élément de formulaire natif : il se soumet, il se valide, et
+      il porte son état lui-même — le composant ne gère rien.{' '}
+      <strong>
+        Il ne rend en revanche aucune étiquette : le nom accessible est entièrement à votre charge.
+      </strong>
     </>
   ),
   render: () => (
     <PageBody>
-      <UsageBlock label="Import et appels représentatifs d’Input" code={USAGE} />
+      <MagicPreamble />
 
-      {/* Tous les spécimens de cette page passent par `Field`, et ce n'est pas
-          un raccourci : un champ sans nom accessible n'est pas un spécimen
-          valide, et `Field` est la façon dont la librairie le nomme. Les
-          appels nus se documentent par le bloc de code ci-dessus. */}
+      <UsageBlock label="Import et appels représentatifs de Input" code={USAGE} />
+
       <Specimen
-        title="Les états de la saisie"
-        note="L’erreur n’est pas déclarée sur l’Input mais sur le Field qui l’enveloppe : c’est lui qui pose aria-invalid."
+        title="Les trois crans, vides puis remplis"
+        note={
+          <>
+            Non contrôlés : ces champs se saisissent directement, aucun <code>useState</code> n’est
+            derrière. <MagicGroundNote />
+          </>
+        }
       >
-        <div className="tc-doc-form">
-          <Field id="input-demo-nom" label="Nom de l’étape">
-            {(control) => <Input {...control} defaultValue="Col du Galibier" />}
-          </Field>
-
-          <Field
-            id="input-demo-altitude"
-            label="Altitude"
-            hint="En mètres, arrondie à la dizaine. Laissez vide si la mesure manque."
-          >
-            {(control) => <Input {...control} inputMode="numeric" placeholder="2 642" />}
-          </Field>
-
-          <Field
-            id="input-demo-date"
-            label="Date de passage"
-            hint="Format JJ/MM/AAAA."
-            error="Cette date est postérieure à l’arrivée du voyage."
-          >
-            {(control) => <Input {...control} defaultValue="31/02/2024" />}
-          </Field>
-
-          <Field
-            id="input-demo-ref"
-            label="Référence interne"
-            hint="Attribuée à la publication, non modifiable."
-          >
-            {(control) => <Input {...control} defaultValue="TIW-2024-018" disabled />}
-          </Field>
-
-          <Field
-            id="input-demo-slug"
-            label="Adresse publique"
-            hint="Dérivée du nom, en lecture seule : le contrôle reste focusable et sa valeur reste copiable."
-          >
-            {(control) => <Input {...control} defaultValue="col-du-galibier" readOnly />}
-          </Field>
-        </div>
+        <MagicStage>
+          {(['small', 'medium', 'large'] as const).map((size) => (
+            <MagicCell key={size} label={<code>size=&quot;{size}&quot;</code>}>
+              <Input size={size} placeholder={`cran ${size}`} aria-label={`cran ${size}`} />
+            </MagicCell>
+          ))}
+          <MagicCell label="avec une valeur — defaultValue">
+            <Input defaultValue="Kyoto" aria-label="Ville de l’étape" />
+          </MagicCell>
+        </MagicStage>
       </Specimen>
 
       <Specimen
-        title="Les types qui changent le clavier"
-        note="type et inputMode décident du clavier affiché sur mobile ; le composant ne fait que les transmettre."
+        title="Désactivé, et un type surchargé"
+        note={
+          <>
+            Le second champ prouve que <code>type</code> est surchargeable : il est déclaré en dur à{' '}
+            <code>&quot;text&quot;</code> mais <em>avant</em> le spread des props.
+          </>
+        }
       >
-        <div className="tc-doc-form">
-          <Field id="input-demo-email" label="Adresse e-mail" hint='type="email"'>
-            {(control) => <Input {...control} type="email" placeholder="thomas@exemple.fr" />}
-          </Field>
-
-          <Field id="input-demo-tel" label="Téléphone" hint='type="tel"'>
-            {(control) => <Input {...control} type="tel" placeholder="06 12 34 56 78" />}
-          </Field>
-
-          <Field id="input-demo-recherche" label="Rechercher une étape" hint='type="search"'>
-            {(control) => <Input {...control} type="search" placeholder="Galibier" />}
-          </Field>
-        </div>
-      </Specimen>
-
-      <Specimen
-        title="Le focus du champ"
-        note="Tabulez dans le cadre : le double anneau se peint sur le liseré du champ sans le remplacer."
-      >
-        <div className="tc-doc-focusdemo">
-          <Field id="input-demo-focus" label="Un champ">
-            {(control) => <Input {...control} placeholder="Tabulez jusqu’ici" />}
-          </Field>
-        </div>
+        <MagicStage>
+          <MagicCell label={<code>disabled</code>}>
+            <Input disabled placeholder="indisponible" aria-label="Champ indisponible" />
+          </MagicCell>
+          <MagicCell label={<code>type=&quot;email&quot;</code>}>
+            <Input type="email" placeholder="vous@exemple.fr" aria-label="Courriel" />
+          </MagicCell>
+        </MagicStage>
       </Specimen>
 
       <PropsTable
-        id="input"
+        id="magic-input"
         note={
           <>
-            Le type étend <code>ComponentPropsWithoutRef&lt;&apos;input&apos;&gt;</code> sans rien
-            retirer : tous les attributs natifs traversent, et le composant ne pose qu’un défaut et
-            une classe.
+            <code>
+              Omit&lt;ComponentPropsWithoutRef&lt;&apos;input&apos;&gt;, &apos;size&apos;&gt;
+            </code>{' '}
+            plus deux props propres. Noter l’asymétrie avec les autres composants de la librairie :
+            celui-ci n’étend <strong>pas</strong> <code>GlassProps</code>, donc ni{' '}
+            <code>rootClassName</code>, ni <code>rootStyle</code>, ni <code>triggerAnimation</code>{' '}
+            ne sont acceptés.
           </>
         }
         rows={PROPS}
       />
 
-      <p className="tc-doc-prose tc-doc-aside">
-        <strong>Un Input a besoin d’un nom accessible et ne le fabrique pas</strong> : montez-le
-        dans un <code>Field</code>, ou à défaut posez un <code>aria-label</code> — un{' '}
-        <code>placeholder</code> n’est <em>pas</em> un libellé.
+      <p className="tc-doc-prose">
+        <strong>Trois manques à connaître avant de l’employer dans un formulaire.</strong> Aucune
+        étiquette n’est rendue — <code>aria-label</code> ou un <code>&lt;label for&gt;</code> écrit
+        à côté sont obligatoires, et c’est ce que fait cette page. Aucun message d’erreur, aucun{' '}
+        <code>aria-describedby</code>, aucun <code>aria-invalid</code> : l’état de validation est
+        entièrement à construire. Et l’absence de <code>forwardRef</code> interdit de lui donner le
+        focus par programme, ce qui est exactement ce qu’on veut faire après un échec de validation.
+      </p>
+
+      <p className="tc-doc-prose">
+        <strong>Il n’y a plus de composant de champ dans cette librairie.</strong> La 1.0 traitait
+        le sujet en deux : un <code>Input</code> pour le contrôle et un <code>Field</code> qui
+        câblait l’étiquette, le texte d’aide et le message d’erreur — <code>&lt;label for&gt;</code>
+        , <code>aria-describedby</code> et <code>aria-invalid</code> posés pour l’appelant. La 2.0
+        ne publie plus ni l’un ni l’autre : les trois manques ci-dessus sont désormais à la charge
+        de qui emploie ce champ, et rien dans le paquet ne les couvre.
       </p>
     </PageBody>
   ),
