@@ -1,0 +1,3037 @@
+/* =============================================================================
+   VITRINE — `tc-doc-*`
+
+   Ce qui suit habille le site de documentation et n'appartient pas à la
+   librairie. C'est dans le même fichier parce que le projet n'a qu'une seule
+   feuille, à plat : pas de CSS Modules, pas de CSS-in-JS, pas d'`import
+   './x.css'` dans un `.tsx`. Les mêmes règles s'appliquent — pas une couleur
+   littérale, pas une longueur hors jeton.
+
+   La vitrine était UNE page de charte à sept sections ; elle est maintenant un
+   site — barre du haut, barre de gauche, une page par sujet. Ce qui a disparu
+   avec l'ancienne mise en page, et qu'un `git show` retrouve :
+   `.tc-doc-masthead`, `.tc-doc-title`, `.tc-doc-eyebrow`, `.tc-doc-lede*` et
+   les quatre règles `.tc-doc-toc*`. Aucune de ces classes n'était employée
+   ailleurs que dans l'ancien `charter-page.tsx`, qui n'existe plus sous cette
+   forme. Tout le reste — spécimens, plaques, tableaux, échelles, états,
+   scènes — est le vocabulaire des PAGES et n'a pas bougé d'une déclaration.
+   ========================================================================== */
+
+/* La hauteur de la barre du haut, citée TROIS fois — par la barre elle-même,
+   par le décalage collant de la nav qui doit s'arrêter juste dessous, et par le
+   coussin de défilement ci-dessous. Une seule déclaration, donc, et pas un
+   nombre recopié qui dériverait. Les deux pas nommés valent 48 px + 24 px : de
+   quoi loger une cible de 44 px avec un peu d'air autour.
+
+   DÉCLARÉE SUR `:root` ET NON SUR `.tc-doc`, parce que le coussin de défilement
+   ne peut vivre que sur l'élément défilant — `html` — qui est un ANCÊTRE de
+   `.tc-doc` : une propriété locale à la vitrine n'y serait pas résolue. Elle
+   reste une propriété de la vitrine, pas un jeton : `doc.css` n'est pas publié
+   dans le paquet. */
+:root {
+  --doc-topbar-size: calc(var(--space-7) + var(--space-5));
+}
+
+/* LE COUSSIN QUI EMPÊCHE LA BARRE COLLANTE DE MANGER LE FOCUS — WCAG 2.4.11.
+   Sans lui, `Shift+Tab` vers un élément situé au-dessus de la fenêtre l'aligne
+   sur le bord HAUT du cadre, c'est-à-dire derrière la barre : aucune des cibles
+   du contenu ne dépasse 72 px de haut (bouton 48, lien de charte 44, lien de
+   prose ≈ 24), donc l'anneau de focus disparaissait ENTIÈREMENT. Posé sur
+   l'élément défilant, le coussin vaut aussi pour le défilement interne du
+   sommaire et pour les ancres. */
+html {
+  scroll-padding-block-start: var(--doc-topbar-size);
+}
+
+/* =============================================================================
+   LE SOL DE LA VITRINE — BLANC EN CLAIR, ET SANS TOUCHER AU JETON PUBLIÉ.
+
+   `--site-background` reste `--tc-mist-936` (#deedf0) : c'est un jeton PUBLIÉ,
+   consommé par `portfolio` et `travels_in_world`, et c'est le sol contre lequel
+   tout `src/contract/` mesure. Le redéclarer ici — même localement — ferait
+   deux dégâts : la vitrine annoncerait dans ses propres plaques un sol qu'elle
+   ne peint pas, et un lecteur qui inspecte `--site-background` dans son
+   navigateur lirait #ffffff pour un paquet qui livre #deedf0.
+
+   Le blanc est donc un JETON DE VITRINE, `--doc-ground`, et il ne sort pas
+   d'ici : `build:css` retire `doc.css` du paquet. Il est déclaré sur `:root` et
+   non sur `.tc-doc`, pour la même raison que `--doc-topbar-size` — c'est `body`
+   qui peint le sol (`tokens/tokens.css`), et `body` est un ancêtre de `.tc-doc`.
+
+   `--tc-white` et jamais `#fff` : la primitive existe (`primitives.css`).
+
+   TROIS BLOCS, dans l'ordre de `roles.css`, et pour la même raison : le thème
+   sombre reste sombre, y compris quand aucun choix n'est mémorisé (le script
+   d'`index.html` ne pose `data-theme` que s'il l'a lu dans le stockage — sans
+   quoi c'est `prefers-color-scheme` qui décide, donc le bloc du milieu).
+   `--site-background` en sombre, et pas une seconde valeur : il n'y a rien à
+   changer là-bas, le sol sombre est déjà le bon.
+   ========================================================================== */
+
+/* `--doc-field-border` N'EST PLUS DÉCLARÉ PAR THÈME, ET C'EST UNE GARANTIE QUI
+   TOMBE — dite ici plutôt que laissée à deviner. Il valait `--tc-mist-658` en
+   clair et `--tc-mist-509` en sombre, chacun battu au plancher de 1.4.11
+   contre le sol du thème (3,11:1 / 3,12:1), et un garde exigeait les TROIS
+   déclarations pour qu'un bloc oublié ne fasse pas hériter la valeur claire.
+   Le champ de recherche vit désormais dans une coquille sombre dans les DEUX
+   thèmes : il n'a plus qu'un fond, donc plus qu'une valeur (`--tc-mist-687`,
+   4,04:1), déclarée dans le bloc de coquille. Ce qui n'est plus garanti est la
+   divergence par thème — il n'y a plus de second thème à faire diverger. */
+:root {
+  --doc-ground: var(--tc-white);
+  --doc-field-border: var(--tc-mist-658);
+  /* L'intensité du lavis de tête de colonne. UN NOMBRE ET NON UNE COULEUR : les
+     deux teintes viennent de `--halo-tint` / `--halo-tint-warm`, qui sont déjà
+     thémées dans `materials.css` ; ce qui change d'un thème à l'autre est la
+     force, pas la couleur. `--halo-opacity` n'est pas réemployé — 0,9 / 0,8
+     dimensionne un disque plein sous du verre, pas un lavis derrière du texte.
+
+     0,32 EN CLAIR, ET LA VALEUR N'EST PAS UN GOÛT. À cette force, le pic du
+     lavis retombe sur les quatre ratios que `roles.css` PUBLIE pour
+     `--site-background` : mesuré 10,26 / 8,38 / 6,75:1 contre les 10,28 / 8,39
+     / 6,76 annoncés. Le lavis ne fait donc rien de plus que rendre au thème
+     clair, en tête de page, le sol que la vitrine lui a retiré en passant au
+     blanc. Aucun ratio nouveau à défendre : ce sont ceux du paquet. */
+  --doc-wash-strength: 0.32;
+  /* En clair l'ombre porte tout, en sombre c'est le liseré — c'est la loi que
+     `roles.css` écrit (ΔE OKLab 20,6 contre 18,5) et que la vitrine
+     n'appliquait à aucune de ses propres surfaces. D'où deux jetons et non un :
+     la carte de spécimen change de MOYEN de détachement avec le thème. */
+  --doc-card-edge: var(--border-subtle);
+  --doc-card-lift: var(--elevation-1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --doc-ground: var(--site-background);
+    --doc-field-border: var(--tc-mist-509);
+    --doc-wash-strength: 0.5;
+    /* `--tc-veil-a22` n'est pas choisi ici : c'est la valeur exacte que
+       `--glass-border` prend en sombre, celle que `materials.css` mesure à
+       ΔE OKLab 18,5 comme « le liseré qui détache la carte quand l'ombre est
+       inopérante ». Mesuré composé sur la carte sombre : 1,85:1, contre 1,34:1
+       pour `--border-subtle`. */
+    --doc-card-edge: var(--tc-veil-a22);
+    --doc-card-lift: var(--elevation-0);
+  }
+}
+
+:root[data-theme='dark'] {
+  --doc-ground: var(--site-background);
+  --doc-field-border: var(--tc-mist-509);
+  --doc-wash-strength: 0.5;
+  --doc-card-edge: var(--tc-veil-a22);
+  --doc-card-lift: var(--elevation-0);
+}
+
+/* `tokens.css` pose `body { background: var(--site-background) }`. Même
+   spécificité (0,0,1), mais `doc.css` est importé APRÈS dans `main.tsx` : c'est
+   l'ordre du document qui donne le blanc, sans `!important` et sans toucher à la
+   feuille publiée.
+
+   CE QUI CHANGE DE RATIO SUR UN SOL BLANC, mesuré (script jeté, contrat de
+   couleur, thème clair) : toutes les encres GAGNENT — `--text-body` 8,39 →
+   10,08:1, `--text-muted` 6,76 → 8,12:1, `--text-strong` 10,28 → 12,35:1,
+   `--text-accent` 6,60 → 7,93:1, `--accent-secondary` 7,13 → 8,57:1.
+   Ce qui PERD est ce qui était déjà sous le seuil et décoratif : `--rule`
+   1,40 → 1,41:1 (le chiffre monte, l'écart perçu baisse — le filet est un
+   mist-blue sur blanc), `--border-subtle` 1,34:1, et l'anneau INTÉRIEUR du
+   focus tombe de 1,16 à 1,04:1 contre le sol, parce qu'il est quasi blanc
+   (`--tc-citron-985`). Aucune règle ne casse : l'anneau intérieur n'a jamais
+   été mesuré que contre l'aplat accent (5,26:1, inchangé), et c'est l'anneau
+   EXTÉRIEUR qui porte l'indicateur — 17,48 → 21,00:1 sur le sol. Le détail
+   complet est dans le rapport. */
+body {
+  background: var(--doc-ground);
+}
+
+/* =============================================================================
+   LA COQUILLE EST SOMBRE DANS LES DEUX THÈMES, ET CE N'EST PAS UN GOÛT.
+
+   La barre du haut est un `Topbar` et le sommaire un `Sidebar` : deux
+   composants de `src/magic/**`, dont les feuilles posent tous les deux
+   `@apply text-white` sur leur élément racine (`Sidebar.module.scss:7`,
+   `Topbar.module.scss:7`). Le sol clair de la vitrine est BLANC
+   (`--doc-ground`), donc du blanc sur du blanc : 1,00:1, invisible. Et le
+   matériau lui-même disparaît avec l'encre — `.glassOverlay` peint du blanc à
+   0,10 et `.glassSpecular` des reflets blancs à 0,25 : posé sur du blanc, le
+   verre EST le pixel du blanc (mesuré ailleurs dans cette feuille : ΔE OKLab
+   0,00 contre le sol).
+
+   Employer ces composants force donc la coquille en sombre. C'est la
+   conséquence directe du choix d'employer la librairie, pas une décision
+   d'apparence — et le contenu, lui, reste clair et lisible : une coquille
+   sombre autour d'une colonne de contenu qui suit le thème du lecteur.
+
+   LE SOL DE LA COQUILLE, ET LA SURFACE QUE LE VERRE EN FAIT. `--tc-mist-265`
+   (#072a32) est le sol opaque ; `Glass` empile par-dessus un
+   `backdrop-filter: blur(2px)` — inopérant sur un aplat — puis du blanc à
+   0,10. La surface composée vaut donc **#203f47**, et c'est CONTRE ELLE que
+   tout ce qui suit est mesuré :
+
+     blanc pur (l'encre que les deux composants imposent)   11,24:1
+     --text-strong   mist-865                                7,56:1
+     --text-body     mist-813                                6,36:1
+     --text-muted    mist-762                                5,33:1
+     --text-accent   teal-753                                5,22:1
+     --focus-outer   citron-985                             10,85:1
+     --doc-field-border  mist-687                             4,04:1  (1.4.11)
+     --accent-secondary  copper-671                           3,66:1  (décor)
+
+   #072a32 A ÉTÉ CHOISI PARMI QUATRE, et le critère n'est pas le contraste
+   maximal : `--tc-mist-205` est le sol du thème sombre du site, donc une
+   coquille peinte avec lui serait indistinguable de la page en sombre (1,18:1
+   entre les deux). #072a32 donne 15,15:1 contre le blanc et se détache encore
+   du sol sombre. La surface de verre, elle, tient 11,24:1 contre le sol clair
+   et 1,59:1 contre le sol sombre.
+
+   LA MÉTHODE : LE THÈME SOMBRE, RECOPIÉ ET BORNÉ À LA COQUILLE. Le bloc
+   ci-dessous reprend les rôles de `:root[data-theme='dark']` de `roles.css`
+   pour la portée `.tc-doc-topbar, .tc-doc-nav`. C'est une duplication
+   ASSUMÉE, et c'est la convention que `roles.css` s'applique déjà à lui-même
+   (« Duplique le bloc ci-dessus, volontairement »). Elle achète deux choses
+   qu'aucune autre méthode ne donne :
+
+   — les propriétés personnalisées HÉRITENT, donc la règle universelle
+     `:focus-visible` de `tokens.css` — celle qui pose l'anneau sur TOUT
+     élément focusable — prend d'elle-même les valeurs sombres à l'intérieur de
+     la coquille. Sans ce bloc, `--focus-outer` vaut `--tc-black` en thème
+     clair, soit **1,87:1** sur la surface de verre : un anneau de focus
+     invisible sur toute la coquille, en manquement à 2.4.11 et 1.4.11. C'est
+     le défaut le plus sérieux de ce changement, et il se ferme par héritage ;
+   — le panneau de suggestions de la recherche descend de la barre, donc il
+     hérite lui aussi : ses ratios sont ceux que `roles.css` mesure en sombre,
+     mot pour mot, sans qu'une seule valeur soit à remesurer.
+
+   TROIS ÉCARTS AU BLOC SOMBRE DE `roles.css`, ET CHACUN EST MESURÉ :
+
+   1. `--doc-field-border` passe à `--tc-mist-687`. Sa valeur sombre
+      (`--tc-mist-509`) ne tient que **1,96:1** sur la surface de verre, sous
+      le plancher de 3:1 que WCAG 1.4.11 demande à la limite d'un champ.
+      mist-687 donne 4,04:1 ;
+   2. `--accent-quiet` — le lavis de l'entrée courante — passe de
+      `--tc-teal-a16` à `--tc-teal-801-a24`. Le premier vaut 1,118:1 sur la
+      surface, et le survol (`--panel-surface`, 1,141:1) le BATTAIT : un état
+      transitoire par-dessus un état permanent, c'est-à-dire exactement le
+      défaut que cette feuille a déjà corrigé une fois sur le sol clair.
+      teal-801-a24 rétablit l'ordre à 1,649:1 contre 1,141:1 — un écart de
+      0,508 là où le sol clair n'en avait que 0,042 — et `--text-strong`
+      (mist-865) y tient 4,59:1, donc au-dessus de 4,5:1 ;
+   3. deux jetons de vitrine NOUVEAUX pour le rail de l'entrée courante,
+      `--doc-nav-rail` et `--doc-nav-rail-quiet`. `--accent` (teal-515) ne
+      vaut que 2,065:1 sur la surface de verre, et il ne peut pas être
+      re-pointé : il est aussi l'aplat de l'option de recherche courante, sur
+      lequel `--text-on-accent` est mesuré à 5,44:1. Le rail prend donc
+      `--tc-teal-801` (6,19:1) et son écho de survol `--tc-teal-801-a42`
+      (2,36:1).
+
+   CE QUE CE BLOC NE FAIT PAS, ET IL FAUT LE DIRE : il ne rend pas la coquille
+   « thème sombre » au sens de `roles.css`. `color-scheme: dark` n'y est PAS
+   déclaré — la propriété n'agit que sur les surfaces de l'agent utilisateur
+   (barres de défilement, champs natifs), et la déclarer sur deux sous-arbres
+   donnerait un ascenseur sombre dans le sommaire et clair dans la page en
+   thème clair. La barre de défilement du sommaire reste donc celle du thème du
+   lecteur. Ce qui est garanti est le CONTRASTE, pas la teinte du chrome.
+   ========================================================================== */
+
+/* LA COQUILLE EN VERRE BLANC, ET CE QUE LE PASSAGE DU SOMBRE AU CLAIR A COÛTÉ.
+
+   Le sol était `--tc-mist-265` (#072a32), un teal profond. Il tenait
+   15,15:1 contre le blanc que les composants imposent, mais il était trop vif
+   pour ce site : la coquille se lisait comme un bandeau et non comme un plan.
+
+   LE BLANC PUR N'EST PAS UN CHOIX D'HUMEUR, C'EST LE SEUL FOND OÙ LE LISERÉ DU
+   CHAMP RESTE CONFORME. Mesuré sur une surface de verre légèrement teintée
+   (`--surface` #ebf4f6, soit #edf5f7 une fois le blanc à 0,10 du verre
+   composé), `--tc-mist-658` tombe à **2,81:1** — sous le plancher de 3:1 que
+   WCAG 1.4.11 demande à la limite d'un champ, alors que c'est précisément la
+   marche créée pour tenir ce plancher. Sur blanc pur elle retrouve ses
+   **3,11:1**. Le fond demandé est donc aussi le seul qui n'oblige pas à
+   remonter la palette.
+
+   RATIOS SUR LA SURFACE (#ffffff, le verre n'y ajoutant que du blanc) :
+
+     --text-strong   mist-324   12,35:1
+     --text-body     mist-427    8,12:1
+     --text-muted    mist-509    5,73:1
+     --accent        teal-515    5,44:1
+     l'arête         mist-658    3,11:1  (1.4.11)
+
+   LE BLOC SOMBRE A ÉTÉ SUPPRIMÉ EN ENTIER, et c'est un gain et non une perte :
+   il recopiait les vingt-deux rôles de `:root[data-theme='dark']` pour les
+   borner à la coquille, avec trois écarts mesurés. La coquille prend désormais
+   les rôles de la page, donc `--focus-outer` retrouve sa valeur claire sans
+   qu'on ait à la forcer — c'était le défaut le plus sérieux du bloc sombre,
+   l'anneau de focus tombant à 1,87:1 sans lui.
+
+   CE QUI N'EST PLUS GARANTI : les trois écarts disparaissent avec le bloc, et
+   avec eux la vérification que `--doc-nav-rail` et `--accent-quiet` tenaient
+   sur un fond sombre. Ils sont désormais ceux de la page, mesurés par
+   `tokens.contract.test.ts` sur le sol clair. */
+.tc-doc-topbar,
+.tc-doc-nav {
+  /* Le fond et l'arête vivent sur l'ENVELOPPE de verre et non ici : ce
+     conteneur est transparent, sinon un plan blanc posé sur un conteneur
+     blanc n'aurait pas de bord visible et l'arrondi ne se verrait pas. */
+  --doc-shell-ground: var(--tc-white);
+  --doc-shell-edge: var(--tc-mist-658); /* 3,11:1 / blanc — plancher 1.4.11 */
+
+  /* L'arrondi demandé. Le conteneur porte déjà 24 px de coussin, donc le plan
+     flotte et ses angles se lisent. */
+  --lg-radius: 22px;
+}
+
+/* LA SURFACE VISIBLE DE LA COQUILLE. `background` sur l'enveloppe la place
+   SOUS les quatre couches du verre, ce qui est l'ordre voulu ; et un aplat
+   opaque rend inerte le `backdrop-filter` du composant, sans quoi le contenu
+   de la page défilerait sous l'encre — le défaut que cette feuille mesurait
+   en 1.x pour refuser le verre sur la barre. */
+.tc-doc-topbar__glass,
+.tc-doc-nav__glass {
+  background: var(--doc-shell-ground);
+  border: 1px solid var(--doc-shell-edge);
+}
+
+/* LES DEUX COMPOSANTS POSENT `text-white`, ET IL FAUT LE REPRENDRE.
+   `Sidebar.module.scss:7` et `Topbar.module.scss:7` déclarent tous deux
+   `@apply text-white`. Sur la surface blanche, ce blanc mesure **1,00:1** :
+   invisible. Le sélecteur pèse (0,2,0) contre le (0,1,0) du module, donc il
+   gagne quel que soit l'ordre d'émission des feuilles — dépendre de l'ordre
+   est exactement ce qui a fait échouer le pli du sommaire. */
+.tc-doc-topbar .tc-doc-topbar__bar,
+.tc-doc-nav .tc-doc-nav__panel {
+  color: var(--text-body); /* 8,12:1 */
+}
+
+.tc-doc {
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+}
+
+/* La mesure du site. Employée par le PIED DE PAGE seul depuis que la colonne de
+   contenu la porte elle-même (`.tc-doc-main`) : les deux valeurs sont les mêmes
+   pour que le filet du pied tombe sous un texte aligné avec lui. */
+.tc-doc-shell {
+  inline-size: 100%;
+  max-inline-size: calc(var(--space-8) * 18);
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+}
+
+.tc-doc-prose {
+  max-inline-size: var(--measure);
+  margin-block: 0;
+}
+
+.tc-doc-mono,
+.tc-doc-inlinecode {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.tc-doc-inlinecode {
+  margin-inline: var(--space-1);
+  color: var(--text-accent);
+}
+
+.tc-doc code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+/* --- Lien d'évitement ------------------------------------------------------ */
+
+/* --- L'ÉCHELLE DE PROFONDEUR DE LA VITRINE, ÉCRITE UNE FOIS ---------------
+   Quatre calques se disputent le même contexte d'empilement — la racine —, et
+   l'ordre entre eux n'est PAS arbitraire :
+
+     3  le lien d'évitement       au-dessus de tout, c'est sa raison d'être
+     2  la barre du haut          et, dans son contexte, le panneau de recherche
+     1  la pastille de version    au-dessus des entrées qui défilent sous elle
+     -  le contenu                `z-index: auto`
+
+   LA BARRE ÉTAIT À 1, COMME LA PASTILLE, ET C'ÉTAIT UN DÉFAUT VISIBLE. À
+   égalité de `z-index`, c'est l'ordre du document qui tranche, et le sommaire
+   vient APRÈS la barre : la pastille de version, dont le fond est opaque,
+   peignait donc par-dessus le panneau de suggestions. Constaté à 420 px, en
+   une colonne, où le panneau descend juste sur elle — la première suggestion
+   disparaissait entièrement derrière « v1.2.0 ».
+
+   Le panneau garde `z-index: 2` DANS le contexte de la barre : la barre étant
+   elle-même un contexte d'empilement (elle a un `z-index` numérique), ce 2 ne
+   se compare qu'à ses frères, pas à l'échelle ci-dessus. */
+
+.tc-doc-skip {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-start: var(--space-2);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target-min);
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+  transform: translateY(calc(-1 * (var(--space-8) + var(--space-4))));
+  transition: transform var(--motion-move) var(--motion-ease);
+}
+
+.tc-doc-skip:focus-visible {
+  transform: translateY(0);
+  /* Même correction que le bloc de focus des composants : l'outline porte
+     l'anneau EXTÉRIEUR, sans quoi il repeint la bande 2-4 px. */
+  outline: 3px solid var(--focus-outer);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--focus-inner),
+    0 0 0 5px var(--focus-outer);
+}
+
+/* --- Barre du haut ----------------------------------------------------------
+   Une barre fine et collante, sur toute la largeur : l'identité du paquet à
+   gauche, la recherche au centre et la bascule de thème à droite. Elle est
+   sœur de la grille pour rester visible pendant le défilement.
+
+   Son enveloppe et son conteneur sont transparents. `Glass` peint le même
+   voile que les boutons et les modales de la librairie (`--tc-white-a10`) et
+   son filtre laisse le décor de la page vivre derrière le header. Le texte
+   reste piloté par les rôles d'Opale pour conserver le contraste dans les
+   deux thèmes.
+   -------------------------------------------------------------------------- */
+
+/* `nowrap`, ET C'EST UNE CORRECTION MESURÉE. Avec `flex-wrap: wrap` et les deux
+   bascules, la barre se repliait : 101 px de haut sous 560 px de large, 145 px
+   sous 320 px, contre les 72 px de `--doc-topbar-size`. Or cette valeur est
+   citée par tout ce qui se décale de la barre — le collant du sommaire et le
+   `scroll-padding` qui empêche la barre de manger le focus (WCAG 2.4.11) —, si
+   bien que le sommaire recouvrait la barre de 41 px après défilement à 320 px,
+   et qu'un élément atteint en `Shift+Tab` se posait derrière elle.
+
+   Ne pas se replier a un prix, et il est payé en deux endroits : la marque se
+   tronque (`text-overflow`), et les libellés des deux bascules sont masqués
+   sous 36 rem. La hauteur, elle, est vraie à toute largeur. */
+.tc-doc-topbar {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  /* `--space-3` ET NON `--space-5` DEPUIS QUE LA BARRE A TROIS ENFANTS. À
+     24 px d'écart, marque + recherche + deux bascules ne tenaient plus sous
+     360 px : la recherche était comprimée sous son plancher et débordait. À
+     12 px, mesuré, la barre tient de 320 à 1440 px sur une ligne. Les deux
+     bascules gardent leur propre `--space-3` entre elles, donc les cibles ne
+     se touchent pas (WCAG 2.5.8). */
+  gap: var(--space-3);
+  min-block-size: var(--doc-topbar-size);
+  padding-inline: 0;
+  background: transparent;
+}
+
+.tc-doc-topbar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* La marque cède la place avant les contrôles : elle se tronque, ils ne
+     partent pas à la ligne. `min-inline-size: 0` est ce qui l'autorise — la
+     taille minimale automatique d'un élément flexible est celle de son contenu,
+     donc sans cette ligne c'est la barre qui déborde au lieu du texte qui
+     s'abrège.
+
+     CETTE PHRASE DISAIT « le nom du paquet reste lisible jusqu'à 320 px », ET
+     LA RECHERCHE L'A RENDUE FAUSSE. Mesuré depuis, capture par capture : le nom
+     entier tient à partir de **560 px**, il est tronqué en dessous
+     (« @thomascaron/ » à 480), et à **320 px il ne reste que le losange**. Le
+     champ de recherche prend 128 px de plancher, que la marque n'a plus.
+
+     C'est accepté plutôt que corrigé, pour une raison qui se vérifie : le lien
+     GARDE SON NOM ACCESSIBLE. Le texte est clippé par `overflow: hidden`, pas
+     retiré du DOM, donc le lien s'annonce toujours « @thomascaron/opale, lien » et
+     reste une cible de 44 px vers l'accueil. Ce qui se perd est la lecture du
+     nom à l'œil sur un téléphone — le motif « logo seul en étroit », qui est
+     celui de tout le monde, et non une dégradation silencieuse. */
+  /* `1rem` ET NON `0`, ET C'EST LA MOITIÉ RESTANTE DU DÉFAUT DE ZOOM. Le
+     plancher en `min()` du champ a réduit le débordement à 200 % de taille de
+     racine (`scrollWidth` 557 → 402 sur 320 px) mais n'a PAS réglé ce qui le
+     motivait : la marque tombait toujours à 0 px, donc le lien d'accueil
+     n'avait aucune surface. Le champ n'était pas seul coupable — à 200 %, les
+     deux bascules passent à 95,7 et 85,3 px, leur `padding-inline` étant en
+     `rem`, soit 181 px avant même le champ. La marque, seul élément
+     compressible, absorbait tout.
+
+     16 px au repos, 32 px à 200 % : au-delà de 24 px, 2.5.8 est satisfait sans
+     recourir à l'exception d'espacement. Et 16 px tient dans le budget de
+     320 px à taille normale — 48 de coussin, 24 de gouttières, 16 de marque,
+     128 de champ, 100 pour les deux bascules : 316 sur 320. Vérifié après
+     coup, pas déduit.
+
+     LE DÉBORDEMENT HORIZONTAL À 200 % RESTE, et il est assumé : 1.4.4 tolère
+     le défilement bidirectionnel sous un zoom de texte, ce qu'il ne tolère pas
+     est la perte de contenu ou de fonction — c'est-à-dire le lien de largeur
+     nulle, qui est ce qui est corrigé ici. */
+  min-inline-size: 1rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-block-size: var(--target-min);
+  color: var(--text-strong);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  /* Pas de soulignement au repos, et ce n'est pas une couleur seule qui le
+     remplace : le lien est le SEUL contenu de sa zone, comme un logo, donc il
+     n'y a aucun texte voisin dont il faudrait le distinguer. Le survol et le
+     focus, eux, se signalent. */
+  text-decoration: none;
+  transition:
+    color var(--motion-color) var(--motion-ease),
+    text-decoration-color var(--motion-color) var(--motion-ease);
+}
+
+.tc-doc-topbar__brand:hover {
+  color: var(--text-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.tc-doc-topbar__brand:focus-visible {
+  /* Même correction que le bloc de focus des composants : l'outline porte
+     l'anneau EXTÉRIEUR, sans quoi il repeint la bande 2-4 px. */
+  outline: 3px solid var(--focus-outer);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--focus-inner),
+    0 0 0 5px var(--focus-outer);
+}
+
+.tc-doc-topbar__glyph {
+  color: var(--accent-secondary);
+}
+
+/* `margin-inline-start: auto` pousse la bascule en fin de ligne. La seconde
+   déclaration annule la marge haute que `.tc-doc-themetoggle` porte pour
+   l'ancien grand en-tête : elle est posée ICI, à (0,2,0), plutôt qu'en
+   modifiant la règle de la bascule — le bouton n'est pas à moi, et sa marge
+   reste juste partout où il n'est pas dans une barre. */
+/* `flex` + `gap`, et pas seulement pour la forme : sans conteneur flexible, les
+   deux pilules n'étaient séparées que par l'espace-mot du JSX — 4,19 px
+   mesurés, soit deux cibles de 44 px qui se touchent presque (WCAG 2.5.8).
+   `flex: none` interdit au groupe de se comprimer : c'est la marque qui cède. */
+.tc-doc-topbar__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-3);
+  /* `margin-inline-start: auto` EST GARDÉ, ET LE RAISONNEMENT A ÉTÉ REFAIT.
+     Il avait d'abord été retiré au motif que la recherche, seul élément
+     élastique, devait prendre l'espace libre — vrai, mais incomplet : la
+     recherche est PLAFONNÉE à 26 rem, donc au-delà de ~1000 px il reste un
+     vide que personne ne réclame. Sans cette marge, il s'accumulait à DROITE
+     des bascules, qui se retrouvaient au milieu de la barre avec 300 px de
+     blanc après elles. Avec, le vide se place entre la recherche et les
+     bascules : marque à gauche, recherche à sa suite, contrôles au bord. Sous
+     ~1000 px la marge ne vaut plus rien d'elle-même, la recherche ayant tout
+     pris — donc elle ne coûte rien à la disposition étroite. */
+  margin-inline-start: auto;
+}
+
+.tc-doc-topbar__actions .tc-doc-themetoggle {
+  margin-block-start: 0;
+}
+
+/* --- La recherche de la barre du haut ---------------------------------------
+   L'ENVELOPPE EST LE BLOC CONTENANT DU PANNEAU. `position: relative` n'est pas
+   décoratif : le panneau de suggestions est `position: absolute`, et sans bloc
+   contenant il se placerait par rapport au bloc initial, c'est-à-dire au coin
+   de la page — la panne classique, et elle ne se voit qu'après défilement.
+
+   ELLE EST LE SEUL ÉLÉMENT ÉLASTIQUE DE LA BARRE. `flex: 1 1 auto` avec un
+   plancher : la marque se tronque, les deux bascules ne bougent pas, et c'est
+   la recherche qui prend ce qui reste. Le plafond de 26 rem existe pour qu'à
+   1440 px le champ ne traverse pas la moitié de l'écran — un champ de
+   recherche démesuré se lit comme un champ de saisie de formulaire.
+
+   LE PLANCHER EST 8 rem, ET LE CALCUL QUI VIVAIT ICI ÉTAIT FAUX. Il disait
+   « 128 px au champ laisse 68 px à la marque, soit @thomascaron… — lisible »,
+   en oubliant les 48 px de `padding-inline` de la barre et les 48,3 px réels de
+   la bascule de thème. Mesuré à 320 px : la marque fait **15,2 px**, c'est-à-dire
+   le losange seul. Le commentaire de `.tc-doc-topbar__brand`, trente lignes plus
+   haut, dit la bonne chose — les deux se contredisaient dans le même fichier.
+
+   8 rem reste le plancher parce qu'en dessous le glyphe et le curseur se
+   disputent la même place, et parce que 15,2 px de marque restent une cible
+   valide : le losange garde le nom accessible du lien, et l'exception
+   d'espacement de 2.5.8 s'applique — cercle de 24 px centré sur 31,6, donc
+   19,6→43,6, contre un champ qui commence à 51,2. Aucune intersection. */
+.tc-doc-search {
+  position: relative;
+  flex: 1 1 auto;
+  /* `min()` ET NON `8rem` SEUL, ET C'EST LA CORRECTION D'UN DÉFAUT DE ZOOM DE
+     TEXTE. Un plancher en `rem` grandit avec la police : à 200 % de taille de
+     racine — le zoom texte seul de Firefox, ou une préférence de police
+     système —, il passait à 256 px, la barre débordait (`scrollWidth` 557 pour
+     une fenêtre de 320) et la MARQUE tombait à 0 px de large. Un lien d'accueil
+     de largeur nulle n'est plus une cible : 2.5.8 échoue, et 1.4.4 tolère le
+     défilement mais pas la perte de fonctionnalité.
+
+     Le second terme est relatif à la BARRE et non à la police, donc il plafonne
+     le plancher quoi qu'il arrive à la taille de texte. 45 % laisse toujours la
+     majorité à la marque et aux deux bascules. */
+  min-inline-size: min(8rem, 45%);
+  max-inline-size: 26rem;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--target-min);
+  padding-inline: var(--space-3);
+  /* `--doc-field-border` ET NON `--control-border`, PARCE QUE LE TRAIT SE
+     LISAIT COMME UN CONTOUR NOIR. `--control-border` vaut #59696d en clair,
+     soit 5,73:1 contre le sol blanc de la barre : à 1 px, sur du blanc, un
+     tel écart ne se lit pas comme la limite d'un champ mais comme un cerne.
+     En sombre il valait #8d9ea2, 6,42:1 — le même défaut à l'envers, un
+     trait clair qui détourait la pilule.
+
+     LE TRAIT N'EST PAS SUPPRIMÉ, IL EST RAMENÉ AU PLANCHER. Il ne peut pas
+     disparaître : c'est la seule information visuelle qui identifie le champ,
+     donc WCAG 1.4.11 lui demande 3:1. Le fond de la pilule ne peut pas
+     prendre le relais — `--panel-surface` est une encre à 0,05 sur le sol,
+     mesurée à 1,11:1 en clair : sans liseré, il ne reste qu'une loupe et un
+     texte de substitution posés dans la barre.
+
+     Mesuré contre `--doc-ground` : 3,11:1 en clair (#859599 sur #ffffff),
+     3,12:1 en sombre (#59696d sur #0f191c). Le plancher, pas un cran de
+     plus. Côté INTÉRIEUR le liseré tombe à 2,80:1 contre le lavis de la
+     pilule aplati (#f3f3f3) : c'est la face extérieure qui porte la limite,
+     et c'est la convention de mesure du dépôt pour `--control-border`.
+
+     Le panneau de suggestions GARDE `--control-border` : son commentaire
+     plus bas dit pourquoi — il flotte au-dessus du contenu et son ombre est
+     une encre sombre, donc invisible sur un sol sombre. Le bord y est
+     porteur, ici il ne faisait que cerner. */
+  border: 1px solid var(--doc-field-border);
+  border-radius: var(--radius-pill);
+  corner-shape: superellipse(1.2);
+  background: var(--panel-surface);
+  transition:
+    border-color var(--motion-color) var(--motion-ease),
+    background-color var(--motion-color) var(--motion-ease);
+}
+
+/* L'ENVELOPPE PORTE L'ÉTAT DE FOCUS DU CHAMP, via `:focus-within`. C'est ce qui
+   permet à l'anneau d'entourer la pilule entière — glyphe compris — plutôt que
+   le seul rectangle de l'`<input>`, qui est plus étroit et décalé. Les deux
+   couches sont celles du reste du site, aux mêmes valeurs mesurées. */
+/* `:has(… :focus-visible)` ET NON `:focus-within`, POUR SUIVRE LA CONVENTION
+   DU DÉPÔT : tout le reste du site montre l'anneau sur `:focus-visible` —
+   `utilities.css`, la marque, les liens du sommaire, les `<summary>`. L'anneau
+   reste sur l'ENVELOPPE pour entourer la pilule entière, glyphe compris, et
+   c'est `:has()` qui permet de lire l'état du champ tout en peignant le parent.
+
+   CE COMMENTAIRE AJOUTAIT QUE L'ANNEAU N'APPARAÎTRAIT PLUS AU CLIC SOURIS.
+   C'EST FAUX, et ça ne peut pas être vrai : un champ de saisie texte correspond
+   TOUJOURS à `:focus-visible` au pointeur, puisque la frappe y est attendue.
+   Vérifié dans la même page — clic au centre du champ, `matches(':focus-visible')`
+   vaut `true` ; sur `.tc-doc-themetoggle`, `false`. Ce qui est gagné n'est donc
+   pas la suppression au clic, c'est que le champ se comporte exactement comme
+   `.tc-input:focus-visible` du reste de la librairie. La cohérence, pas
+   l'économie d'un anneau. */
+.tc-doc-search:has(.tc-doc-search__input:focus-visible) {
+  border-color: var(--accent);
+  background: var(--surface);
+  outline: 3px solid var(--focus-outer);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--focus-inner),
+    0 0 0 5px var(--focus-outer);
+}
+
+.tc-doc-search__glyph {
+  flex: none;
+  color: var(--text-muted);
+  font-size: var(--text-md);
+  line-height: 1;
+}
+
+/* L'INPUT EST DÉSHABILLÉ, et c'est l'enveloppe qui fait la pilule : un champ
+   qui porterait lui-même le liseré et le fond aurait dessiné une seconde boîte
+   à l'intérieur de la première. `appearance: none` retire la décoration que
+   Safari pose sur les champs de recherche ; `background: transparent` laisse
+   voir celui de l'enveloppe.
+
+   L'ANNEAU EST DÉPLACÉ SUR L'ENVELOPPE, ET IL FAUT DEUX DÉCLARATIONS POUR ÇA.
+   Ce commentaire n'en citait qu'une (`outline: none`) et affirmait que l'anneau
+   était déplacé : c'était FAUX, il était dédoublé. `tokens.css` porte une règle
+   UNIVERSELLE `:focus-visible` — pas la liste de sélecteurs d'`utilities.css`,
+   une règle qui attrape tout élément focusable — et elle pose l'outline ET les
+   deux `box-shadow`. `outline: none` n'éteignait que la première.
+
+   Mesuré sur le champ focalisé, avant correction :
+     box-shadow = rgb(246,255,222) 0 0 0 2px, rgb(0,0,0) 0 0 0 5px
+     border-radius = 0
+   soit un anneau noir de 5 px À ANGLES DROITS autour du champ, à l'intérieur
+   de l'anneau en pilule de l'enveloppe. Deux anneaux concentriques de tons
+   opposés, dont un carré dans un arrondi.
+
+   `box-shadow: none` ferme la seconde moitié. Les deux tiennent par l'ORDRE et
+   non par le poids : la règle universelle pèse (0,1,0) comme
+   `.tc-doc-search__input`, et `doc.css` est importée après `tokens.css` dans
+   `main.tsx`. Vérifié au navigateur — `outlineStyle` vaut `none` et
+   `boxShadow` vaut `none` sur le champ focalisé, tandis que l'enveloppe garde
+   les siens.
+
+   Un `outline: none` sans ce relais serait exactement le défaut que
+   `utilities.css` passe deux paragraphes à interdire. */
+.tc-doc-search__input {
+  flex: 1 1 auto;
+  /* `align-self: stretch` DONNE AU CHAMP TOUTE LA HAUTEUR DE LA PILULE. Sans
+     lui, mesuré : enveloppe 44 px, champ 33 px — un clic dans la bande haute de
+     5,5 px laissait `document.activeElement` sur `body`. 2.5.8 restait
+     satisfait (33 ≥ 24), mais la moitié de ce qui ressemble à un champ n'en
+     était pas un. */
+  align-self: stretch;
+  min-inline-size: 0;
+  appearance: none;
+  padding-block: var(--space-2);
+  border: 0;
+  background: transparent;
+  color: var(--text-strong);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+}
+
+/* LES DEUX EXTINCTIONS SONT CONDITIONNÉES COMME LEUR REMPLAÇANT. Elles étaient
+   inconditionnelles alors que l'anneau qui les remplace est porté par une règle
+   en `:has()`. Dans tout contexte où `:has()` ne s'applique pas, il ne restait
+   donc AUCUN indicateur de focus sur le champ de recherche — pas un anneau
+   dégradé, aucun.
+
+   Ce n'est pas un manquement aujourd'hui : les trois moteurs livrés gèrent
+   `:has()`. C'est le seul endroit du dépôt où un `outline: none` n'avait pas de
+   filet, et `@supports selector(…)` le lui donne pour zéro octet de rendu. Un
+   moteur sans `:has()` retrouve le double anneau natif au lieu de rien. */
+@supports selector(:has(*)) {
+  .tc-doc-search__input {
+    outline: none;
+    box-shadow: none;
+  }
+}
+
+/* `--text-muted` et non une encre plus pâle : un texte de substitution est du
+   texte, donc WCAG 1.4.3 s'y applique. Mesuré ailleurs dans cette feuille,
+   `--text-muted` tient 8,12:1 sur le sol blanc de la vitrine et 8,47:1 en
+   sombre — et il est ici sur `--panel-surface`, un lavis composé sur ce sol,
+   donc au-dessus du seuil dans les deux thèmes. */
+.tc-doc-search__input::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+/* --- Le panneau de suggestions --------------------------------------------
+   IL FLOTTE, DONC IL A UNE OMBRE ET UN FOND OPAQUE. Opaque obligatoirement :
+   il recouvre le contenu de la page, et c'est la seule surface du site dont le
+   dessous défile pendant qu'elle est ouverte. Un fond translucide y laisserait
+   passer les titres de la page en train de bouger.
+
+   `z-index` : la barre du haut est déjà à 1 dans le contexte de la page ; le
+   panneau doit passer au-dessus du contenu de la barre ET du contenu du site,
+   d'où 2 dans le contexte de la barre. Il n'y a pas de troisième prétendant. */
+.tc-doc-search__list {
+  position: absolute;
+  z-index: 2;
+  inset-inline: 0;
+  /* Sous la pilule, séparé d'elle : `calc(100% + …)` place le bord haut du
+     panneau juste après le bord bas de l'enveloppe, coussin compris. */
+  inset-block-start: calc(100% + var(--space-2));
+  max-block-size: 60dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: var(--space-2);
+  list-style: none;
+  /* `--control-border` ET NON `--border-subtle` : le panneau flotte au-dessus
+     du contenu, donc son bord est ce qui dit où il commence. Mesuré, le fond du
+     panneau contre la page en dessous ne vaut que 1,12:1 en clair et 1,04:1 en
+     sombre, et `--border-subtle` 1,34 / 1,36:1 : il ne tenait que par son
+     ombre, qui est une encre SOMBRE — donc invisible sur un sol sombre. Le
+     panneau flottait sans contour en thème sombre. `--control-border` tient
+     5,73:1 en clair et 6,42:1 en sombre. Aucun critère AA ne l'exigeait ; c'est
+     la lisibilité d'une surface qui recouvre le contenu. */
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--elevation-3);
+}
+
+/* LE PANNEAU DEVIENT FOCUSABLE DÈS QU'IL DÉFILE, ET SON OMBRE EFFAÇAIT ALORS
+   L'ANNEAU. C'est le cas qu'`utilities.css` décrit sans le nommer : une
+   `box-shadow` déclarée après `tokens.css` remplace celles de la règle
+   universelle `:focus-visible`, à poids égal, par simple ordre.
+
+   Le `<ul>` n'a pas de `tabindex`, mais Chrome rend focusable au clavier un
+   conteneur défilant dont aucun enfant ne l'est — et les `<li role="option">`
+   ne le sont pas. Mesuré sur le build :
+
+     960 × 900  clientH 368 = scrollH 368  ->  focusable : non
+     960 × 420  clientH 250 < scrollH 368  ->  focusable : OUI
+     375 × 700  clientH 418 < scrollH 544  ->  focusable : OUI
+
+   Dans ces deux cas l'`outline` était bien peint (3 px noir) mais les deux
+   ombres de l'anneau non : il ne restait que la moitié de l'indicateur.
+
+   L'ÉTAT FOCALISÉ CUMULE, il ne remplace pas : l'ombre de lévitation est ce
+   qui dit que le panneau flotte au-dessus du contenu, et la perdre pendant le
+   focus serait échanger un défaut contre un autre. (0,2,0) contre (0,1,0),
+   donc la règle gagne par le poids et non par l'ordre. */
+.tc-doc-search__list:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--focus-inner),
+    0 0 0 5px var(--focus-outer),
+    var(--elevation-3);
+}
+
+.tc-doc-search__option {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+  align-items: baseline;
+  justify-content: space-between;
+  /* 44 px de haut sans y penser : `--target-min` en plancher, et le coussin
+     par-dessus. Une liste de suggestions est une liste de cibles (WCAG 2.5.8),
+     même quand on n'y arrive qu'au clavier. */
+  min-block-size: var(--target-min);
+  padding-block: var(--space-2);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+/* UN SEUL ÉTAT VISUEL POUR LE SURVOL ET POUR LE CLAVIER, et c'est voulu :
+   `onMouseEnter` déplace l'option courante, donc la souris et les flèches
+   pilotent la MÊME désignation. Deux apparences distinctes auraient laissé
+   croire à deux curseurs concurrents. L'attribut est `aria-selected`, donc le
+   sélecteur lit l'état réel de l'arbre d'accessibilité et non une classe
+   parallèle qui pourrait en diverger.
+
+   L'APLAT `--accent`, ET NON LE LAVIS `--accent-quiet` : C'EST LA CORRECTION
+   D'UN MANQUEMENT À 1.4.11. Le lavis ne se voyait pas. Mesuré sur les fonds
+   composés — option courante contre option normale :
+
+     --accent-quiet   1,14:1 en clair, 1,09:1 en sombre    ÉCHEC (seuil 3:1)
+     --accent         4,87:1 en clair, 3,40:1 en sombre    tient
+
+   Le second indice, `--text-strong` au lieu de `--text-body`, ne rattrapait
+   rien : 11,06 → 9,68:1 sur le libellé, une variation d'encre imperceptible.
+   Un utilisateur clavier tapait, appuyait trois fois sur ↓, n'voyait rien
+   changer, validait, et arrivait sur une page qu'il n'avait pas vue désignée —
+   pendant que le lecteur d'écran, lui, annonçait correctement.
+
+   Ironie du diagnostic : le bloc `forced-colors` plus bas faisait DÉJÀ ce qu'il
+   fallait. L'état n'était visible qu'en couleurs forcées.
+
+   L'ENCRE PASSE À `--text-on-accent`, ET LE NOM DE GROUPE AVEC. Sur l'aplat
+   teal, `--text-muted` tomberait sous le seuil ; le blanc y tient 5,44:1, donc
+   les deux lignes de la rangée sont au-dessus de 4,5:1. Le nom de groupe perd
+   sa nuance de gris sur cette seule rangée — c'est le prix, et il est payé en
+   hiérarchie plutôt qu'en lisibilité. */
+.tc-doc-search__option[aria-selected='true'] {
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+
+.tc-doc-search__option[aria-selected='true'] .tc-doc-search__group {
+  color: var(--text-on-accent);
+}
+
+.tc-doc-search__label {
+  font-weight: var(--weight-semibold);
+}
+
+.tc-doc-search__group {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+/* IL FLOTTE COMME LE PANNEAU QU'IL REMPLACE, ET C'EST LA CORRECTION D'UNE
+   RÉGRESSION QUE J'AI INTRODUITE. Ce message vivait dans le `<ul>` en
+   `role="presentation"` ; l'en sortir était juste — une `listbox` doit
+   contenir des `option` — mais il est alors devenu un ENFANT FLEXIBLE de la
+   pilule, qui est `display: flex; align-items: center`. Sans position, sans
+   fond et sans bord, il se posait DANS le champ.
+
+   Mesuré, requête sans résultat : la barre passait de 72,0 px à **122,2 px** de
+   320 à 480 px de large, poussant toute la page vers le bas, et le champ était
+   réduit à **4,0 px** — l'utilisateur ne pouvait plus lire ce qu'il venait de
+   taper. À 320 px le message débordait en plus sur la bascule de thème, dont
+   une bande de 12 px cessait d'être cliquable (`elementFromPoint` renvoyait le
+   paragraphe).
+
+   Il reprend donc les six déclarations qui font du panneau un calque flottant :
+   position, débordement latéral, décalage sous la pilule, fond opaque, liseré
+   et ombre. Ce qui aurait dû être fait du premier coup — le message REMPLACE le
+   panneau, il n'est pas un contenu de la barre. */
+.tc-doc-search__empty {
+  position: absolute;
+  z-index: 2;
+  inset-inline: 0;
+  inset-block-start: calc(100% + var(--space-2));
+  margin: 0;
+  padding-block: var(--space-3);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--elevation-3);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+/* SOUS COULEURS FORCÉES, l'option courante ne peut pas compter sur son lavis :
+   le mode force `background-color`, donc `--accent-quiet` disparaît et les huit
+   rangées deviennent identiques. `Highlight` / `HighlightText` sont la paire
+   système prévue pour exactement ça. */
+@media (forced-colors: active) {
+  .tc-doc-search__option[aria-selected='true'] {
+    background: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+}
+
+/* `prefers-reduced-motion` n'a rien à couper ici : les deux transitions de
+   l'enveloppe sont des transitions de COULEUR, que `tokens.css` conserve
+   délibérément sous cette préférence — elle refuse le mouvement, pas le retour
+   visuel. Aucun bloc, et cette phrase dit pourquoi il n'y en a pas. */
+
+/* --- Grille du site ---------------------------------------------------------
+   PILE PAR DÉFAUT, DEUX COLONNES À PARTIR DE 60rem. Le petit écran est l'état
+   nu : la nav reste dans le flux, au-dessus du contenu, bornée en hauteur et
+   défilante. Aucun bouton de dépliage, aucun `hidden`, aucun `display: none` —
+   donc rien de focusable qui soit invisible, et rien qui dépende de
+   JavaScript. À 360 px, la colonne de contenu vaut 360 px moins ses coussins,
+   et `minmax(0, 1fr)` interdit à une cellule large (un tableau, une grille de
+   spécimens) de pousser la grille au-delà de la fenêtre.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* --- LE LAVIS DE TÊTE DE COLONNE -------------------------------------------
+   LES DEUX COULEURS DE LA CHARTE, EN TÊTE DE CHAQUE PAGE. C'est la couche
+   décorative que la librairie possède déjà — les deux teintes de halo — et que
+   la vitrine n'avait jamais peinte hors de ses scènes de démonstration. Elle
+   se dissipe avant le premier spécimen.
+
+   POURQUOI SUR TOUTES LES PAGES ET NON SUR LE SEUL ACCUEIL : la charte se lit
+   comme un système, pas comme une page d'accueil suivie de vingt-cinq annexes.
+   Et il n'y a aucun crochet CSS de route — ni classe ni attribut sur
+   `.tc-doc-main` — donc un traitement propre à l'accueil demanderait une
+   ligne de `doc-shell.tsx` pour un gain qui n'est pas démontré.
+
+   SUR LA COLONNE ET NON SUR LA PAGE, et c'est ce qui protège deux mesures : le
+   sommaire est un FRÈRE de grille, donc le lavis ne passe ni sous lui ni sous
+   la barre du haut. Sous un lavis à 0,32, le liseré du champ de recherche
+   tomberait de 3,11 à 2,59:1 — sous le plancher de 1.4.11, pour un jeton battu
+   exprès pour l'atteindre.
+
+   AUCUNE ANIMATION. C'est un fond statique : WCAG 2.2.2 est hors sujet, et il
+   n'y a de toute façon aucune commande de pause dans la page.
+
+   LA BOÎTE FAIT 384 PX, LA PEINTURE S'ARRÊTE À 258. Les deux dégradés
+   atteignent `transparent` à 68 % et 64 % du rayon, et le rayon vertical vaut
+   100 % de la boîte : mesuré au pixel, le dernier rang teinté est à y=258 en
+   384 px de boîte. C'est ce qui met le premier bloc de code (279–369 px sous le
+   haut de colonne selon la page) et la première carte de spécimen HORS du
+   lavis, donc leurs ratios sont ceux qui leur ont été mesurés.
+
+   NE PAS « CORRIGER » LA BOÎTE À 256 PX pour coller à la peinture : les arrêts
+   sont des POURCENTAGES du rayon, donc réduire la boîte réduit le lavis. Mesuré
+   sur deux pages isolées, colonne du centre du halo froid : boîte 384 px →
+   dernier rang teinté y=258 ; boîte 256 px → y=172. La boîte déclare 50 % de
+   plus qu'elle ne peint, et c'est ce qui donne au dégradé sa longueur.
+
+   LA BORNE À CONNAÎTRE AVANT D'AJOUTER QUOI QUE CE SOIT DANS CETTE BANDE. Le
+   lavis ne recouvre aujourd'hui que du texte — `<h1>`, chapeau, prose, liens de
+   prose sur cinq pages, et le haut d'une carte OPAQUE sur `#/typographie` : ni
+   contrôle, ni liseré porteur, ni indicateur d'état, donc rien qui porte une
+   obligation 1.4.11. Mais `--accent` tombe de 3,28 à **2,65:1** sur le pic
+   sombre. Le jour où une plaque, un `.tc-btn--secondary` ou un `.tc-input`
+   remonte dans les 258 premiers pixels de la colonne, il passe sous le plancher
+   de 3:1 en thème sombre — et la protection écrite au paragraphe précédent est
+   GÉOMÉTRIQUE (le sommaire est un frère de grille), donc elle ne couvre pas ce
+   qui est DANS la colonne.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-column {
+  /* Sans lui, la largeur minimale automatique d'un élément de grille est celle
+     de son contenu : un tableau à défilement horizontal élargirait la colonne
+     au lieu de défiler. */
+  min-inline-size: 0;
+  /* Ancre du pseudo-élément. `z-index: auto` — donc PAS de contexte
+     d'empilement créé : c'est ce qui permet au `z-index: -1` du lavis de
+     passer derrière le contenu de la colonne tout en restant devant le sol. */
+  position: relative;
+}
+
+.tc-doc-column::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: calc(var(--space-8) * 6);
+  opacity: var(--doc-wash-strength);
+  background-image:
+    radial-gradient(70% 100% at 12% 0%, var(--halo-tint) 0%, transparent 68%),
+    radial-gradient(52% 88% at 88% 4%, var(--halo-tint-warm) 0%, transparent 64%);
+  pointer-events: none;
+}
+
+/* LES DEUX REPLIS SONT OBLIGATOIRES ET NON DÉCORATIFS.
+   `prefers-reduced-transparency` est du Chromium seul, donc le second n'est pas
+   une redondance : c'est le seul levier universel. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .tc-doc-column::before {
+    display: none;
+  }
+}
+
+/* `forced-colors` force `background-color` mais PAS les images de fond : sans
+   ce bloc, les deux dégradés continueraient de peindre par-dessus le `Canvas`
+   forcé. C'est la raison que cette feuille écrit déjà pour les anciens replis
+   du verre du sommaire. */
+@media (forced-colors: active) {
+  .tc-doc-column::before {
+    display: none;
+  }
+}
+
+/* --- Barre de gauche --------------------------------------------------------
+   Collante, avec son propre défilement, et un filet la séparant du contenu.
+   `align-self: start` est ce qui rend le `sticky` opérant : un élément de
+   grille est étiré par défaut, il remplirait donc sa rangée et n'aurait aucune
+   course à parcourir.
+   -------------------------------------------------------------------------- */
+
+/* LA FENÊTRE DE SOMMAIRE EST PROPORTIONNELLE À L'ÉCRAN, et non fixée à quatre
+   pas : à 256 px de haut, la tête de colonne (pastille de version, filet, deux
+   titres de groupe et leurs notes) consommait presque tout, et il ne restait
+   qu'une entrée et demie visible sur vingt-deux — sur tout écran sous 60rem,
+   pas seulement sur téléphone. `60dvh` en montre sept à huit.
+
+   Ce qu'aucune valeur ne peut corriger, et qu'il faut savoir : la coupe tombera
+   toujours au milieu d'une rangée, la tête de colonne n'étant pas un multiple
+   des 44 px de la cible. La seule façon de l'éviter serait de faire défiler
+   chaque groupe HORIZONTALEMENT sous 60rem — quatre bandes de 44 px, rien de
+   tronqué — mais on y perd le balayage vertical d'une liste de seize noms, qui
+   est justement ce qu'on vient chercher dans un sommaire. Choix assumé : la
+   coupe verticale, qui est le signal de défilement que tout le monde lit. */
+/* --- LE SOMMAIRE EST DANS LA PAGE, ET NON DANS UNE FENÊTRE -----------------
+
+   Il a été un panneau de verre — remplissage `--glass-fill`, liseré
+   `--glass-border`, rayon `--radius-lg`, ombre `--elevation-3`, coussin
+   extérieur de tous les côtés. Cela flottait, et c'est précisément ce qui a été
+   retiré : un sommaire n'est pas une palette posée sur la page, c'est une
+   partie de la page. Il n'a donc plus ni fond, ni bord fermé, ni rayon, ni
+   ombre — un filet, et le sol de la vitrine qui passe derrière lui.
+
+   CE QUE LE VERRE COÛTAIT, MESURÉ, ET C'EST L'ARGUMENT QUI CLÔT LE SUJET : sur
+   un sol blanc, `--glass-fill` composé donne 1,000:1 contre ce sol et ΔE OKLab
+   0,00. Le remplissage ne peignait rien. Tout le panneau était porté par son
+   liseré et son ombre, c'est-à-dire par la seule chose qu'on vient d'enlever :
+   il ne restait donc, du matériau, que le contour d'une fenêtre. Aucune encre
+   du sommaire ne change en le retirant — elles étaient déjà lues sur le sol.
+
+   TROIS CONSÉQUENCES, dont deux suppressions :
+
+   1. les deux blocs de repli du verre — `prefers-reduced-transparency` /
+      `prefers-contrast` et `forced-colors` — n'ont plus d'objet. Ils sont
+      remplacés par les commentaires qui disent pourquoi, en dessous ;
+   2. le décalage collant n'a plus à porter le coussin du panneau : il valait
+      `--doc-topbar-size + --space-4` pour que le verre garde son air autour de
+      lui, il vaut maintenant la hauteur de la barre, et le sommaire monte
+      jusque sous elle comme le reste du contenu ;
+   3. la pastille de version garde son fond opaque, mais c'est désormais celui
+      de la page : c'est la seule surface du site sous laquelle du contenu
+      défile réellement, donc un fond transparent y laisserait passer les
+      entrées du sommaire.
+
+   CE QUI N'A PAS CHANGÉ : la colonne reste collante, borne sa hauteur et défile
+   pour elle seule. « Intégré à la page » décrit une apparence, pas un
+   comportement — un sommaire qui remonte avec le contenu de la page ne servirait
+   plus à naviguer dès la deuxième section.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-nav {
+  max-block-size: 60dvh;
+  overflow-y: auto;
+  padding-block: var(--space-5);
+  padding-inline: var(--space-5);
+  /* UN SEUL FILET, ET RIEN D'AUTRE. Le sommaire n'a ni fond, ni liseré fermé,
+     ni rayon, ni ombre : il est posé sur le sol de la page et séparé du
+     contenu par un trait. Le filet est en bas en une colonne, sur le côté en
+     deux — c'est la seule chose qui change entre les deux dispositions. */
+  border-block-end: 1px solid var(--rule);
+  /* Le défilement de la nav ne doit pas entraîner celui de la page quand elle
+     arrive en butée. */
+  overscroll-behavior: contain;
+}
+
+/* LES DEUX REPLIS DU VERRE N'ONT PLUS D'OBJET, ET LEUR ABSENCE EST UN FAIT —
+   d'où ce commentaire à la place des deux blocs qui vivaient ici.
+
+   Le premier était un `@media (prefers-reduced-transparency: reduce),
+   (prefers-contrast: more)` qui ramenait le remplissage à `--glass-fill-solid`.
+   Le second un `@media (forced-colors: active)` qui remettait le fond à
+   `Canvas`, parce que le mode force `background-color` mais PAS les images de
+   fond, et que les deux dégradés de `--glass-highlight` auraient continué de
+   peindre par-dessus le `Canvas` forcé.
+
+   Les deux visaient un remplissage translucide et deux dégradés que le
+   sommaire ne déclare plus. Il n'y a aucune transparence à réduire ni aucune
+   image de fond à retirer : le filet et l'encre partent au système comme le
+   reste de la colonne. La seule surface de verre de la vitrine est celle des
+   composants, servie par `glass.css`, qui porte ses propres blocs — et
+   `glass.structure.test.ts` épingle désormais la cohérence de leur condition
+   avec celle de `lens.css`, `card.css`, `backdrop.css` et `materials.css`. */
+
+/* COLLANTE DANS SON PROPRE CONTENEUR. La colonne défile dès que la fenêtre est
+   courte (mesuré : 1 408 px de sommaire pour 928 px de fenêtre à 1440 × 1000),
+   et la première chose qui sortait de l'écran était précisément la version.
+   Les marges négatives annulent puis rétablissent le coussin haut de la nav :
+   sans elles, la pastille se collerait au bord au lieu de garder son coussin,
+   et un blanc de 24 px défilerait au-dessus d'elle.
+
+   LE FOND RESTE OPAQUE, ET C'EST DÉSORMAIS CELUI DE LA PAGE. C'est la SEULE
+   surface du site sous laquelle du contenu défile réellement : ce qui passe
+   dessous, ce sont les vingt-trois entrées du sommaire, de l'encre à 10:1. Un
+   fond translucide y était mesuré et rejeté — l'encre d'un lien
+   (`--text-body`, #2b464c) sous `--glass-fill` donne un support
+   rgb(128, 144, 148), sur lequel `--text-strong` ne tient plus que 3,722:1, et
+   1,836:1 en thème sombre où l'encre des liens est claire. Un flou ne fabrique
+   pas de contraste : il détruit le détail, pas la luminance moyenne.
+
+   CE QUI A CHANGÉ AVEC LA FENÊTRE DE SOMMAIRE : le fond était
+   `--glass-fill-solid`, choisi pour se LIRE contre le verre du panneau
+   (mesuré : 1,117:1, ΔE OKLab 4,03 en clair). Il n'y a plus de panneau à se
+   détacher de, et une pastille teintée en tête d'une colonne posée à même la
+   page se lirait comme une bande surlignée. `--doc-ground` la fait disparaître
+   dans le sol, et ce sont son cadre et son mono qui la tiennent — ce qu'ils
+   faisaient déjà. */
+/* LA NOTE DE VERSION, REDEVENUE UNE SIMPLE LIGNE D'EN-TÊTE.
+
+   Elle était collante, avec un fond opaque et des marges négatives, et les
+   trois avaient la même raison : elle coiffait une colonne dont le contenu
+   défilait dessous, donc il fallait qu'elle traverse toute la largeur et
+   qu'on ne voie pas passer les entrées derrière. Cette colonne n'existe plus
+   — la note vit maintenant dans le `Sidebar.Header` du composant, dont le
+   coussin latéral est celui du composant et non `--space-5`.
+
+   MESURÉ, LES TROIS SE RETOURNAIENT CONTRE ELLE : la note sortait à
+   16,96 px sur 117 × 73, quand l'`<aside>` commence à 24 — décalée de 8 px à
+   gauche, large d'un tiers du rail, et son fond opaque poinçonnait un
+   rectangle sombre dans le verre. C'est ce qui donnait au haut du sommaire
+   son air de rustine.
+
+   CE QUI N'EST PLUS GARANTI : la note ne reste plus visible quand le sommaire
+   défile, elle s'en va avec lui. C'est le prix du retrait de `sticky`, et il
+   est assumé — un numéro de version n'a pas à suivre l'œil. */
+.tc-doc-nav__version {
+  display: flex;
+  flex-wrap: wrap;
+  /* `baseline` et non `center` : centrer une pastille de 32 px sur une note de
+     14 px décale leurs lignes de base d'environ 1,5 px — l'écart qui fait « pas
+     fini » sans qu'on sache dire pourquoi. */
+  align-items: baseline;
+  gap: var(--space-2);
+  inline-size: 100%;
+  margin-block: 0 var(--space-4);
+  padding-block-end: var(--space-4);
+  border-block-end: 1px solid var(--rule);
+}
+
+/* UN LAVIS NEUTRE ET NON TEAL : une version ne s'actionne pas, et le teal est
+   l'encre de ce qui se clique. Deux objets teal empilés — la pastille et
+   l'entrée courante juste dessous, qui portent le MÊME `--accent-quiet` — se
+   lisaient d'ailleurs comme un groupe, dont un seul signalait un état. La
+   pastille reste présente par le mono, le demi-gras et son cadre : elle est le
+   seul objet encadré de la colonne. */
+.tc-doc-nav__versionnumber {
+  padding-block: var(--space-1);
+  padding-inline: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--panel-surface);
+  color: var(--text-strong);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+/* `--text-sm` et non `--text-xs` : cette note porte l'un des deux faits que la
+   tête de colonne doit dire — la version est stable, et pour React 19. Elle
+   était le plus petit texte de toute la coquille. Le mono de la pastille suffit
+   à distinguer les deux à taille égale. */
+.tc-doc-nav__versionnote {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+/* `--text-muted` (8,12:1 sur le sol blanc de la vitrine — 6,76:1 sur le sol
+   publié —, 8,47:1 en sombre) et non `--text-strong` :
+   capitales + interlettrage + demi-gras faisaient des trois titres de groupe
+   les marques les plus noires de la colonne, en concurrence avec l'entrée
+   courante. L'ordre de lecture voulu est : page courante, entrées, groupes,
+   notes, version. La capitale et l'interlettrage suffisent à distinguer un
+   titre de sa note. */
+/* --- Les groupes sont pliables, en `<details>` natifs -----------------------
+   Le titre de groupe est devenu un `<summary>`. Il change donc de nature : ce
+   n'était qu'une étiquette, c'est maintenant une COMMANDE. Trois conséquences,
+   et aucune n'est cosmétique :
+
+   — le marqueur natif est retiré. `list-style: none` sur le `<summary>` suffit
+     dans Chromium et Firefox ; Safari a besoin de `::-webkit-details-marker`,
+     qui est un pseudo-élément propriétaire mais le seul levier existant. Les
+     deux sont déclarés ;
+   — la cible fait au moins 24 px de haut (WCAG 2.5.8). Le coussin est
+     `--space-2`, soit 8 px de chaque côté, et la cible MESURÉE dans le
+     navigateur fait 239 × 35 px sans note, 239 × 58 px avec. Ce commentaire
+     annonçait « 12 px de coussin, 16 px de ligne, 40 au total » : le critère
+     passait, les trois chiffres étaient faux ;
+   — l'anneau de focus est CELUI DU SITE et non celui du navigateur. Sans
+     `:focus-visible` explicite, un `<summary>` sans marqueur reçoit le contour
+     par défaut du moteur, qui n'a pas les deux couches mesurées de la vitrine.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-nav__group {
+  /* La marge est sur le groupe et non plus sur le titre : le `<summary>` est
+     maintenant à l'intérieur, et une marge haute sur lui se placerait DANS la
+     zone cliquable, ce qui l'agrandit sans le dire. */
+  margin-block-start: var(--space-5);
+}
+
+/* Le premier groupe suit la pastille de version, qui porte déjà son coussin
+   bas. Le sélecteur cite `:first-of-type` et non l'adjacence à la version :
+   c'est le même résultat aujourd'hui, et il tient si un jour la version passe
+   ailleurs. */
+.tc-doc-nav__group:first-of-type {
+  margin-block-start: 0;
+}
+
+.tc-doc-nav__grouptitle {
+  /* `display: block` ET NON `flex`, ET CE N'EST PAS UN DÉTAIL DE MISE EN PAGE.
+     WebKit a un défaut ancien et connu : un `<summary>` dont le `display`
+     quitte `list-item` peut perdre son comportement de dépliage — le
+     `<details>` ne s'ouvre plus du tout. Je n'ai pas de Safari ici pour le
+     constater, donc c'est un risque SUPPOSÉ et non mesuré ; mais le prix de
+     l'éviter est nul, et le prix de se tromper est un sommaire définitivement
+     replié dans un moteur sur trois. En `block`, le chevron `::before` coule
+     naturellement avant le texte et la note reprend son `display: block` :
+     aucune boîte flexible n'est nécessaire. */
+  display: block;
+  margin-block-end: var(--space-2);
+  padding-block: var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  list-style: none;
+}
+
+.tc-doc-nav__grouptitle::-webkit-details-marker {
+  display: none;
+}
+
+/* LE CHEVRON EST UN CARACTÈRE ET NON UNE IMAGE, pour la même raison que les
+   points de suspension de `[aria-busy]` dans `button.css` : rien à charger,
+   rien à colorer sous couleurs forcées. Il est `aria-hidden` de fait — un
+   pseudo-élément n'est pas dans l'arbre d'accessibilité —, et c'est voulu :
+   l'état est déjà annoncé par le `<details>` lui-même. Le doubler en texte
+   ferait dire « réduit » deux fois. */
+.tc-doc-nav__grouptitle::before {
+  content: '\203a';
+  display: inline-block;
+  inline-size: 1ch;
+  margin-inline-end: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1;
+  text-align: center;
+  transition: rotate var(--motion-move) var(--motion-ease);
+}
+
+.tc-doc-nav__group[open] > .tc-doc-nav__grouptitle::before {
+  rotate: 90deg;
+}
+
+/* --- Le pli du sommaire ENTIER ---------------------------------------------
+   Même commande que pour un groupe, un cran au-dessus : le `<summary>` devient
+   une flèche horizontale, en un ton plus fort parce qu'il commande les groupes.
+
+   `--text-body` et non `--text-muted` : 10,08:1 sur le sol blanc de la vitrine
+   contre 8,12:1, donc la hiérarchie se lit sans qu'aucune des deux encres
+   descende vers le seuil. En sombre, `--text-body` tient 8,39:1 et
+   `--text-muted` 8,47:1 — les deux sont larges, et c'est la graisse plus que
+   l'encre qui porte la hiérarchie là-bas.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-nav__alltitle {
+  /* Même `display: block` que les titres de groupe, et pour la même raison
+     supposée : un `<summary>` qui quitte `list-item` peut perdre son dépliage
+     dans WebKit. Le risque n'est pas mesuré ici, l'éviter ne coûte rien. */
+  display: block;
+  margin-block-end: var(--space-3);
+  padding-block: var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--text-body);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  list-style: none;
+}
+
+.tc-doc-nav__alltitle::-webkit-details-marker {
+  display: none;
+}
+
+.tc-doc-nav__alltitle::before {
+  content: '\203a';
+  display: inline-block;
+  inline-size: 1ch;
+  margin-inline-end: var(--space-2);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  line-height: 1;
+  text-align: center;
+  transition: color var(--motion-color) var(--motion-ease);
+}
+
+.tc-doc-nav__all[open] > .tc-doc-nav__alltitle::before {
+  content: '\2039';
+}
+
+.tc-doc-nav__alltitle:focus-visible {
+  outline: 3px solid var(--focus-outer);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--focus-inner),
+    0 0 0 5px var(--focus-outer);
+}
+
+/* La flèche change de caractère selon `[open]` — elle reste horizontale dans
+   les deux états. La préférence de mouvement n'a donc pas de rotation à
+   neutraliser, seulement la transition de couleur du contrôle. */
+
+.tc-doc-nav__grouptitle:hover {
+  background: var(--panel-surface-hover);
+  color: var(--text-strong);
+}
+
+/* L'ANNEAU EXACT DES LIENS DU SOMMAIRE, à deux couches — et recopié plutôt que
+   partagé pour la raison écrite au bloc de focus de `utilities.css` : un
+   sélecteur mutualisé y pèserait moins que la classe qui pose le fond de survol
+   juste au-dessus, et il ne resterait que l'`outline`. Les deux couches sont
+   les mêmes valeurs mesurées : `--focus-outer` tient 17,48:1 sur le sol clair
+   et 17,24:1 sur le sombre. */
+.tc-doc-nav__grouptitle:focus-visible {
+  outline: 3px solid var(--focus-outer);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--focus-inner),
+    0 0 0 5px var(--focus-outer);
+}
+
+/* La note vit dans le titre du groupe : elle reprend donc son fil normal —
+   casse, graisse et interlettrage — au lieu de la capitale espacée. */
+/* LA NOTE EST UN BLOC, donc sur sa propre ligne ; le retrait la remet sous le
+   libellé plutôt que sous le chevron — `1ch` est la largeur déclarée du
+   chevron, `--space-2` la marge qui le sépare du libellé. */
+.tc-doc-nav__groupnote {
+  display: block;
+  margin-block-start: var(--space-1);
+  padding-inline-start: calc(1ch + var(--space-2));
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-regular);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.tc-doc-nav__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* --- Liens de la nav --------------------------------------------------------
+   Quatre états, et la page courante ne se distingue JAMAIS par la seule
+   couleur : elle prend un filet d'accent au bord de départ, un lavis
+   `--accent-quiet` et la graisse demi-gras. Le filet est le signal qui survit
+   au niveaux de gris comme à la deutéranopie.
+
+   Le rayon est retiré du côté du filet — un rail arrondi ne lit pas comme un
+   rail. `border-start-start-radius` / `border-end-start-radius` : les deux
+   coins du bord de DÉPART, en logique, donc justes en écriture droite-à-gauche.
+
+   Aucune propriété animée hors couleur, donc rien à neutraliser sous
+   `prefers-reduced-motion` : le bloc de `preferences.css` restreint déjà la
+   liste des propriétés transitionnables de tout élément `tc-` aux couleurs, et
+   ce lien ne se déplace pas.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-nav__link {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--target-min);
+  padding-inline: var(--space-3);
+  border-inline-start: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  transition:
+    background-color var(--motion-color) var(--motion-ease),
+    border-color var(--motion-color) var(--motion-ease),
+    color var(--motion-color) var(--motion-ease);
+}
+
+/* LE SURVOL PASSE SOUS LE LAVIS DE LA PAGE COURANTE, et c'est un ordre
+   mesuré : `--panel-surface-hover` donnait 1,229:1 en clair et 1,359:1 en
+   sombre, contre 1,135:1 et 1,156:1 pour l'`--accent-quiet` de la page
+   courante. Un état TRANSITOIRE battait donc un état PERMANENT — tant que la
+   souris traînait dans la colonne, la page affichait deux entrées courantes.
+   `--panel-surface` (1,108:1 / 1,116:1) rétablit l'ordre, et le survol reste
+   lisible parce qu'il gagne aussi son filet teal.
+
+   REMESURÉ SUR LE SOL DE LA VITRINE, qui est désormais BLANC en clair — les
+   quatre chiffres du thème clair bougent, la conclusion non : survol
+   1,234:1, entrée courante 1,150:1, `--panel-surface` 1,108:1. L'écart entre
+   le lavis retenu et celui de la page courante passe de 0,027 à 0,042, donc
+   l'ordre est même un peu plus franc qu'avant. Le verre du panneau ne change
+   rien à ces trois valeurs : composé sur du blanc, il mesure 1,000:1 contre
+   le sol — les lavis se composent sur le même pixel. */
+.tc-doc-nav__link:hover {
+  border-inline-start-color: var(--accent-quiet-border);
+  background: var(--panel-surface);
+  color: var(--text-strong);
+}
+
+.tc-doc-nav__link:focus-visible {
+  /* Même correction que le bloc de focus des composants : l'outline porte
+     l'anneau EXTÉRIEUR, sans quoi il repeint la bande 2-4 px. */
+  outline: 3px solid var(--focus-outer);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--focus-inner),
+    0 0 0 5px var(--focus-outer);
+}
+
+.tc-doc-nav__link[aria-current='page'] {
+  border-inline-start-color: var(--accent);
+  background: var(--accent-quiet);
+  color: var(--text-strong);
+  font-weight: var(--weight-semibold);
+}
+
+/* Contraste élevé : le lavis ET le filet d'accent sont remplacés par la palette
+   système, donc la page courante redeviendrait indiscernable de ses voisines.
+
+   LE SOULIGNEMENT EST LA GARANTIE, le filet n'est qu'un renfort. Le premier
+   n'est pas une couleur : le mode le conserve tel quel, sans aucune dérogation
+   `forced-color-adjust` à poser. Le second suppose que `transparent` reste
+   transparent sous forçage — c'est ce que font les navigateurs, mais ce n'est
+   pas mesurable dans ce dépôt (jsdom n'évalue aucun `@media (forced-colors)`),
+   donc on ne s'y fie pas seul : si l'hypothèse est fausse, TOUS les liens
+   prennent un filet et seul le soulignement distingue encore la page courante.
+
+   Aucun `outline` ici, et c'est délibéré : à spécificité égale (0,2,0) et
+   déclaré après, il battrait l'anneau de `:focus-visible` sur le lien courant —
+   on aurait échangé un état visible contre un autre. */
+@media (forced-colors: active) {
+  .tc-doc-nav__link[aria-current='page'] {
+    border-inline-start-color: CanvasText;
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+}
+
+/* --- Deux colonnes ---------------------------------------------------------- */
+
+@media (min-width: 60rem) {
+  .tc-doc-body {
+    grid-template-columns: calc(var(--space-8) * 4.5) minmax(0, 1fr);
+    transition: grid-template-columns var(--motion-move) var(--motion-ease);
+  }
+
+  /* LE SOMMAIRE REPLIÉ REND SA PISTE À LA PAGE. La largeur passe d'une piste
+     de 288 px à un rail de 76 px : la flèche rejoint donc le haut gauche et
+     le contenu récupère l'espace libéré avec une transition fluide.
+
+     `:has()` ET NON UN ATTRIBUT POSÉ PAR REACT, parce que le pli est un
+     `<details>` natif sans état React — c'est la feuille qui doit lire l'état
+     de l'élément, pas un rendu qui doit le recopier. Le sélecteur pèse
+     (0,2,0) contre (0,1,0) pour la règle de base, donc il gagne sans
+     `!important` et sans dépendre de l'ordre. `:has()` est déjà employé
+     quinze lignes plus haut par la pilule de recherche. */
+  .tc-doc-body:has(.tc-doc-nav__all:not([open])) {
+    grid-template-columns: calc(var(--target-min) + (2 * var(--space-4))) minmax(0, 1fr);
+  }
+
+  .tc-doc-nav {
+    position: sticky;
+    /* JUSTE SOUS LA BARRE DU HAUT, sans un pixel de plus. Le décalage valait
+       `--doc-topbar-size + --space-4` : ces 16 px étaient le coussin extérieur
+       du panneau de verre, qu'il fallait ajouter à la main parce que Chromium
+       contraint la boîte de BORDURE au décalage et non la boîte de marge
+       (sondé à quatre positions de défilement — sans l'appoint, le panneau
+       partait à 88 px puis remontait souder son liseré à la barre dès le
+       premier coup de molette). Le panneau n'existe plus, la marge extérieure
+       non plus : la colonne s'arrête sous la barre, comme le contenu. */
+    inset-block-start: var(--doc-topbar-size);
+    align-self: start;
+    block-size: calc(100dvh - var(--doc-topbar-size));
+    max-block-size: none;
+    /* LE FILET PASSE SUR LE CÔTÉ. En une colonne il sépare le sommaire du
+       contenu qui le suit, donc il est en bas ; en deux colonnes le contenu est
+       à droite, donc il y va. Un seul trait dans les deux cas. */
+    border-block-end: 0;
+    border-inline-end: 1px solid var(--rule);
+    padding-block: var(--space-5) var(--space-7);
+    transition: padding-inline var(--motion-move) var(--motion-ease);
+  }
+
+  /* Replié, le sommaire n'a plus à occuper toute la hauteur : `block-size` en
+     dur laisserait une colonne vide de 100 dvh bordée d'un filet sur toute la
+     page. */
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open])) {
+    block-size: auto;
+  }
+
+  /* EN MODE PLIÉ, LE TEXTE DISPARAÎT, LA PISTE SE RÉDUIT ET LA FLÈCHE PASSE
+     en haut à gauche du rail. */
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open])) .tc-doc-nav__versionnote {
+    display: none;
+  }
+
+  /* La commande est retirée du flux pour rester en haut de la colonne. Le
+     remplissage du pli conserve l'espace nécessaire aux groupes dépliés. */
+  .tc-doc-nav__panel {
+    position: relative;
+  }
+
+  .tc-doc-nav__all {
+    padding-block-start: calc(var(--target-min) + var(--space-2));
+  }
+
+  .tc-doc-nav__alltitle {
+    position: absolute;
+    inset-block-start: var(--space-2);
+    inset-inline-end: auto;
+    inset-inline-start: calc(100% - var(--target-min) - var(--space-2));
+    margin: 0;
+    transition:
+      inset-block-start var(--motion-move) var(--motion-ease),
+      inset-inline-start var(--motion-move) var(--motion-ease),
+      background-color var(--motion-color) var(--motion-ease);
+  }
+
+  /* Plié : le rail compact place la commande en haut à gauche. */
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open])) .tc-doc-nav__alltitle {
+    inset-block-start: 0;
+    inset-inline-start: 0;
+  }
+
+  /* LA GRILLE DE CENTRAGE A ÉTÉ RETIRÉE, ET SON ABSENCE EST LE CORRECTIF.
+
+     Elle datait de la coquille écrite à la main : trois pistes
+     `minmax(0,1fr) minmax(0,26rem) minmax(0,1fr)` pour centrer le champ de
+     recherche entre la marque et les bascules. La barre est désormais le
+     `Topbar` de la librairie, qui dispose lui-même ses sections — et la
+     grille l'enfermait dans sa piste centrale, plafonnée à 26 rem. Mesuré :
+     le composant sortait à 416 px dans une barre de 1280, et les trois
+     `justify-self` plaçaient des enfants qui n'existent plus, si bien que la
+     recherche se peignait PAR-DESSUS la marque et la bascule de thème.
+
+     Ce qui est perdu avec elle, et qui est réel : le champ n'est plus centré
+     à la piste près, il l'est par la répartition de `Topbar.Section`. Et le
+     raisonnement mesuré qui justifiait le barreau à 60 rem — bascules à
+     197,3 px contre marque à 168,2, donc 55,2 rem requis — ne s'applique plus
+     à la barre. Il vaut toujours pour la bascule à deux colonnes de la page,
+     qui est la raison pour laquelle ce barreau existe. */
+}
+
+/* --- Bascule de thème ------------------------------------------------------
+   UN BOUTON `aria-pressed`, à la place des trois radios de la v0.2.0 : la
+   bascule n'a plus que deux états, il n'y a plus de groupe à annoncer.
+
+   LES RÈGLES DU PORTFOLIO SONT RETEINTES, pas recopiées. Là-bas, `.theme-toggle`
+   emploie `--header-control-border`, `--header-control-surface{,-hover,-active}`,
+   `--header-text-strong` et `--header-text-hover` : le verre fumé de son en-tête,
+   qui n'a pas été porté dans cette librairie. Plutôt que d'inventer six jetons
+   pour un seul bouton, la bascule reprend le langage de contrôle DÉJÀ MESURÉ de
+   `.tc-btn--secondary` — liseré `--control-border`, encre `--text-accent`, lavis
+   `--accent-quiet` au survol, aplat `--accent` à l'état retenu. C'est le langage
+   que portaient déjà les radios, donc aucune paire de couleurs nouvelle n'entre
+   ici et il n'y a rien à remesurer.
+
+   Le `transform: translateY(1px)` de l'appui, lui, N'EST PAS repris :
+   `preferences.css` ne neutralise le déplacement d'appui que pour `.tc-btn`, si
+   bien qu'un `tc-doc-themetoggle` continuerait de sauter sous
+   `prefers-reduced-motion: reduce`. L'appui se lit sur `--accent-active`.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-themetoggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-block-size: var(--target-min);
+  margin-block-start: var(--space-6);
+  padding-inline: var(--space-4);
+  /* Même raison que `.tc-btn--secondary` : le liseré est la seule forme du
+     bouton non enfoncé, donc 3:1 exigés — `--accent-quiet-border` n'en donnait
+     que 1,82:1. */
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-pill);
+  /* `none` et non un jeton : un `<button>` porte un fond d'agent utilisateur
+     (`buttonface`) qu'il faut retirer pour que le sol de la page revienne — le
+     sol sur lequel `--text-accent` est mesuré à 7,93:1 dans la vitrine, dont le
+     sol clair est blanc, et à 6,60:1 chez un consommateur, qui reçoit
+     `--site-background`. */
+  background: none;
+  color: var(--text-accent);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-color) var(--motion-ease),
+    border-color var(--motion-color) var(--motion-ease),
+    color var(--motion-color) var(--motion-ease);
+}
+
+.tc-doc-themetoggle__glyph {
+  font-size: var(--text-base);
+}
+
+/* Mesuré : réduite à son glyphe, la bascule du verre faisait 43,6 px de large
+   contre 48,3 px pour celle du thème — `◍` est plus étroit que `☾`. Zéro
+   virgule quatre pixel sous le plancher que ce dépôt s'impose, et sous WCAG
+   2.5.5 (AAA), pour une différence de glyphe. Le plancher est donc déclaré. */
+.tc-doc-themetoggle {
+  min-inline-size: var(--target-min);
+}
+
+/* LA PLEINE LARGEUR DE LA COQUILLE, ET POURQUOI ELLE N'EST PAS DANS `Glass`.
+
+   `Glass` borne son enveloppe à `width: fit-content`, ce qui est juste pour un
+   bouton et faux pour une barre : mesuré, le `Topbar` sortait à 654 px dans une
+   barre de 1280 et s'arrêtait au milieu de la page.
+
+   PREMIÈRE TENTATIVE, ET ELLE A CASSÉ LE PLI DU SOMMAIRE. J'avais rendu la
+   largeur réglable DANS `Glass` (`width: var(--lg-width, fit-content)`). Le
+   défaut est que l'enveloppe déclare alors TOUJOURS une largeur, et la feuille
+   de `Glass` est émise après celle des composants : cette déclaration battait
+   donc `.collapsed { width: 88px }` que `Sidebar` pose lui-même sur
+   l'enveloppe par `rootClassName`. Mesuré, replié, l'enveloppe portait bien
+   `opale-magic-collapsed-YDT-N` et sortait quand même à 260 px. L'écart
+   désactivait en silence les classes de largeur de TOUT composant — chez un
+   consommateur aussi, pas seulement ici.
+
+   LA LARGEUR EST DONC DEMANDÉE PAR LA COQUILLE, ET SEULEMENT QUAND ELLE LA
+   VEUT. Le sélecteur exclut l'état replié, si bien que la largeur du composant
+   reprend la main dès que le rail se plie : le pli est celui de la librairie.
+
+   `[class*='glassContainer']` VISE UNE CLASSE HACHÉE, et c'est le seul crochet
+   disponible — le nom émis est `opale-magic-glassContainer-<hash>`, dont le
+   préfixe est fixé par `generateScopedName` dans les deux configs Vite. Il
+   casserait si ce gabarit changeait ; c'est le prix d'un composant qui n'expose
+   pas sa largeur. */
+.tc-doc-topbar > [class*='glassContainer'],
+.tc-doc-nav > [class*='glassContainer'] {
+  inline-size: 100%;
+}
+
+/* `.tc-visually-hidden`, RESTAURÉE ICI PARCE QUE LA 2.0 L'A EMPORTÉE.
+
+   Cette classe vivait dans `styles/components/utilities.css`, supprimée avec
+   les dix-huit composants d'Opale. Trois endroits de la vitrine l'emploient
+   toujours, et les trois se sont mis à peindre leur texte en clair :
+
+     — le `<label>` du champ de recherche (« Rechercher une page »), qui se
+       superposait à son propre `placeholder` ;
+     — la région live qui annonce le nombre de résultats ;
+     — le nom accessible de la bascule de thème (« Thème sombre »), qui
+       s'affichait à côté du croissant censé le remplacer.
+
+   C'est une régression de la suppression, pas de la coquille, et elle était
+   déjà poussée. Le commentaire juste en dessous l'affirmait d'ailleurs :
+   « il l'est par `.tc-visually-hidden` — la recette partagée de la
+   librairie ». La recette partagée n'existait plus.
+
+   RECOPIÉE AU CARACTÈRE depuis `utilities.css` avant sa suppression, et
+   `inset-inline-start: 0` n'est PAS décoratif : sans lui la boîte reste à sa
+   position statique, et une boîte absolue sans ancêtre positionné n'est pas
+   clippée par les `overflow` intermédiaires — elle gonfle le défilement de la
+   racine. C'était le défaut mesuré dans `utilities.css`. */
+.tc-visually-hidden {
+  position: absolute;
+  inset-inline-start: 0;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* SOUS 36 REM, LE LIBELLÉ EST MASQUÉ MAIS PAS SUPPRIMÉ : le bouton garde son
+   nom accessible — « Thème sombre », « Verre liquide » — et ne devient une
+   icône que pour l'œil. C'est la condition pour que la barre tienne sur une
+   ligne à 320 px sans rien perdre.
+
+   LA RECETTE EST CELLE DE `tc-visually-hidden` (`components/utilities.css`),
+   RECOPIÉE ET NON RÉEMPLOYÉE, parce qu'une classe ne peut pas être
+   conditionnelle en CSS : le libellé doit être visible au-dessus du seuil. Le
+   `inset-inline-start: 0` n'est pas décoratif — sans lui la boîte reste à sa
+   position statique, et une boîte absolue sans ancêtre positionné n'est pas
+   clippée par les `overflow` intermédiaires : elle gonfle le défilement de la
+   racine. C'est exactement le défaut mesuré dans `utilities.css`.
+
+   Le seuil vaut 36 rem parce que c'est là que « marque + deux pilules
+   libellées » cesse de tenir : mesuré, la barre passe à deux lignes entre
+   480 px et 560 px. */
+/* CE BLOC MASQUAIT LE LIBELLÉ DE LA BASCULE DE THÈME SOUS 36 rem, et il n'a
+   plus d'objet : le libellé est masqué à TOUTE largeur depuis que le bouton se
+   réduit à son glyphe, et il l'est par `.tc-visually-hidden` — la recette
+   partagée de la librairie, corrigée une fois pour toutes plutôt que recopiée
+   ici. `.tc-doc-themetoggle__label` n'est plus émis par personne.
+
+   Le libellé de la bascule de MATÉRIAU, lui, reste masqué sous 36 rem par le
+   bloc de sa propre section : « Verre liquide » n'a pas de glyphe que tout le
+   monde lise, donc son texte est gardé aussi longtemps que la barre le permet. */
+
+.tc-doc-themetoggle:hover {
+  border-color: var(--accent);
+  background: var(--accent-quiet);
+}
+
+.tc-doc-themetoggle:active {
+  border-color: var(--accent-active);
+  background: var(--accent-quiet);
+}
+
+.tc-doc-themetoggle:focus-visible {
+  /* Même correction que le bloc de focus des composants : l'outline porte
+     l'anneau EXTÉRIEUR, sans quoi il repeint la bande 2-4 px. */
+  outline: 3px solid var(--focus-outer);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--focus-inner),
+    0 0 0 5px var(--focus-outer);
+}
+
+/* Enfoncé : l'aplat accent, exactement comme l'option cochée d'avant. L'état se
+   lit à la PRÉSENCE d'un fond, pas à une teinte — la planche en niveaux de gris
+   de la vitrine le vérifie à l'œil, et `aria-pressed` le porte pour le reste. */
+.tc-doc-themetoggle[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+
+.tc-doc-themetoggle[aria-pressed='true']:hover {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+}
+
+.tc-doc-themetoggle[aria-pressed='true']:active {
+  border-color: var(--accent-active);
+  background: var(--accent-active);
+}
+
+/* Contraste élevé : le mode remplace les couleurs de l'auteur, et l'état
+   enfoncé — peint par un simple aplat — redeviendrait invisible. Même problème,
+   même dérogation et mêmes mots-clés de couleur SYSTÈME que le bloc
+   `forced-colors` de `preferences.css`, qui traitait le cas des radios.
+   `forced-color-adjust` est borné à ce seul état, et `Highlight` /
+   `HighlightText` sont une paire dont le système garantit le contraste.
+
+   « BORNÉ À CE SEUL ÉTAT » VEUT DIRE À CET ÉLÉMENT, PAS À CES DÉCLARATIONS, et
+   c'est la nuance qui a coûté un bug. `forced-color-adjust` n'existe qu'au
+   niveau de l'ÉLÉMENT — CSS n'offre aucune granularité par déclaration — donc
+   `none` désactive le forçage de TOUTES les couleurs de la bascule enfoncée, y
+   compris celles qu'une AUTRE règle du même fichier lui pose. L'`outline` de
+   `.tc-doc-themetoggle:focus-visible` était ainsi peinte à `--focus-outer`
+   d'auteur (#000000 en clair) alors que le fond, lui, vaut `Highlight`, dont la
+   valeur appartient au thème Windows de l'utilisateur : sur un thème à
+   `Highlight` sombre, cela donne un anneau noir sur fond sombre. La
+   `box-shadow` de l'anneau, que le mode aurait supprimée, survivait de la même
+   façon et en couleurs d'auteur.
+
+   On ne peut donc pas restreindre la dérogation — la retirer rendrait l'aplat
+   au système et l'état enfoncé redeviendrait invisible, ce que ce bloc existe
+   pour empêcher. On repeint l'anneau dans le même mode, à (0,3,0) contre les
+   (0,2,0) de la règle de focus, donc en gagnant par spécificité autant que par
+   l'ordre.
+
+   `CanvasText` et non `Highlight` : à `outline-offset: 2px`, l'anneau tombe
+   HORS de la boîte, sur le sol de la page, c'est-à-dire sur `Canvas`. Le
+   système garantit le contraste de la paire `Canvas` / `CanvasText` ; il ne
+   garantit rien entre `Canvas` et `Highlight`. Et `box-shadow: none` rend
+   simplement ce que `forced-colors` aurait fait sans la dérogation : l'anneau
+   se réduit à son `outline`, ce que `tokens.css` annonce déjà (« l'outline
+   reste le seul des deux que `forced-colors` rende »).
+
+   NON MESURABLE DANS CE DÉPÔT : il faut un poste Windows en contraste élevé,
+   et les mots-clés système n'ont aucune valeur calculable ici — jsdom ne peint
+   pas et aucun `@media (forced-colors)` ne s'y évalue. Ce qui est vérifié,
+   c'est la CASCADE (spécificité et ordre), pas le rendu. */
+@media (forced-colors: active) {
+  .tc-doc-themetoggle[aria-pressed='true'] {
+    forced-color-adjust: none;
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  /* LE SURVOL ET L'APPUI DOIVENT ÊTRE REPRIS EUX AUSSI, et c'est une question de
+     spécificité, pas de zèle. Les deux règles d'état de l'état enfoncé pèsent
+     (0,3,0) ; la règle ci-dessus, (0,2,0). Sans ces deux sélecteurs, les règles
+     d'état gagnent — et comme `forced-color-adjust: none` continue de
+     s'appliquer, le teal d'AUTEUR est peint sous une encre SYSTÈME.
+
+     Mesuré (Chromium 151, `forced-colors: active`) : au survol le fond valait
+     `--accent-hover` et à l'appui `--accent-active`, sous `HighlightText`. Avec
+     le blanc de l'émulation la paire tenait, mais `HighlightText` appartient au
+     thème de l'utilisateur : sur un thème à encre de surbrillance sombre, elle
+     tombe à 3,27:1 au survol et 2,80:1 à l'appui, sous les 4,5:1 de WCAG 1.4.3.
+     Le libellé de la bascule disparaissait donc tant que le pointeur ou la
+     touche restait dessus. */
+  .tc-doc-themetoggle[aria-pressed='true']:hover,
+  .tc-doc-themetoggle[aria-pressed='true']:active {
+    border-color: Highlight;
+    background: Highlight;
+  }
+
+  .tc-doc-themetoggle[aria-pressed='true']:focus-visible {
+    outline-color: CanvasText;
+    box-shadow: none;
+  }
+}
+
+/* --- La page ----------------------------------------------------------------
+   `<main>` porte lui-même la mesure et les coussins : la coquille n'a AUCUN
+   conteneur entre lui et le titre — le contrat de DOM exige que le `<h1>`, le
+   chapeau et le corps soient ses enfants directs — donc il n'y a pas de
+   `.tc-doc-shell` à intercaler ici. La borne est la même que celle du pied de
+   page, qui l'obtient par `.tc-doc-shell` : les deux s'alignent au pixel.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-main {
+  inline-size: 100%;
+  max-inline-size: calc(var(--space-8) * 18);
+  margin-inline: auto;
+  padding-block: var(--space-7) var(--section-space);
+  padding-inline: var(--space-5);
+}
+
+/* `--text-display-md` ET NON `--display-sm`, sur l'argument de la page
+   typographie elle-même : elle documente le premier comme « titre d'ouverture »
+   et le second comme « titre de page secondaire », et le titre d'une page EST
+   son ouverture. Mesuré avant correction : le `<h1>` à 34 px se faisait
+   dominer par un spécimen de `SectionHeading` rendu à 52 px dans une carte —
+   l'élément le plus fort de la page était une démonstration. */
+/* `<main>` n'est plus la cible du focus depuis que le titre l'est (voir
+   `doc-shell.tsx`), mais il reste focusable comme filet du `href="#contenu"`.
+   Si ce chemin est emprunté, l'anneau doit rester DANS la fenêtre : la boîte de
+   `<main>` fait la hauteur de la page, donc un anneau posé dehors n'en montre
+   que deux traits verticaux, bord haut caché sous la barre collante. */
+/* `box-shadow: none` EST LA MOITIÉ QUI MANQUAIT, et le commentaire au-dessus
+   décrivait le défaut sans le corriger entièrement. L'`outline` est rentré
+   (`offset` négatif) pour que l'anneau se peigne À L'INTÉRIEUR de `<main>`,
+   mais les deux `box-shadow` de la règle universelle de `tokens.css`
+   survivaient et se peignaient DEHORS.
+
+   Mesuré, `<main>` focalisé en 760 × 560 sur le build : boîte de 760 × 1903,7,
+   `outline` 3 px noir à −4 px, et `box-shadow` valant encore
+   « rgb(246,255,222) 0 0 0 2px, rgb(0,0,0) 0 0 0 5px » — soit un anneau noir de
+   5 px autour d'une boîte de 1904 px de haut, dont le bord supérieur passe sous
+   la barre collante. Exactement les « deux traits verticaux » que ce
+   commentaire affirmait avoir supprimés.
+
+   Le chemin qui y mène est réel : le lien d'évitement `href="#contenu"`
+   emprunté avant que son gestionnaire de clic soit attaché, ou l'ancre ouverte
+   par un autre moyen, donne le focus à `<main>`. */
+.tc-doc-main:focus-visible {
+  outline: 3px solid var(--focus-outer);
+  outline-offset: calc(-1 * var(--space-1));
+  box-shadow: none;
+}
+
+.tc-doc-page__title {
+  margin: 0;
+  /* `fit-content` POUR L'ANNEAU DE FOCUS, et pour lui seul. Le titre est la
+     cible du focus à chaque changement de route (voir `doc-shell.tsx`) : en
+     bloc pleine largeur, l'anneau de 3 px de la charte dessinait un cadre qui
+     courait jusqu'au bord de la colonne, très loin des mots. Ajusté au
+     contenu, il entoure le titre. Le titre reste un bloc — il se replie
+     normalement quand il est plus long que la colonne. */
+  inline-size: fit-content;
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: var(--text-display-md);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-heading);
+}
+
+/* Le corps de la page commence après le bloc de tête, et l'écart se pose par
+   VOISINAGE faute de conteneur (voir ci-dessus). `+ *` ne touche que le premier
+   nœud rendu par la page, ce qui est exactement l'intention : les suivants
+   gèrent leur propre rythme.
+
+   L'ordre de ces deux règles est porteur : le chapeau est lui aussi le voisin
+   du titre, donc il est d'abord poussé de `--space-7`, puis ramené à
+   `--space-4` par la règle suivante — même spécificité (0,1,0), déclarée après,
+   elle gagne. Les inverser rendrait le chapeau trop bas. */
+.tc-doc-page__title + *,
+.tc-doc-page__lede + * {
+  margin-block-start: var(--space-7);
+}
+
+/* LA MESURE DU CHAPEAU EST RAMENÉE À LA LARGEUR PHYSIQUE DU CORPS, et c'est
+   une correction mesurée : `--measure` vaut `66ch`, et le `ch` se résout sur la
+   fonte de l'ÉLÉMENT — 66 caractères à 19 px font 787 px là où le corps, à
+   16 px, en fait 665. Le contrat « 66 caractères » était tenu, la colonne ne
+   l'était pas : trois bords droits en escalier dans la même page, et le
+   chapeau plus large que le texte qu'il introduit.
+
+   La première déclaration est le REPLI et n'est pas décorative : la division
+   d'une longueur par une longueur relève de CSS Values 4, et un moteur qui la
+   refuse ignore la seconde règle et retrouve le rendu d'avant — le chapeau
+   redevient trop large, rien ne casse. Mesuré à 662,9 px contre 665,2 px pour
+   le corps dans Chromium : 2 px d'écart de métrique. */
+.tc-doc-page__lede {
+  margin-block-start: var(--space-4);
+  max-inline-size: var(--measure);
+  max-inline-size: calc(var(--measure) * var(--text-base) / var(--text-md));
+  font-size: var(--text-md);
+}
+
+/* --- Corps de page ---------------------------------------------------------
+   Ce qui restait de l'habillage des SECTIONS numérotées de la charte : le
+   filet de séparation, le chiffre en cuivre et le titre de section sont partis
+   avec elles — une page par sujet n'a ni voisine à séparer ni rang à afficher.
+   Seule la pile survit, sous le nom que `PageBody` lui donne.
+   -------------------------------------------------------------------------- */
+
+/* 48 PX DEHORS CONTRE 24 DEDANS, SOIT UN RAPPORT DE 2. L'écart valait 32 px
+   entre deux spécimens et 24 px entre la tête d'un spécimen et sa scène : un
+   rapport de 1,33, c'est-à-dire aucun groupement lisible. La page se lisait
+   comme une colonne continue au lieu d'une pile d'objets — loi de proximité, et
+   c'est ce qui se voit avant la couleur.
+
+   Le prix est d'environ 16 px par spécimen, soit ~40 px sur une page moyenne.
+   Sur un site de documentation, c'est le bon échange. */
+.tc-doc-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+}
+
+.tc-doc-aside {
+  padding-inline-start: var(--space-4);
+  border-inline-start: 2px solid var(--accent-secondary);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+/* --- Spécimens ------------------------------------------------------------- */
+
+/* LA CARTE REDEVIENT UN OBJET, AVEC LA BONNE POLARITÉ. Sur le sol blanc de la
+   vitrine, `--surface` ne lève que 1,12:1 et `--border-subtle` 1,34:1 : les
+   soixante-cinq cartes de spécimen n'avaient plus ni fond ni bord, et il ne
+   restait qu'une colonne d'encre. Les deux jetons de vitrine changent le MOYEN
+   de détachement avec le thème — ombre en clair, liseré en sombre. */
+.tc-doc-specimen {
+  padding: var(--space-5);
+  border: 1px solid var(--doc-card-edge);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--doc-card-lift);
+}
+
+/* LA SERIF D'AFFICHAGE, SUR LES SOIXANTE-CINQ TITRES DE SPÉCIMEN. Elle ne
+   servait que dans trois règles de la feuille, jamais sur les titres qui se
+   répètent : le site s'ouvrait sur des étiquettes d'interface et se lisait
+   comme son propre panneau d'administration.
+
+   `--weight-bold` ET NON `semibold` : `Iowan Old Style` n'a pas de graisse 600,
+   elle serait synthétisée par le moteur. Ce jeu rend la règle IDENTIQUE à
+   `.tc-doc-plate__title`, qui existait déjà : un seul style de titre de
+   niveau 2 pour tout le site au lieu de deux qui divergent.
+
+   L'ENCRE NE CHANGE PAS, ET MES CHIFFRES CITAIENT LE MAUVAIS FOND. J'avais
+   écrit « 12,35:1 sur le sol clair et 12,01:1 en sombre » : ce sont les ratios
+   de `--text-strong` contre le SOL, or un titre de spécimen n'est jamais sur le
+   sol — il est sur `--surface`, dans la carte. Remesuré : **11,06:1 en clair et
+   12,43:1 en sombre**.
+
+   Sans conséquence, et il faut dire pourquoi plutôt que de s'en tirer par le
+   chiffre : 23 px en graisse 700 est du TEXTE DE GRANDE TAILLE au sens de
+   1.4.3, dont le plancher est 3:1. Conforme d'un facteur 3,7. */
+.tc-doc-specimen__title {
+  margin: 0;
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-heading);
+}
+
+.tc-doc-specimen__note {
+  margin: var(--space-2) 0 0;
+  max-inline-size: var(--measure);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+/* Le filet reprend le dispositif de `.tc-doc-plate__head` — coussin puis trait
+   — donc la tête d'un spécimen se lit comme la tête d'une plaque : un seul
+   vocabulaire pour « titre, puis démonstration ». Le trait est décoratif
+   (1,41:1 en clair, 1,54:1 en sombre) ; 1.4.11 ne s'applique pas à un
+   séparateur. */
+.tc-doc-specimen__stage {
+  margin-block-start: var(--space-5);
+  padding-block-start: var(--space-5);
+  border-block-start: 1px solid var(--rule);
+}
+
+.tc-doc-specimen__stage--inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+/* --- Les trois lois de la couleur ------------------------------------------ */
+
+.tc-doc-laws {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 4)), 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tc-doc-laws__item {
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-block-start-width: var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: var(--text-sm);
+}
+
+.tc-doc-laws__item--teal {
+  border-block-start-color: var(--accent);
+}
+
+.tc-doc-laws__item--copper {
+  border-block-start-color: var(--accent-secondary);
+}
+
+.tc-doc-laws__item--neutral {
+  border-block-start-color: var(--text-muted);
+}
+
+.tc-doc-laws__item strong {
+  color: var(--text-strong);
+}
+
+/* --- Plaques de palette ----------------------------------------------------
+   Fond, encre et filet des deux premières plaques sont posés en style EN LIGNE
+   depuis `palette-data.ts`, avec des hexadécimaux littéraux : une plaque
+   documente un thème, elle ne suit pas celui du lecteur. C'est la seule
+   dérogation à la règle « aucune couleur littérale », et elle est délibérée.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-plates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 5)), 1fr));
+  gap: var(--space-5);
+}
+
+/* L'ombre est posée SANS condition de thème, et c'est justifié : les deux
+   premières plaques peignent des sols littéraux (#deedf0, #0f191c) qui
+   tranchent sur l'un comme sur l'autre thème. Seule la troisième suit le
+   lecteur, et c'est elle qui reçoit le liseré thémé juste en dessous. */
+.tc-doc-plate {
+  padding: var(--space-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-2);
+}
+
+.tc-doc-plate--themed {
+  border-color: var(--doc-card-edge);
+  background: var(--surface);
+  color: var(--text-body);
+}
+
+.tc-doc-plate__head {
+  padding-block-end: var(--space-4);
+  margin-block-end: var(--space-4);
+  border-block-end: 1px solid var(--rule);
+}
+
+.tc-doc-plate__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-heading);
+}
+
+.tc-doc-plate__ground {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.tc-doc-plate__group + .tc-doc-plate__group {
+  margin-block-start: var(--space-5);
+}
+
+.tc-doc-plate__grouptitle {
+  margin: 0 0 var(--space-2);
+  padding-block-end: var(--space-2);
+  border-block-end: 1px solid var(--rule);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tc-doc-plate__groupnote {
+  margin: 0 0 var(--space-4);
+  max-inline-size: var(--measure);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.tc-doc-swatches {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tc-doc-swatch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* 88 × 48 ET NON 48 × 48. Une pastille carrée de 48 px ne permet pas de juger
+   une teinte : c'est une puce, pas un échantillon, et l'échantillon est l'objet
+   central de la page palette. Les deux valeurs restent des sommes de pas
+   nommés. */
+.tc-doc-swatch__chip {
+  flex: none;
+  inline-size: calc(var(--space-8) + var(--space-5));
+  block-size: var(--space-7);
+  border: 1px solid;
+  border-radius: var(--radius-sm);
+}
+
+.tc-doc-swatch__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  min-inline-size: 0;
+}
+
+.tc-doc-swatch__token {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.tc-doc-swatch__hex,
+.tc-doc-swatch__ratio {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.tc-doc-swatch__against {
+  font-family: var(--font-sans);
+}
+
+/* --- Tableaux ---------------------------------------------------------------
+   Quatre corrections mesurées sur les tableaux de props, qui sont le bloc le
+   plus répété du site — une maladresse y coûte vingt-deux fois :
+
+   — `vertical-align: baseline` et non `middle` : dans une ligne dont la
+     description fait trois lignes, un nom de prop centré flottait au milieu du
+     vide. Dans un tableau qu'on balaie de haut en bas, le nom doit être à
+     hauteur de la PREMIÈRE ligne de sa description ;
+   — la dernière colonne, seule colonne de prose du site, n'avait aucune
+     mesure : 627 px à 14 px, soit environ 95 caractères par ligne contre 66
+     partout ailleurs ;
+   — `.tc-doc code` pose `0.9em`, qui se composait avec le `--text-sm` du
+     tableau : les noms de props tombaient à 12,6 px, hors échelle et plus
+     petits que le texte qu'ils commandent. Or c'est EUX qu'on balaie ;
+   — la ligne de tête n'avait aucun fond et ne tenait que par la capitale.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-tablewrap {
+  overflow-x: auto;
+  margin-block-start: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.tc-doc-table {
+  inline-size: 100%;
+  min-inline-size: calc(var(--space-8) * 11);
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  text-align: start;
+}
+
+.tc-doc-table th,
+.tc-doc-table td {
+  padding-block: var(--space-3);
+  padding-inline: var(--space-4);
+  border-block-end: 1px solid var(--rule);
+  text-align: start;
+  vertical-align: baseline;
+}
+
+/* Le code d'une cellule est à la taille de la cellule : la composition avec le
+   `0.9em` de `.tc-doc code` le rendait plus petit que sa propre description. */
+.tc-doc-table code {
+  font-size: 1em;
+}
+
+/* La colonne de prose reprend la mesure du site. Chrome et Firefox l'honorent
+   comme plafond de largeur préférée en `table-layout: auto` ; un moteur qui
+   l'ignore rend la colonne large, comme avant. */
+.tc-doc-table td:last-child {
+  max-inline-size: var(--measure);
+}
+
+.tc-doc-table thead th {
+  background: var(--panel-surface);
+  color: var(--text-strong);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tc-doc-table tbody tr:last-child th,
+.tc-doc-table tbody tr:last-child td {
+  border-block-end: 0;
+}
+
+.tc-doc-inkchip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-1);
+  padding-inline: var(--space-3);
+  border: 1px solid;
+  border-radius: var(--radius-sm);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+}
+
+/* --- Échelles (typo, espacement) ------------------------------------------- */
+
+.tc-doc-scale {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* DEUX PISTES NOMMÉES ET NON `auto-fit`, mesuré sur la page espacement : avec
+   deux enfants dans une colonne de 1 054 px, `auto-fit` créait deux pistes de
+   527 px, si bien que « --space-1 4 px » et sa barre de 4 px étaient séparés
+   par un demi-écran de blanc. Le libellé se dimensionne désormais sur son
+   contenu, l'échantillon prend le reste. Les `minmax(0, …)` interdisent à un
+   échantillon large de pousser la grille hors de la fenêtre. */
+.tc-doc-scale__row {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: baseline;
+  padding-block-end: var(--space-4);
+  border-block-end: 1px solid var(--rule);
+}
+
+.tc-doc-scale__row:last-child {
+  padding-block-end: 0;
+  border-block-end: 0;
+}
+
+.tc-doc-scale__row--bar {
+  align-items: center;
+}
+
+.tc-doc-scale__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+}
+
+.tc-doc-scale__token {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-accent);
+}
+
+.tc-doc-scale__value {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.tc-doc-scale__usage {
+  flex: 1 1 100%;
+  max-inline-size: var(--measure);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.tc-doc-scale__sample {
+  margin: 0;
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  line-height: var(--leading-heading);
+  overflow-wrap: break-word;
+}
+
+.tc-doc-scale__sample--family {
+  font-size: var(--text-md);
+}
+
+.tc-doc-scale__stack {
+  display: block;
+  margin-block-start: var(--space-1);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+/* Le teal a le monopole des états ; une barre de mesure est du décor, donc
+   cuivre. */
+.tc-doc-bar {
+  display: block;
+  block-size: var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--accent-secondary);
+}
+
+/* --- Rayons ---------------------------------------------------------------- */
+
+.tc-doc-radius {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  max-inline-size: calc(var(--space-8) * 3);
+}
+
+.tc-doc-radius__box {
+  inline-size: var(--space-8);
+  block-size: var(--space-8);
+  border: 2px solid var(--accent);
+  background: var(--accent-quiet);
+}
+
+.tc-doc-radius__caption {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* --- Grilles de cartes ------------------------------------------------------ */
+
+.tc-doc-grid {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.tc-doc-grid--elev {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 3.5)), 1fr));
+  /* Les ombres des crans 2 et 3 débordent : sans marge, elles seraient rognées
+     par le bord du spécimen. */
+  padding: var(--space-3);
+}
+
+.tc-doc-cardtitle {
+  margin: 0 0 var(--space-2);
+  color: var(--text-strong);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-heading);
+}
+
+.tc-doc-cardmeta {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-accent);
+}
+
+.tc-doc-cardtext {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+/* --- La scène où la réfraction se voit ------------------------------------
+   UNE LENTILLE NE MONTRE RIEN SUR UN APLAT UNI : elle déplace des pixels
+   identiques. C'est pourquoi le spécimen des surfaces filtrées, posé sur le sol
+   de la page, ne laisse RIEN voir de la déformation — mesuré, le libellé du
+   secondary y vaut 9,32:1 à flou 0 comme à flou 12, ce qui dit la même chose
+   autrement : il n'y a pas de détail à effacer, donc pas de détail à courber.
+
+   Les captures d'Apple montrent la réfraction parce que des barres colorées à
+   BORDS FRANCS passent derrière le verre. Cette scène reproduit cette
+   condition, et rien d'autre : cinq bandes à arrêts durs et une grille de
+   16 px.
+
+   ELLE NE SUIT PAS LE THÈME DU LECTEUR, et c'est la même dispensation que les
+   plaques de la page palette : un fond qui documente une MATIÈRE ne doit pas
+   changer sous celui qui la regarde. Deux conséquences écrites plutôt que
+   subies — les bandes citent les membres CLAIRS de chaque famille, et l'encre
+   du libellé est figée sur `--text-strong` du thème clair. Sans ce second
+   point, le thème sombre posait son encre claire sur des pastels clairs :
+   mesuré, 1,16:1 à 1,34:1 selon la bande, c'est-à-dire rien.
+
+   POURQUOI DES PASTELS ET NON LES ENCRES SATURÉES. La première version employait
+   `--accent`, `--success`, `--warning` et `--danger`, qui montrent une frange
+   chromatique superbe et rendent le libellé illisible — Apple ne met pas de
+   texte dans ses pilules de démonstration, moi je dois en mettre. Sur les cinq
+   pastels, l'encre tient 6,20:1 (rouge) à 9,72:1 (ambre), et la courbure des
+   arêtes se voit tout autant : ce qui la révèle est le BORD FRANC, pas la
+   saturation.
+
+   `overflow: hidden` ET NON `clip` : le bouton posé dessus porte un
+   `backdrop-filter`, dont la région déborde sa boîte de 30 % pour que le bord
+   de la lentille aille chercher le fond au-delà. Un conteneur qui clippe au ras
+   coupe cet échantillon et la frange devient une arête. */
+
+/* --- Rebasculer le MATÉRIAU dans une plaque de thème -----------------------
+   Les trois blocs de thème du dépôt sont tous portés par `:root` — c'est la
+   convention de `roles.css`, `materials.css` et `lens.css`, et elle est juste :
+   un thème est une propriété du document, pas d'un conteneur. Conséquence
+   mesurée : une plaque de démonstration qui peint un sol sombre avec des
+   littéraux N'EMPORTE PAS les jetons avec elle. La plaque sombre de la page du
+   bouton bulle montrait donc le matériau CLAIR — voile blanc, encre sombre —
+   posé sur un damier sombre, c'est-à-dire une démonstration qui affirme le
+   contraire de ce qu'elle prétend montrer.
+
+   Cette classe rebascule les jetons dont ce spécimen dépend, et
+   elle cite des primitives publiées, pas des littéraux : `--tc-mist-865` EST
+   la valeur de `--text-strong` en sombre, `--tc-pitch-a32` celle de
+   `--lens-veil`. Elle n'existe que pour la vitrine et n'est pas exportée.
+
+   LA LISTE S'EST ALLONGÉE UNE FOIS, ET C'EST INSTRUCTIF : elle n'avait que
+   `--text-strong` et `--lens-veil`, et le bouton `aria-disabled` de la plaque
+   sombre sortait alors en pastille BLANCHE — son repli opaque est
+   `--glass-fill-solid`, resté au thème clair. Chaque jeton qu'un spécimen
+   emploie sans être dans cette liste est un mensonge en attente.
+
+   Ce qu'elle ne fait PAS, et il faut le savoir : elle ne rebascule pas le
+   thème, seulement les jetons listés. Tout autre jeton employé dans une plaque
+   sombre reste celui du thème du document. Le jour où un spécimen en aura
+   besoin, c'est la liste ci-dessous qui s'allonge, une valeur à la fois et
+   mesurée — pas un `[data-theme]` imbriqué, qui ne marcherait pas. */
+
+/* CE QUE CETTE CLASSE NE REBASCULE PAS, ET QUI RESTE UN ÉCART ASSUMÉ :
+   `--glass-specular` et `--glass-highlight`. Les deux sont des DÉGRADÉS
+   littéraux à sept et cinq arrêts, pas des références de jeton — les recopier
+   ici en créerait une seconde source qui dériverait au premier ajustement de
+   `materials.css`. Conséquence mesurée : sur la plaque sombre, le reflet et le
+   liseré spéculaire sont ceux du thème CLAIR, donc plus lumineux que la
+   réalité. C'est écrit sur la page du spécimen. La seule vraie sortie est un
+   harnais qui rend le spécimen dans un document à `data-theme="dark"` — c'est
+   le chantier « harnais navigateur » du README. */
+
+/* La bulle. Elles changent la VALEUR du lavis d'état, comme le fait `lens.css`
+   § 4, et ne redéclarent surtout pas `background` : la pile de fonds de la
+   bulle contient une couche que seul `lens.css` sait écrire correctement, et
+   la recopier ici l'avait déjà rendue invalide une fois. Une valeur ne se
+   dispute pas, donc la question du poids ne se pose plus — elle se posait, et
+   le commentaire qui vivait ici comparait d'ailleurs (0,2,0) à un « (0,1,0) »
+   qui était en réalité (0,4,0). */
+
+/* `<figure>` : la marge par défaut du navigateur est à remettre à zéro. */
+
+/* --- CE QUI A ÉTÉ RETIRÉ DE CETTE FEUILLE EN 2.0 ---------------------------
+   Vingt-quatre règles sont parties avec les pages qui les employaient, et il
+   vaut mieux le lire ici que le déduire d'un `git log` :
+
+   - `.tc-doc-state--hover/-active` × 8, qui rejouaient un survol et un appui
+     CÔTE À CÔTE sur `.tc-btn--*`. Ni les boutons ni `ui.css` ne sont publiés.
+   - `.tc-doc-states`, `__cell`, `__label` — la grille qui les portait.
+   - `.tc-doc-greyrow` × 4, les deux panneaux « en couleur / en niveaux de
+     gris » de la page accessibilité. La garantie qu'ils démontraient (« la
+     couleur n'est qu'un renfort ») n'est plus tenue : voir cette page, qui le
+     dit en clair au lieu de laisser la démonstration disparaître en silence.
+   - `.tc-doc-lensstage` et `.tc-doc-plate--darkmaterial`, la scène de
+     réfraction du bouton bulle. `GlassLens` et `lens.css` ne sont plus publiés.
+   - `.tc-doc-scene` × 3, `.tc-doc-form`, `.tc-doc-stack` — mises en page des
+     spécimens des dix-sept composants supprimés.
+   - `.tc-doc-focusdemo .tc-field`, qui ciblait une classe d'`ui.css`.
+   - `.tc-doc-materialtoggle__label`, le repli sous 36 rem de la bascule
+     « Verre liquide ». Plus aucune feuille ne lit `data-material`, donc la
+     bascule a été retirée de la coquille.
+
+   `.tc-doc-focusdemo` RESTE : la démonstration du focus existe toujours, sur
+   des éléments natifs non habillés — c'est même devenu la démonstration juste,
+   l'anneau venant de la règle universelle de `tokens.css` et d'aucun composant.
+
+   RESTENT DANS CETTE FEUILLE, ET ELLES ÉTAIENT DÉJÀ MORTES AVANT LA 2.0 :
+   `.tc-doc-eyebrow`, `.tc-doc-lede`, `.tc-doc-masthead`, `.tc-doc-title` et
+   `.tc-doc-toc`, héritées du temps où la vitrine tenait sur une page unique.
+   Elles ne sont pas retirées ici parce qu'elles ne sont pas de ce chantier.
+   -------------------------------------------------------------------------- */
+
+/* --- Démonstration du focus ------------------------------------------------- */
+
+.tc-doc-focusdemo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  border: 1px dashed var(--control-border);
+  border-radius: var(--radius-md);
+  background: var(--panel-surface);
+}
+
+/* NI `inline-flex` NI PLANCHER DE 44 px, ET C'EST MESURÉ. WCAG 2.5.8 exempte
+   explicitement la cible EN LIGNE — celle dont la taille est contrainte par
+   l'interligne du texte qui l'entoure — et tous les `.tc-doc-link` sont dans
+   de la prose ou dans un `<li>`. Ils étaient donc déjà conformes, et les 44 px
+   coûtaient deux choses : une boîte en ligne atomique, qui ne se coupe plus en
+   fin de ligne, et un interligne irrégulier dans chaque paragraphe qui héberge
+   un lien. Le plancher reste là où il a un sens — `.tc-doc-nav__link`,
+   `.tc-doc-topbar__brand`, `.tc-doc-themetoggle`, `.tc-doc-skip` — qui sont
+   des contrôles isolés, pas des mots dans une phrase. */
+/* LES LIENS DE PROSE NE RÉPONDAIENT PAS AU POINTEUR, et c'était un manque et
+   non un choix : l'élément interactif le plus fréquent du site ne déclarait
+   aucun `:hover`. (`:focus-visible`, lui, était bien couvert — par la règle
+   universelle de `tokens.css`.)
+
+   L'ÉPAISSEUR ET NON LA COULEUR, sur deux mesures. Assombrir au survol est le
+   réflexe et il échoue : `--accent-hover` en sombre donne 3,89:1 sur le sol,
+   sous les 4,5:1 de 1.4.3. Teinter le soulignement échoue aussi : `--accent` en
+   sombre vaut 3,28:1, donc il AFFAIBLIRAIT un trait qui est aujourd'hui à
+   `currentColor`, c'est-à-dire `--text-accent` — 7,93:1 en clair, 8,30:1 en
+   sombre. Il ne reste que l'épaisseur, et elle suffit.
+
+   La transition SURVIT à `prefers-reduced-motion` : `text-decoration-thickness`
+   est dans la liste blanche de `tokens.css`, dont l'intention écrite est
+   « moins de MOUVEMENT, pas moins de RETOUR D'INFORMATION ». */
+.tc-doc-link {
+  color: var(--text-accent);
+  font-weight: var(--weight-medium);
+  text-underline-offset: 0.25em;
+  transition: text-decoration-thickness var(--motion-color) var(--motion-ease);
+}
+
+.tc-doc-link:hover {
+  text-decoration-thickness: 0.125em;
+}
+
+/* UNE GOUTTIÈRE CUIVRE SUR LES QUARANTE-SIX BLOCS DE CODE. Le bloc était un
+   rectangle à 1,11:1 sur une carte à 1,12:1 — c'est-à-dire rien du tout — alors
+   que c'est la surface qu'on vient chercher sur un site de doc.
+
+   LE CUIVRE EST ICI DANS SON MANDAT ÉCRIT : `roles.css` lui assigne « le décor
+   et l'éditorial, JAMAIS un contrôle », et un bloc de code n'est pas un
+   contrôle. Le même rail cuivre sert déjà à `.tc-doc-aside` : la gouttière
+   devient un langage — « ce qui est mis à part » — au lieu d'un accident.
+   L'ambre n'est PAS candidate : c'est `--warning`, et une couleur sémantique ne
+   vaut que par l'unicité de son emploi.
+
+   Le rayon est retiré du côté du rail, pour la raison que cette feuille écrit
+   déjà pour `.tc-doc-nav__link` : un rail arrondi ne se lit pas comme un rail.
+
+   Décoratif, donc aucun seuil ne s'applique ; mesuré quand même, et IL Y A DEUX
+   FONDS ET NON UN — ce que ma première rédaction laissait croire. Le bloc
+   apparaît dans une carte de spécimen, mais aussi directement sur le sol de la
+   page (`#/verre`, `#/composants/button` et d'autres n'ont aucun ancêtre à fond
+   opaque au-dessus du `<pre>`).
+
+     dans une carte : gouttière 6,95:1 clair / 5,39:1 sombre — encre 10,01 / 11,15
+     sur le sol      : gouttière 7,72:1 clair / 5,21:1 sombre — encre 11,13 / 10,76
+
+   Le pire cas des deux configurations est donc 5,21:1 pour la gouttière, qui est
+   décorative, et 10,01:1 pour l'encre. */
+.tc-doc-code {
+  overflow-x: auto;
+  margin: var(--space-4) 0 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-inline-start: var(--space-1) solid var(--accent-secondary);
+  border-radius: var(--radius-sm);
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  background: var(--panel-surface);
+  color: var(--text-strong);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+/* --- Couleur retirée -------------------------------------------------------- */
+
+/* --- Cibles tactiles --------------------------------------------------------- */
+
+.tc-doc-targets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 4)), 1fr));
+  gap: var(--space-5);
+}
+
+.tc-doc-target {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.tc-doc-target__box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent-quiet);
+  color: var(--text-accent);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.tc-doc-target__box--min {
+  block-size: var(--target-min);
+}
+
+.tc-doc-target__box--button {
+  block-size: var(--target-button);
+  border-radius: var(--radius-pill);
+}
+
+.tc-doc-target__caption {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* --- Liste d'engagements ----------------------------------------------------- */
+
+.tc-doc-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding-inline-start: var(--space-5);
+  /* `disc`, pas `'◆'` : un marqueur CHAÎNE est énoncé par VoiceOver, ce qui
+     ramène exactement le bruit que le passage de `::before` à `::marker`
+     visait à supprimer. Un marqueur nommé, lui, reste une puce. La teinte
+     cuivre suffit à le rattacher au reste de la charte. */
+  list-style-type: disc;
+  max-inline-size: var(--measure);
+}
+
+.tc-doc-checklist li {
+  padding-inline-start: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.tc-doc-checklist li::marker {
+  color: var(--accent-secondary);
+  font-size: var(--text-xs);
+}
+
+/* --- Pied de page ------------------------------------------------------------ */
+
+/* LE FILET EST SUR LA MESURE, PAS SUR LA COLONNE. Posé sur `.tc-doc-footer`,
+   il partait du bord de la nav et courait jusqu'à la fenêtre : au-delà de
+   1 441 px il dépassait de 250 px de chaque côté tout ce qui était au-dessus.
+   L'intention annoncée en tête de ce fichier — « le filet du pied tombe sous un
+   texte aligné avec lui » — n'était vraie qu'à la largeur exacte des captures. */
+.tc-doc-footer {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.tc-doc-footer .tc-doc-shell {
+  padding-block: var(--space-7);
+  border-block-start: 1px solid var(--rule);
+}
+
+/* --- Scène de décor ----------------------------------------------------------
+   Un `Backdrop` n'a ni coussin ni grille : il est l'hôte du décor, pas une
+   mise en page. La vitrine lui en donne, parce qu'un verre collé aux bords de
+   son hôte ne laisse plus rien voir des halos qu'il est censé filtrer.
+   Le rayon est posé sur l'hôte lui-même : son `overflow: clip` le respecte,
+   donc les disques sont coupés en suivant le coin arrondi.
+   -------------------------------------------------------------------------- */
+
+/* Une pile plutôt qu'une grille : la frise gère déjà l'écart entre ses entrées,
+   il ne reste à donner que le coussin — celui de la grille ci-dessus, pour que
+   les deux scènes commencent au même endroit.
+
+   CE QUE CETTE SCÈNE MONTRE MIEUX QUE L'AUTRE, et il faut le savoir avant de
+   juger le verre : les disques du décor sont positionnés en POURCENTAGE de la
+   hauteur de leur hôte et dimensionnés en `vw`. Sur la scène des cartes,
+   mesurée à 348 px de haut pour des disques de 206 à 418 px, ils se retrouvent
+   tous empilés sur la même bande — celui à `top: 66%` est même intégralement
+   rogné, donc invisible. Sur une page réelle l'hôte fait plusieurs milliers de
+   pixels et les six se répartissent. Cette scène-ci, plus haute, est celle qui
+   ressemble à ce que verra un consommateur. */
+
+/* --- Scène de /magic ---------------------------------------------------------
+   La plaque de spécimen d'Opale est un aplat CLAIR (`--surface`, rgb(235,244,246)
+   en thème clair, sur un sol `--doc-ground` blanc). Les quatorze composants de
+   `src/magic/**` écrivent leur libellé en `#ffffff` EN DUR : posés sur cette
+   plaque, ils y disparaissent. Mesuré : blanc sur `--surface` = 1,12:1, blanc
+   sur le sol blanc de la vitrine = 1,00:1. Chaque spécimen de `/magic` porte
+   donc sa propre scène sombre, et ce n'est pas une préférence de mise en scène :
+   c'est la condition sans laquelle le composant ne se voit pas.
+
+   LE FOND N'EST PAS ICI, ET C'EST DÉLIBÉRÉ. Ces règles ne portent que la mise
+   en page ; le dégradé est un `style` en ligne posé par
+   `showcase/pages/magic/stage.tsx`, avec ses trois hexadécimaux et ses trois
+   ratios mesurés en commentaire. C'est la MÊME dérogation que les plaques de la
+   page palette, pour la même raison : une scène qui documente le thème d'un
+   autre projet ne suit pas celui du lecteur, et `doc.css` garde sa règle
+   « aucune couleur littérale ». `/magic` est par ailleurs hors du contrat de
+   couleur d'Opale et n'emploie aucun jeton `--tc-*` — peindre sa scène avec un
+   jeton publié affirmerait le contraire.
+
+   `--tc-white` sur les LÉGENDES est l'exception qui confirme la frontière : ce
+   texte-là est de la prose de vitrine posée sur la scène, pas du composant
+   vendoré. C'est Opale qui l'écrit, donc c'est un jeton d'Opale qui le peint.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-magicstage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  border-radius: var(--radius-md);
+  color: var(--tc-white);
+}
+
+/* Les scènes d'un composant qui prend toute la largeur — `Topbar`, `Tabs`,
+   `Modal` — s'empilent au lieu de s'aligner. */
+.tc-doc-magicstage--stack {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* `Sidebar` et `Modal` ont besoin de hauteur pour se juger : une barre latérale
+   haute de son seul contenu ne ressemble pas à une barre latérale, et un modal
+   se peint par-dessus la page entière. 256 px = quatre pas de `--space-8`. */
+.tc-doc-magicstage--tall {
+  min-block-size: calc(var(--space-8) * 4);
+}
+
+/* La rangée d'une scène : plusieurs variantes d'affilée, chacune légendée. */
+.tc-doc-magicstage__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+/* La légende d'une figure de scène. En mono et en `--text-xs` comme les
+   légendes de `.tc-doc-states__label`, mais en blanc : le fond est sombre. */
+.tc-doc-magicstage__label {
+  color: var(--tc-white);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}
+
+/* --- Finition de la coquille ------------------------------------------------
+   Une identité plus nette pour les deux surfaces de navigation : le contenu
+   reste piloté par les rôles de la vitrine, tandis que les couches du verre
+   reprennent leurs valeurs de surface. La barre ouvre volontairement son
+   débordement pour que la liste de recherche puisse flotter hors de sa hauteur.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-topbar__glass,
+.tc-doc-nav__glass {
+  --doc-shell-ground: var(--surface);
+  --doc-shell-edge: var(--rule);
+  --lg-bg-color: var(--panel-surface);
+  --lg-highlight: var(--border-subtle);
+  --lg-text: var(--text-body);
+  background: var(--doc-shell-ground);
+  border-color: var(--doc-shell-edge);
+}
+
+.tc-doc-topbar__glass {
+  /* Même voile translucide que `Button` et `Modal` via `Glass` : le header
+     laisse le décor vivre derrière lui au lieu de poser un aplat opaque. */
+  --doc-shell-ground: transparent;
+  --doc-shell-edge: transparent;
+  --lg-bg-color: var(--tc-white-a10);
+  --lg-highlight: rgba(255, 255, 255, 0.25);
+  --lg-radius: 0;
+  background: transparent;
+  border-radius: 0;
+  border-color: transparent;
+  overflow: visible;
+}
+
+.tc-doc-nav__glass {
+  --lg-radius: var(--radius-lg);
+}
+
+.tc-doc-topbar__bar {
+  background: transparent;
+  border-radius: 0;
+}
+
+.tc-doc-topbar {
+  background: transparent;
+}
+
+.tc-doc-topbar__brand {
+  gap: var(--space-3);
+}
+
+.tc-doc-topbar__glyph {
+  display: block;
+  flex: none;
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+  border-radius: var(--radius-sm);
+}
+
+.tc-doc-topbar__actions .tc-doc-themetoggle {
+  inline-size: var(--target-min);
+  padding-inline: 0;
+  border-color: var(--border-subtle);
+  background: var(--panel-surface);
+}
+
+.tc-doc-topbar__actions .tc-doc-themetoggle:hover {
+  border-color: var(--accent);
+  background: var(--accent-quiet);
+}
+
+.tc-doc-search:hover {
+  background: var(--panel-surface-hover);
+}
+
+.tc-doc-search__glyph {
+  color: var(--accent);
+}
+
+.tc-doc-search__input::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+.tc-doc-nav__head {
+  align-items: center;
+  padding-block-start: var(--space-2);
+  padding-block-end: var(--space-3);
+  border-block-end: 1px solid var(--rule);
+}
+
+.tc-doc-nav__heading {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.tc-doc-nav__eyebrow {
+  margin-block-start: var(--space-2);
+  color: var(--text-accent);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tc-doc-nav__title {
+  overflow: hidden;
+  color: var(--text-strong);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tc-doc-nav__version {
+  align-items: center;
+  margin-block: var(--space-4) var(--space-3);
+  padding-block: 0 var(--space-3);
+}
+
+.tc-doc-nav__versionnumber {
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
+}
+
+.tc-doc-nav__alltitle {
+  inline-size: var(--target-min);
+  block-size: var(--target-min);
+  margin-block-end: var(--space-2);
+  margin-inline-start: auto;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-strong);
+  line-height: var(--target-min);
+  text-align: center;
+}
+
+.tc-doc-nav__alltitle::before {
+  margin-inline-end: 0;
+  color: var(--accent);
+  font-size: var(--text-md);
+}
+
+.tc-doc-nav__alltitle:hover {
+  border-color: var(--accent);
+  background: var(--panel-surface-hover);
+}
+
+/* En mode fermé, le rail ne conserve aucune information concurrente : la
+   flèche reste le seul contrôle visible et le sommaire se rouvre au même
+   endroit. */
+.tc-doc-nav:has(.tc-doc-nav__all:not([open])) .tc-doc-nav__head,
+.tc-doc-nav:has(.tc-doc-nav__all:not([open])) .tc-doc-nav__version {
+  display: none;
+}
+
+.tc-doc-nav__group {
+  margin-block-start: var(--space-4);
+}
+
+.tc-doc-nav__grouptitle {
+  margin-block-end: var(--space-1);
+  padding-inline: var(--space-2);
+  color: var(--text-strong);
+}
+
+.tc-doc-nav__link {
+  position: relative;
+  border-inline-start-width: 3px;
+  padding-inline: var(--space-3) var(--space-2);
+}
+
+.tc-doc-nav__link::after {
+  content: '';
+  inline-size: var(--space-1);
+  block-size: var(--space-1);
+  margin-inline-start: auto;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  opacity: 0;
+  transition:
+    opacity var(--motion-color) var(--motion-ease),
+    background-color var(--motion-color) var(--motion-ease);
+}
+
+.tc-doc-nav__link[aria-current='page']::after {
+  background: var(--accent);
+  opacity: 1;
+}
+
+@media (min-width: 60rem) {
+  .tc-doc-topbar__brand {
+    max-inline-size: 100%;
+  }
+
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open])) {
+    padding-block: var(--space-2);
+    padding-inline: var(--space-2);
+    transition: padding-inline var(--motion-move) var(--motion-ease);
+  }
+
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open])) > [class*='glassContainer'] {
+    inline-size: 100%;
+    padding-block: var(--space-2);
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    --lg-bg-color: transparent;
+    --lg-highlight: transparent;
+  }
+
+  /* En mode plié, le verre appartient au contrôle et non à un rail qui
+     l'entoure. Les couches de l'enveloppe sont désactivées pour qu'il ne
+     reste aucune mini-modale visible autour de la flèche. */
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open]))
+    > [class*='glassContainer']
+    > [class*='glassFilter'],
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open]))
+    > [class*='glassContainer']
+    > [class*='glassOverlay'],
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open]))
+    > [class*='glassContainer']
+    > [class*='glassSpecular'] {
+    display: none;
+  }
+
+  /* La flèche porte seule la surface translucide, avec le même voile que les
+     boutons et modales. */
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open])) .tc-doc-nav__alltitle:not(:focus-visible) {
+    background: var(--tc-white-a10);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+}

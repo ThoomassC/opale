@@ -17,6 +17,13 @@
     "jsx": "react-jsx",
 
     /* Linting */
+    "strict": true,
+    /* `noUncheckedIndexedAccess` reste DÉSACTIVÉ, et c'est mesuré : il produit
+       35 erreurs, toutes concentrées dans `src/contract/` (arithmétique de
+       couleur sur des tableaux d'index fixes, et les assertions des tests de
+       contrat). Aucune n'est un bug réel, mais les corriger demande de
+       remanier le code du contrat — c'est un travail à part, pas un
+       interrupteur. Le mesurer à nouveau avant de l'activer, pas le supposer. */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
