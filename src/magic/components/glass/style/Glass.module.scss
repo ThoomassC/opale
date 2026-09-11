@@ -61,7 +61,9 @@
     backdrop-filter: blur(2px);
     filter: url("#lg-dist");
     isolation: isolate;
-    transition: filter 0.3s ease;
+    transform: scale(1.015);
+    transform-origin: center;
+    transition: filter 0.3s ease, transform 0.3s ease;
 }
 
 .glassFilterAnimate {
@@ -111,19 +113,19 @@
     }
 
     20% {
-        transform: scale(0.95, 1.05);
+        transform: scale(0.985, 1.015);
     }
 
     40% {
-        transform: scale(1.02, 0.98);
+        transform: scale(1.008, 0.992);
     }
 
     60% {
-        transform: scale(0.98, 1.02);
+        transform: scale(0.992, 1.008);
     }
 
     80% {
-        transform: scale(1.01, 0.99);
+        transform: scale(1.005, 0.995);
     }
 
     100% {
@@ -142,7 +144,7 @@
     }
 
     100% {
-        transform: translate(-50%, -50%) scale(4);
+        transform: translate(-50%, -50%) scale(2.6);
         opacity: 0;
     }
 }

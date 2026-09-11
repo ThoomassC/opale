@@ -62,14 +62,8 @@ export interface DocNavProps {
  * cours. C'est le visiteur qui l'a replié, et il est à un clic.
  *
  * `aria-label` ET NON `aria-labelledby` VERS LE TITRE DE GROUPE, après mesure.
- * Ce titre contient le libellé PUIS la note, sans aucune espace entre les deux
- * dans le DOM : le nom calculé valait donc « FondationsCe que les composants
- * consomment. », lisible seulement si le navigateur insère une séparation à la
- * frontière du `<span>` — ce que Chromium fait parce que la note est en
- * `display: block`, mais qui n'est garanti par aucune spécification. Faire
- * dépendre le nom d'un point de repère d'une déclaration CSS n'est pas
- * acceptable. La note reste dans le `<p>`, donc lue en linéaire par les
- * technologies d'assistance : elle n'est simplement plus dans le NOM.
+ * Le libellé est fixé directement sur le contrôle afin que le chevron peint par
+ * CSS n'entre pas dans son nom accessible.
  * ==========================================================================
  */
 export function DocNav({ pages, currentSlug }: DocNavProps) {
@@ -144,30 +138,10 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
                   donc l'indice d'état suit l'élément qui porte l'état. Le
                   marqueur natif est retiré côté CSS — il n'est pas stylable de
                   la même façon dans les trois moteurs. */}
-                  {/* `aria-label` SUR LE `<summary>`, ET IL FERME DEUX TROUS D'UN
-                  COUP. Un `<summary>` est une COMMANDE : son nom se calcule
-                  depuis son contenu, ce qu'un `<p>` inerte ne faisait pas.
-
-                  1. le chevron du `::before` ENTRE dans ce nom. Accname 1.2,
-                     § 2.6.2 : le contenu généré d'un `::before` est préfixé au
-                     texte du nœud, SANS espace. Le nom commençait donc par un
-                     guillemet simple pointant à droite, qu'un lecteur en
-                     verbosité « toute la ponctuation » énonce ;
-                  2. le libellé et la note sont adjacents SANS nœud de texte
-                     entre eux. C'est exactement le défaut que le bloc ci-dessus
-                     décrit pour refuser `aria-labelledby`, et il était revenu,
-                     sur un contrôle cette fois. `aria-label` fixe le nom et
-                     rend la question sans objet ; la note reste dans le
-                     contenu, donc lue en linéaire juste après.
-
-                  L'espace littéral est conservé par-dessus : il ne sert plus au
-                  nom, il sert à ce que le DOM se lise correctement pour tout ce
-                  qui ignorerait `aria-label`. */}
+                  {/* `aria-label` protège le nom accessible du chevron peint par
+                  CSS. Le libellé reste le contenu visible du contrôle. */}
                   <summary className="tc-doc-nav__grouptitle" aria-label={group.label}>
-                    {group.label}{' '}
-                    {group.note ? (
-                      <span className="tc-doc-nav__groupnote">{group.note}</span>
-                    ) : null}
+                    {group.label}
                   </summary>
                   <ul className="tc-doc-nav__list" aria-label={group.label}>
                     {groupPages.map((page) => (

@@ -70,7 +70,7 @@ export function PropsTable({ id, title = 'L’interface', note, rows }: PropsTab
        l'API se déguisait en démonstration, alors qu'elle est d'un autre
        registre : le tableau EST son propre cadre. Les deux classes de titre et
        de note restent, elles ne portent que de la typographie. */
-    <div>
+    <div className="tc-doc-props">
       <h2 className="tc-doc-specimen__title" id={titleId}>
         {title}
       </h2>

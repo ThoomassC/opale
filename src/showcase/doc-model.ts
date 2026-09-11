@@ -22,43 +22,12 @@ export type DocGroupId = 'introduction' | 'fondations' | 'composants';
 export interface DocGroup {
   readonly id: DocGroupId;
   readonly label: string;
-  /** Une ligne sous le titre du groupe. Absente, le groupe n'en affiche pas. */
-  readonly note?: string;
 }
 
 export const GROUPS: readonly DocGroup[] = [
   { id: 'introduction', label: 'Introduction' },
-
-  /* LES JETONS, ET C'EST TOUT CE QUI RESTE D'OPALE. La 2.0 ne publie plus un
-     seul composant écrit ici : `src/tokens/**` et `src/contract/**` sont la
-     librairie. La note ne change pas de mot pour autant — « ce que les
-     composants consomment » reste vrai, à ceci près que les composants du
-     groupe suivant n'en consomment justement RIEN. C'est le sujet de leur
-     propre note, juste en dessous. */
-  { id: 'fondations', label: 'Fondations', note: 'Ce que les composants consomment.' },
-
-  /* LA NOTE DE CE GROUPE A CHANGÉ DE SUJET, ET C'EST LE CŒUR DE LA 2.0.
-     Elle disait « un par entrée publiée » du temps où dix-huit composants
-     d'Opale vivaient ici. Ces dix-huit sont supprimés ; les quatorze composants
-     verre liquide de `src/magic/**`, jusqu'ici relégués dans un cinquième
-     groupe parce qu'ils n'étaient pas d'Opale, SONT désormais les composants
-     publiés par l'entrée racine.
-
-     LA VÉRITÉ QUE PORTAIT LA NOTE DU GROUPE « MAGIC » NE DISPARAÎT PAS AVEC
-     LUI, elle devient la note de celui-ci : ce code est copié de
-     `react-magic-ui` (MIT, @tweeedlex), gardé fidèle au caractère, il est HORS
-     du contrat de couleur d'Opale, il n'emploie aucun jeton `--tc-*`, et aucun
-     de ses ratios de contraste n'a été mesuré. Le dire dans la colonne ne
-     suffit pas — une note de sommaire est pliable et absente d'un lien
-     partagé —, donc chaque page le redit en clair par `MagicPreamble`, et
-     l'introduction le redit une troisième fois dans ce que la librairie NE
-     garantit pas. Trois endroits pour une seule phrase, parce que c'est la
-     phrase qu'un lecteur ne doit pas pouvoir rater. */
-  {
-    id: 'composants',
-    label: 'Composants',
-    note: 'Vendorés (MIT), hors du contrat de couleur.',
-  },
+  { id: 'fondations', label: 'Fondations' },
+  { id: 'composants', label: 'Composants' },
 ];
 
 export interface DocPage {

@@ -199,7 +199,7 @@ masquent de vrais défauts, et c'est écrit dans le pragma :
 | Fichier | Règles | Ce que ça cache |
 | --- | --- | --- |
 | `glass/Glass.tsx` | `no-explicit-any` | ref et événement de clic typés `any` |
-| `slider/Slider.tsx` | `no-unused-vars`, `no-static-element-interactions` | `showValue` et `enableClickAnimation` sans aucun effet ; piste non atteignable au clavier |
+| `slider/Slider.tsx` | `no-unused-vars`, `no-static-element-interactions` | `showValue` sans effet ; piste non atteignable au clavier |
 | `checkbox/Checkbox.tsx` | `click-events-have-key-events`, `no-static-element-interactions` | libellé en `<span onClick>` au lieu d'un `<label>` |
 | `modal/Modal.tsx` | `set-state-in-effect` | `setState` en corps d'effet |
 | `toast/ToastProvider.tsx` | `set-state-in-effect` | `setState` en corps d'effet |
@@ -339,17 +339,12 @@ n'appelle jamais `onChange` avec autre chose qu'un booléen
 (`Checkbox.tsx:35`) — la branche fausse est donc morte, mais le compilateur
 l'exige.
 
-## Le quatrième point : `Slider` n'est pas du verre
+## Le quatrième point : `Slider` rejoint le verre
 
-Vérifié : `Slider.tsx` n'importe pas `Glass`. C'est le **seul** des quatorze dans
-ce cas — les douze autres (plus `Glass` lui-même) le montent. Il porte à la place
-son propre `backdrop-filter: blur(4px)` dans `Slider.module.scss:48`, avec son
-doublet `-webkit-`.
-
-Ce qu'il n'a donc pas : le `filter: url("#lg-dist")` de déformation, le reflet
-spéculaire, l'animation de clic « liquide ». Posé à côté d'un `Button` ou d'un
-`Card`, il ne se lit pas comme le même matériau, et ce n'est pas un réglage à
-trouver — c'est une absence de structure dans leur code.
+`Slider.tsx` monte désormais `Glass`, comme les autres composants de la
+librairie. Il partage donc le `filter: url("#lg-dist")`, le reflet spéculaire et
+la déformation liquide au clic. Sa piste reste volontairement celle de l'amont :
+un `<div>` avec `onMouseDown`, sans rôle ni clavier.
 
 ## Reste ouvert
 
