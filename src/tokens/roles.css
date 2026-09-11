@@ -1,5 +1,5 @@
 /* =============================================================================
-   @thomascaron/ui — COUCHE 2 : RÔLES
+   @thomascaron/opale — COUCHE 2 : RÔLES
 
    Un jeton nomme un RÔLE, jamais un emplacement. Cinq encres de texte, pas
    douze cases par écran : un jeton nommé `--card-title-color` est une dette,
@@ -13,10 +13,17 @@
      2. `@media (prefers-color-scheme: dark)` gardé   — l'OS, sans JavaScript
      3. `:root[data-theme="dark"]`                    — le choix explicite
 
+   Puis un QUATRIÈME bloc, qui n'est pas un thème : l'aplatissement demandé par
+   `prefers-reduced-transparency` et `prefers-contrast`, en fin de fichier. Il
+   ne fait que rendre opaques des jetons déjà déclarés.
+
    Les blocs 2 et 3 ne font que REDÉFINIR. Une couleur dont la seule
    déclaration vit dans un `@media` ou un `[data-theme]` ne s'applique jamais
    dans l'état non marqué : c'est le bug qui rend une marque invisible sur son
-   propre fond. Le contrat échoue si un jeton sombre manque au bloc clair.
+   propre fond. Le contrat échoue si un jeton sombre manque au bloc clair — ET
+   si un jeton coloré thémé ne se redéclare pas dans les DEUX blocs sombres,
+   parce qu'une déclaration présente au seul `:root` satisfaisait les deux
+   gardes précédents tout en restant fausse en thème sombre.
 
    Les ratios en commentaire sont recalculés en CI sur le support où l'encre vit
    réellement. Un chiffre faux fait échouer la suite : ce ne sont pas des notes.
@@ -90,24 +97,47 @@
   /* Champs et surfaces. Le sol de référence est --site-background, mais ce
      n'est jamais le pire cas : une encre se mesure sur le support composé où
      elle vit vraiment. */
-  /* --- Les sols sont du PAPIER depuis la v0.2.0, et les encres restent froides.
-         Chaque valeur est posée à la luminosité OKLab exacte du `mist` qu'elle
-         remplace, ce qui est la raison pour laquelle les ratios ci-dessous ont
-         bougé de deux à cinq CENTIÈMES et pas davantage. --------------------- */
-  --site-background: var(--tc-paper-936); /* #f2e9d6 */
-  --surface: var(--tc-paper-961); /*         carte */
-  --panel-surface: var(--tc-paper-928); /*   champ de saisie, panneau au repos */
-  --panel-surface-hover: var(--tc-paper-894);
-  --panel-surface-active: var(--tc-paper-873);
+  /* --- Les sols REDEVIENNENT FROIDS en v0.3.0. Le papier chaud de la v0.2.0
+         (`--tc-paper-*`, retiré de `primitives.css`) est arbitré au profit de
+         l'apparence du portfolio : décision du propriétaire de la palette, pas
+         un résultat de mesure. Les ratios ci-dessous sont donc tous remesurés,
+         un par un, sur les nouveaux supports. --------------------------------
+
+         --surface est le repli OPAQUE de la carte de verre : c'est lui que
+         `materials.css` sert comme `--glass-fill-solid`, et c'est sur lui que
+         se mesurent les lavis de panneau, qui sont désormais translucides. */
+  --site-background: var(--tc-mist-936); /* #deedf0 */
+  --surface: var(--tc-mist-961); /*         #ebf4f6 — carte, repli du verre */
+
+  /* Les lavis de panneau sont des COUCHES D'ÉTAT translucides, plus des aplats.
+     Raison mesurée : sur une carte dont le repli est #ebf4f6, le blanc pur
+     n'est qu'à 1,200:1 du sol — un aplat plus clair ne peut plus fabriquer
+     trois crans d'interaction, il donnerait trois noms à la même feuille
+     blanche. Une encre à faible alpha les restitue : mesuré contre la carte,
+     1,107:1 au repos, 1,230:1 au survol, 1,313:1 à l'appui. En sombre la même
+     échelle est portée par un voile CLAIR (1,111 / 1,347 / 1,519:1) : la couche
+     creuse ici, elle éclaircit là-bas.
+
+     Conséquence pour tout appelant : `--panel-surface` N'EST PAS UN SOL. Son
+     contraste dépend de ce qu'il y a dessous, donc toute mesure passe par
+     `compositeLayers([--surface, --panel-surface])`. Le contrat le fait, et
+     `contrastRatio` refuse une entrée translucide plutôt que de composer
+     d'office sur du blanc.
+
+     Le texte garde sa marge sur le lavis le plus profond : --text-body 6,87:1
+     et --text-strong 8,42:1 en clair, 6,89:1 et 8,19:1 en sombre. */
+  --panel-surface: var(--tc-shade-a05); /* champ de saisie, panneau au repos */
+  --panel-surface-hover: var(--tc-shade-a10);
+  --panel-surface-active: var(--tc-shade-a13);
 
   /* Encres — cinq rôles, pas douze emplacements.
      Plancher de ΔE OKLab 5 entre rôles voisins. Sans lui, résoudre chaque
      encre isolément contre son seuil les fait converger sur la même
      luminosité et tue la hiérarchie — erreur commise, puis corrigée. */
-  --text-strong: var(--tc-mist-324); /*  10,23:1 / sol */
-  --text-body: var(--tc-mist-375); /*     8,35:1 / sol */
-  --text-muted: var(--tc-mist-427); /*    6,73:1 / sol */
-  --text-accent: var(--tc-teal-429); /*   6,57:1 / sol */
+  --text-strong: var(--tc-mist-324); /*  10,28:1 / sol */
+  --text-body: var(--tc-mist-375); /*     8,39:1 / sol */
+  --text-muted: var(--tc-mist-427); /*    6,76:1 / sol */
+  --text-accent: var(--tc-teal-429); /*   6,60:1 / sol */
   --text-on-accent: var(--tc-white);
 
   /* Le teal — l'encre. Monopole des actions et des états : boutons, liens,
@@ -122,36 +152,98 @@
   /* Le cuivre — le décor et l'éditorial, JAMAIS un contrôle. Une couleur
      chaude sur un bouton rompt le contrat et rend l'encre illisible comme
      signal. Tenu à ≥ 0,08 OKLab L de l'accent : ici 0,090. */
-  --accent-secondary: var(--tc-copper-425); /* 7,10:1 / sol */
+  --accent-secondary: var(--tc-copper-425); /* 7,13:1 / sol */
 
   /* Traits */
-  --border-subtle: var(--tc-shade-a14); /* décoratif seul */
-  /* 4,75:1 sur le sol et 4,63:1 sur le panneau — les deux supports que le contrat
-     vérifie. Le pire cas composé que ce fichier sait NOMMER est le trait sur un
-     lavis d'accent posé sur `--panel-surface-active` : 3,46:1.
-
-     Cette ligne annonçait « 3,19:1 pire cas composé » avant la v0.2.0 et le
-     chiffre n'a pas été reporté : la composition dont il venait n'est écrite
-     nulle part, et aucun test ne la rejoue, donc il n'était pas reproductible.
-     Un chiffre qu'on ne peut pas refaire n'est pas une mesure — c'est le
-     principe même de ce dépôt, appliqué à l'un de ses propres commentaires. */
+  --border-subtle: var(--tc-shade-a14); /* décoratif seul — 1,34:1 sur la carte */
+  /* 4,77:1 sur le sol et 4,63:1 sur le panneau composé — les deux supports que
+     le contrat vérifie. Le pire cas que ce fichier sait NOMMER et refaire est le
+     trait sur `--panel-surface-active` composé sur la carte : 3,90:1. */
   --control-border: var(--tc-mist-509);
-  --rule: var(--tc-shade-a16);
+  --rule: var(--tc-shade-a16); /* 1,40:1 sur le sol */
 
-  /* Sémantique — la couleur double toujours un mot ET un glyphe. */
-  --danger: var(--tc-red-339); /*   10,31:1 / sol ; 11,11:1 / carte */
-  --success: var(--tc-green-378); /* 8,01:1 / sol ;  8,63:1 / carte */
-  --warning: var(--tc-amber-482); /* 5,45:1 / sol ;  5,87:1 / carte */
+  /* Sémantique — la couleur double toujours un mot ET un glyphe.
+
+     L'ENCRE SE MESURE SUR SON PROPRE LAVIS, ET SUR LE PIRE SUPPORT DE CELUI-CI.
+     C'est ce qui a coûté un échec réel : `.tc-message--warn` pose `--warning`
+     sur `--warning-quiet` à `--text-base`, donc WCAG 1.4.3 et son 4,5:1 — pas
+     le 3:1 des éléments non textuels. Or `Backdrop` rend ses halos puis SES
+     ENFANTS : un `Message` hors carte a le halo pour seul substrat, et l'ambre
+     de la v0.2.0 (`--tc-amber-482`) y tombait à 3,35:1. Mesuré sur la chaîne
+     complète, ton par ton (le pire des sept supports — cinq de carte, deux de
+     décor nu — sous le lavis du ton) :
+
+         --danger   5,99:1        --success  4,83:1        --warning  7,04:1
+
+     Le § 9 de `contract/glass.contract.test.ts` rejoue ces trois chiffres. Le
+     succès n'a que 0,33 de marge : il ne se retouche pas sans être remesuré. */
+  --danger: var(--tc-red-339); /*   10,36:1 / sol ; 11,15:1 / carte */
+  --success: var(--tc-green-378); /* 8,05:1 / sol ;  8,66:1 / carte */
+  /* Assombri deux fois, et la deuxième correction dit pourquoi la première
+     était insuffisante : `#845d22` → `#7b5620` avait été calé sur le pire
+     substrat que le contrat savait alors nommer — un lavis posé sur
+     `--panel-surface`, un aplat opaque. Le vrai pire support est le HALO SANS
+     CARTE, que `Backdrop` offre à tout enfant rendu hors d'une `Card`, et
+     l'ambre y tombait à 3,35:1 sous `.tc-message--warn` (du texte, donc 4,5:1
+     exigé). Le § 9 de `contract/glass.contract.test.ts` mesure désormais cette
+     chaîne.
+
+     `--tc-amber-390` a été battue pour cet emploi précis. Les deux primitives
+     voisines sont fausses, chacune dans un sens : 482 ne tient que 3,35:1, et
+     300 tient 7,04:1 mais passe DEVANT `--text-strong` (10,28:1) sur le sol —
+     une encre d'avertissement plus contrastée que l'encre forte est une faute
+     d'apparence. 390 tient 4,96:1 au pire, avec 0,46 de marge. */
+  --warning: var(--tc-amber-390); /* 8,10:1 / sol ; 8,71:1 / carte */
   --danger-quiet: var(--tc-red-339-a10);
   --success-quiet: var(--tc-green-378-a10);
+  /* LE LAVIS NE SUIT PAS L'ENCRE, ET C'EST VOULU. `--tc-amber-482-a10` reste le
+     fond du bandeau : c'est le voile ambre que le portfolio peint, il est
+     mesuré, et le faire descendre avec l'encre demanderait une primitive
+     `--tc-amber-300-a10` qui n'existe pas — pour un fond que personne ne
+     distinguerait du précédent (le voile est à alpha 0,10). Le nom du jeton dit
+     un RÔLE, « le fond discret de l'avertissement », pas « --warning à
+     l'alpha 0,10 ». */
   --warning-quiet: var(--tc-amber-482-a10);
+
+  /* --- États et disponibilité — des EMPLOIS sémantiques, donc ils restent ici
+         et ne partent pas dans `materials.css` : ce ne sont pas des matériaux,
+         c'est « acquis », « en cours », « à venir », « en direct ».
+
+         La pastille reste dans la famille du bouton, mais UN CRAN PLUS PROFOND,
+         pour que l'aplat accent demeure le teal le plus clair et le plus saturé
+         de l'écran — sinon le bouton d'action et les pastilles forment trois
+         aplats identiques et rien ne dit lequel est cliquable. VALEUR UNIQUE
+         dans les deux thèmes, comme l'accent : mesuré, blanc sur pastille
+         8,40:1, ΔE OKLab 10,04 contre l'accent, écart de teinte 5,1°, et 7,52:1
+         contre la carte claire.
+
+         CONTRAINTE INATTEIGNABLE EN SOMBRE, et il faut le savoir avant de
+         poser cette pastille sur une carte : pastille contre carte sombre
+         mesure 2,20:1, sous le 3:1 de WCAG 1.4.11, et aucune encre ne tient à
+         la fois 4,5:1 contre le blanc et 3:1 contre une carte sombre. Un
+         composant qui rend cette pastille DOIT donc lui donner sa propre
+         bordure (`border: 1px solid currentColor`, mesurée à 18,48:1 contre le
+         repli de carte). Ce n'est pas une option de style.
+
+         LA COULEUR EST UN RENFORT, JAMAIS LE PORTEUR DE L'INFORMATION : voir la
+         note deutéranope de `--tc-violet-*`. Le libellé textuel reste requis. */
+  --badge-live-surface: var(--tc-teal-416);
+  --badge-live-text: var(--tc-white); /* 8,40:1 sur la pastille */
+  /* « Acquis » est la même pastille que « en direct » — un alias, pas un second
+     littéral qui feindrait de différer. */
+  --status-done-surface: var(--badge-live-surface);
+  --status-done-text: var(--badge-live-text);
+  --status-progress-surface: var(--tc-amber-921);
+  --status-progress-text: var(--tc-amber-508); /* 4,63:1 sur sa pastille */
+  --status-upcoming-surface: var(--tc-violet-902);
+  --status-upcoming-text: var(--tc-violet-498); /* 4,63:1 sur sa pastille */
 
   /* Focus — deux anneaux dont les tons s'inversent entre les thèmes. Ce n'est
      pas une symétrie décorative : c'est ce qui rend les trois contraintes
      satisfaisables à la fois. L'anneau intérieur touche l'aplat accent,
      l'extérieur touche la page — l'extérieur ne borde jamais l'accent.
      C'est le focus qui a contraint le choix de l'accent, pas l'inverse. */
-  --focus-outer: var(--tc-black); /*     17,40:1 / sol */
+  --focus-outer: var(--tc-black); /*     17,48:1 / sol */
   --focus-inner: var(--tc-citron-985); /*  5,26:1 / aplat accent */
 
   /* Élévation — quatre crans, et une règle de polarité.
@@ -174,10 +266,17 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --site-background: var(--tc-mist-205); /* #0f191c */
+    /* #0c1518 — PLUS SOMBRE que la page, à l'inverse du thème clair : ici la
+       carte creuse au lieu de lever, en accord avec un `--glass-fill` qui est un
+       lavis sombre. */
     --surface: var(--tc-mist-188);
-    --panel-surface: var(--tc-mist-232);
-    --panel-surface-hover: var(--tc-mist-302);
-    --panel-surface-active: var(--tc-mist-334);
+    /* Voile CLAIR, miroir exact du thème clair. 0,05 remplace le 0,049 de la
+       palette d'origine : ΔE OKLab 0,090 composé sur la carte, sous le seuil de
+       fusion, et le nom du jeton redevient vrai (`a05` vaut bien 0,05).
+       Échelle mesurée contre la carte : 1,111 / 1,347 / 1,519:1. */
+    --panel-surface: var(--tc-veil-a05);
+    --panel-surface-hover: var(--tc-veil-a12);
+    --panel-surface-active: var(--tc-veil-a16);
 
     --text-strong: var(--tc-mist-865); /* 12,01:1 / sol */
     --text-body: var(--tc-mist-813); /*   10,10:1 / sol */
@@ -198,7 +297,9 @@
     --accent-secondary: var(--tc-copper-671); /* 5,81:1 / sol ; ΔL 0,156 */
 
     --border-subtle: var(--tc-veil-a12);
-    --control-border: var(--tc-mist-687); /* 6,42:1 / sol ; 3,23:1 pire cas */
+    /* 6,42:1 sur le sol, 5,98:1 sur le panneau composé, 4,37:1 au pire cas
+       nommable (lavis d'appui composé sur la carte). */
+    --control-border: var(--tc-mist-687);
     --rule: var(--tc-veil-a16);
 
     --danger: var(--tc-red-793); /*    8,96:1 / sol ;  9,28:1 / carte */
@@ -207,6 +308,14 @@
     --danger-quiet: var(--tc-red-793-a14);
     --success-quiet: var(--tc-green-812-a14);
     --warning-quiet: var(--tc-amber-831-a14);
+
+    /* La pastille « en direct » / « acquis » NE SE DÉCLINE PAS par thème : sa
+       valeur unique est déclarée dans le bloc clair, et les deux jetons alias
+       « acquis » la suivent. Seules les deux autres pastilles s'inversent. */
+    --status-progress-surface: var(--tc-amber-300);
+    --status-progress-text: var(--tc-amber-673); /* 4,62:1 sur sa pastille */
+    --status-upcoming-surface: var(--tc-violet-279);
+    --status-upcoming-text: var(--tc-violet-656); /* 4,62:1 sur sa pastille */
 
     --focus-outer: var(--tc-citron-985); /* 17,24:1 / sol */
     --focus-inner: var(--tc-black); /*      3,86:1 / aplat accent */
@@ -227,9 +336,9 @@
 :root[data-theme='dark'] {
   --site-background: var(--tc-mist-205);
   --surface: var(--tc-mist-188);
-  --panel-surface: var(--tc-mist-232);
-  --panel-surface-hover: var(--tc-mist-302);
-  --panel-surface-active: var(--tc-mist-334);
+  --panel-surface: var(--tc-veil-a05);
+  --panel-surface-hover: var(--tc-veil-a12);
+  --panel-surface-active: var(--tc-veil-a16);
 
   --text-strong: var(--tc-mist-865);
   --text-body: var(--tc-mist-813);
@@ -256,10 +365,68 @@
   --success-quiet: var(--tc-green-812-a14);
   --warning-quiet: var(--tc-amber-831-a14);
 
+  --status-progress-surface: var(--tc-amber-300);
+  --status-progress-text: var(--tc-amber-673);
+  --status-upcoming-surface: var(--tc-violet-279);
+  --status-upcoming-text: var(--tc-violet-656);
+
   --focus-outer: var(--tc-citron-985);
   --focus-inner: var(--tc-black);
 
   --shadow-ink: var(--tc-soot-a50);
 
   color-scheme: dark;
+}
+
+/* --- 4. APLATISSEMENT — `prefers-reduced-transparency` et `prefers-contrast`.
+
+       Sans ce bloc les deux préférences ne tiennent leur promesse qu'à moitié :
+       `.liquid-card` peut bien perdre son `backdrop-filter`, si ses lavis
+       d'état restent translucides leur couleur effective continue de dépendre
+       de ce qui passe derrière.
+
+       Chaque valeur est la COMPOSITION MESURÉE du jeton translucide sur
+       `--surface` du thème correspondant (#ebf4f6 en clair, #0c1518 en sombre),
+       c'est-à-dire le support que la carte prend dans ces deux modes. Rien
+       n'est deviné et rien ne change d'apparence : seule la dépendance à
+       l'arrière-plan disparaît. Les primitives existaient déjà toutes, ce qui
+       est la preuve la plus courte que la palette v0.2.0 avait été dérivée de
+       cette même composition — `--tc-mist-928` EST l'encre 0,05 sur la carte.
+
+       Les deux préférences partagent ce bloc à dessein : dupliquer ces valeurs
+       dans deux requêtes média est le moyen le plus sûr de les laisser dériver.
+
+       TROIS SÉLECTEURS, et non deux, contrairement au portfolio dont ce bloc
+       est repris : la librairie a DEUX chemins vers le thème sombre. Sans le
+       `@media (prefers-color-scheme: dark)` imbriqué, un utilisateur en sombre
+       système avec la transparence réduite gardait des lavis translucides — le
+       `:root` nu ci-dessous, de spécificité 0,1,0, ne peut pas battre le bloc
+       sombre système, de spécificité 0,2,0. La préférence était silencieusement
+       ignorée, ce qui est précisément le genre de demi-promesse que ce bloc
+       existe pour fermer.
+
+       Pires paires mesurées après aplatissement : --control-border 3,90:1 sur
+       `--panel-surface-active` et 4,63:1 sur `--panel-surface` en clair, 4,37:1
+       et 5,98:1 en sombre — aucune encre de texte ne descend sous 4,5:1 dans
+       l'un ou l'autre mode. ------------------------------------------------- */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :root {
+    --panel-surface: var(--tc-mist-928); /*       encre 0,05 sur la carte */
+    --panel-surface-hover: var(--tc-mist-894); /* encre 0,10 */
+    --panel-surface-active: var(--tc-mist-873); /* encre 0,13 */
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --panel-surface: var(--tc-mist-232); /*       voile 0,05 sur la carte */
+      --panel-surface-hover: var(--tc-mist-302); /* voile 0,121 */
+      --panel-surface-active: var(--tc-mist-334); /* voile 0,16 */
+    }
+  }
+
+  :root[data-theme='dark'] {
+    --panel-surface: var(--tc-mist-232);
+    --panel-surface-hover: var(--tc-mist-302);
+    --panel-surface-active: var(--tc-mist-334);
+  }
 }

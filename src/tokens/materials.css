@@ -1,0 +1,348 @@
+/* =============================================================================
+   @thomascaron/opale — COUCHE 3 : MATÉRIAUX
+
+   Ce que `roles.css` ne peut pas nommer sans mentir. Un rôle dit un EMPLOI —
+   « le texte fort », « la surface de panneau », « l'état acquis ». Les jetons
+   de ce fichier décrivent un MATÉRIAU : le verre liquide, ses filtres, son
+   ménisque, les halos qui passent derrière lui, les tuiles décoratives. Appeler
+   `--glass-blur` un rôle serait faux — ce n'est même pas une couleur, c'est un
+   rayon de flou.
+
+   DIRECTION DE DÉPENDANCE : materials → roles → primitives, jamais l'inverse.
+   Ce fichier peut citer un `--tc-*` et peut citer un rôle (`--surface`,
+   `--shadow-ink`) ; `roles.css` ne connaît pas ce fichier et `primitives.css`
+   ne connaît personne. Le contrat vérifie la partie vérifiable : aucun
+   hexadécimal ici.
+
+   MÊMES TROIS BLOCS DE THÈME que `roles.css`, et pour la même raison — plus le
+   bloc d'aplatissement en fin de fichier. Des jetons colorés échappent aux
+   blocs sombres, et chaque fois c'est délibéré, pour l'une de DEUX raisons
+   distinctes :
+
+   - `--glass-fill-solid` et `--glass-shadow` ALIASENT un rôle qui est déjà
+     thémé, donc les redéclarer en sombre ne ferait que recopier ce que la
+     cascade fait déjà. Le § 13 du contrat connaît cette exception par son nom,
+     il ne la devine pas ;
+   - `--accent-shadow-ink*` ne se thème pas du tout : l'aplat accent est le
+     MÊME teal dans les deux thèmes, donc l'ombre qu'il projette l'est aussi.
+     C'est la valeur du portfolio, qui ne redéclare pas cette ombre en sombre.
+
+   LES ARRÊTS DE DÉGRADÉ RESTENT EN `rgba()` LITTÉRAL, et c'est une décision,
+   pas un oubli. `--glass-specular` et `--glass-highlight` portent à eux deux
+   quinze arrêts de couleur. Les tokeniser produirait quinze primitives d'alpha
+   qui ne nomment aucun rôle et qu'aucun autre jeton ne citerait jamais —
+   `--tc-white-a98`, `--tc-white-a72`, `--tc-white-a34`… La règle du dépôt
+   interdit les HEXADÉCIMAUX hors de `primitives.css`, pas les `rgba()` : ces
+   arrêts sont donc écrits ici, en clair, et cette phrase est là pour qu'on ne
+   les prenne pas pour une entorse passée inaperçue.
+   ========================================================================== */
+
+:root {
+  /* --- LE VERRE LIQUIDE ---------------------------------------------------
+
+         En clair, le verre est un BLANC translucide : sur un fond clair il
+         éclaircit, ce qui creuse l'écart avec le texte sombre. Alpha 0,40, et
+         c'est aussi loin que ce matériau va en restant franchement
+         transparent : mesuré, le remplissage lève la carte de 1,078:1 contre le
+         sol, quand le blanc PUR n'est qu'à 1,200:1 du même sol. Il n'y a plus
+         rien à acheter en blanchissant. La séparation que le sol ne peut pas
+         donner est reprise par le liseré d'encre et par l'ombre portée. */
+  --glass-fill: var(--tc-white-a40);
+
+  /* Le repli OPAQUE, servi quand `backdrop-filter` manque ou quand la
+     transparence réduite est demandée. C'est exactement `--surface` : la carte
+     de la librairie et la carte de verre du portfolio sont la même carte, donc
+     un second littéral ne ferait que promettre une différence qui n'existe pas.
+     Vérifié : #ebf4f6 en clair (--tc-mist-961) et #0c1518 en sombre
+     (--tc-mist-188) sont les deux valeurs que `--surface` porte déjà. */
+  --glass-fill-solid: var(--surface);
+
+  /* Filtres et géométrie — pas des couleurs, et NON THÉMÉS : le portfolio ne
+     les redéclare pas en sombre, un flou n'a pas de thème. */
+  --glass-blur: 32px;
+
+  /* LE FLOU DES CONTRÔLES, ET IL EST PLUS PETIT PARCE QUE LES CONTRÔLES SONT
+     PLUS PETITS. Un `backdrop-filter: blur(r)` échantillonne au-DELÀ des bords
+     de l'élément puis découpe le résultat à sa boîte : quand le rayon approche
+     la taille de l'élément, l'intérieur visible n'est plus une image de son
+     arrière-plan, c'est la MOYENNE de la bande qui l'entoure. Le matériau cesse
+     alors de répondre à ce qui passe derrière lui, ce qui est toute la raison
+     d'être d'un verre.
+
+     La plus petite surface verrée est un contrôle à `--target-min`, 44 px :
+     c'est le plancher de `.tc-input`, `.tc-select`, `.tc-textarea` et le format
+     exact de la tuile d'action. Le noyau gaussien de `blur(r)` a pour écart-type
+     r, donc :
+
+         r = 32 px  →  ±1σ couvre 64 px, soit 1,45 × la hauteur du contrôle
+         r = 12 px  →  ±1σ couvre 24 px, soit 0,55 × la hauteur du contrôle
+
+     ET C'EST MESURÉ, pas seulement calculé. Sonde chrome-headless-shell, thème
+     clair : un `.tc-input` réel de 160 × 44 px posé à cheval sur le BORD d'un
+     disque du décor — un aplat à opacity 0,9, donc une arête franche, et
+     localement horizontale à son sommet, c'est-à-dire dans l'axe COURT du
+     contrôle. On lit le profil de luminance ligne par ligne à l'intérieur du
+     contrôle, sur six rayons, le reste de la chaîne de filtres inchangé
+     (`saturate` compris, r = 0 servant de témoin) :
+
+         r =  0 px   amplitude du profil 10,05   (le fond tel qu'il est)
+         r =  8 px                        4,01   (40 % conservés)
+         r = 12 px                        1,61   (16 %)
+         r = 16 px                        0,88   ( 9 %)
+         r = 24 px                        0,26   ( 3 %)
+         r = 32 px                        0,08   ( 1 %)
+
+     À 32 px le contrôle est PLAT : il ne reste 0,8 % de la modulation du fond,
+     soit un écart de luminance de 0,08 sur 255 — invisible, et un verre qui ne
+     montre plus rien de ce qui passe derrière lui n'est plus qu'un panneau
+     teinté. À 12 px il en garde vingt fois plus.
+
+     CE QUE LA MESURE NE DIT PAS, et il faut l'écrire : elle départage 12 de 32,
+     elle ne départage pas 12 de 8, qui conserve encore 2,5 fois plus. Le choix
+     de 12 est un arbitrage d'APPARENCE — sous 10 px le fond se lit à travers
+     presque net et la surface cesse de se lire comme du verre — et il est
+     assumé comme tel. Ce qui est mesuré, c'est que 32 est faux.
+
+     NON THÉMÉ, comme les autres filtres de ce paragraphe : un flou n'a pas de
+     thème. Le § 13 du contrat le sait par son nom, il ne le devine pas. */
+  --glass-blur-control: 12px;
+
+  --glass-saturate: 1.6;
+  /* Ménisque : la bande de bord filtre son arrière-plan autrement que le
+     centre. C'est ce qui distingue ce verre d'un simple fond flouté. */
+  --glass-edge-width: 3px;
+  --glass-edge-blur: 2px;
+  --glass-edge-saturate: 2.4;
+  --glass-edge-brightness: 1.08;
+  --glass-rim-width: 1.5px;
+
+  /* Liseré d'ENCRE, pas de blanc, et la raison est mesurée. Un filet blanc ne
+     peut pas dessiner de bord sur un remplissage quasi blanc : l'arrêt le plus
+     lumineux de `--glass-specular` (blanc à 0,98) plafonne à ΔE OKLab 4,0
+     contre ce remplissage, même à alpha 1,0. Le seul indice de relais quand ce
+     liseré faiblit est l'OMBRE PORTÉE (--shadow-ink, ΔE 20,6 contre le sol
+     clair), donc cette bordure porte le contour à peu près seule et son alpha
+     est dimensionné pour ça. Mesuré : ΔE OKLab 16,7 contre le sol nu. */
+  --glass-border: var(--tc-shade-a25);
+
+  /* Liseré directionnel : allumé en haut-gauche, éteint en bas-droite, rappel
+     au coin opposé. Jamais d'arrêt sombre — sur un anneau de 1,5 px il se
+     lirait comme un trait en travers de la carte. */
+  --glass-specular: linear-gradient(
+    142deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(255, 255, 255, 0.72) 16%,
+    rgba(255, 255, 255, 0.34) 38%,
+    rgba(255, 255, 255, 0.22) 58%,
+    rgba(255, 255, 255, 0.38) 78%,
+    rgba(255, 255, 255, 0.8) 96%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  --glass-highlight:
+    radial-gradient(
+      115% 80% at 86% -16%,
+      rgba(255, 255, 255, 0.4) 0%,
+      rgba(255, 255, 255, 0.14) 44%,
+      transparent 72%
+    ),
+    radial-gradient(90% 70% at 4% 108%, rgba(8, 116, 135, 0.1) 0%, transparent 66%);
+
+  /* L'ombre EST `--shadow-ink` : même encre, mêmes deux alphas selon le thème.
+     Un alias, parce qu'une carte de verre et une carte opaque projettent la
+     même ombre — c'est la définition d'une ombre portée. Mesuré : ΔE OKLab 20,6
+     contre le sol clair, et 2,2 seulement contre le sol sombre, où c'est le
+     LISERÉ qui détache (ΔE 18,5). La polarité s'inverse, la valeur non. */
+  --glass-shadow: var(--shadow-ink);
+
+  /* --- L'OMBRE DE L'APLAT ACCENT ------------------------------------------
+
+         Un SECOND matériau d'ombre, et il n'est pas `--shadow-ink`. Le bouton
+         primaire projette une ombre TEINTÉE, pas la suie neutre des cartes : la
+         géométrie vient des crans d'élévation (`--elevation-2` au repos,
+         `--elevation-1` resserré à l'appui), seule l'encre change. Deux alphas
+         parce que l'appui resserre l'ombre et la fonce d'un cran.
+
+         ET CETTE ENCRE EST L'ORPHELIN D'UN ACCENT RETIRÉ — ce n'est pas une
+         dérivation de l'accent actuel, contrairement à ce que le commentaire du
+         portfolio affirme. Mesuré : `--accent` est à h 214,6 / L 0,515, cette
+         encre à h 271,2 / L 0,308, soit 56,6° d'écart de teinte et ΔL −0,207
+         (le portfolio annonce −0,083, et une teinte « reprise de l'accent »).
+         Elle descend d'une palette indigo que le teal a remplacée sans que
+         l'ombre soit remesurée. L'invariant réel est l'ÉCART DE LUMINOSITÉ sous
+         l'accent, jamais la teinte : au prochain déplacement de l'accent, cette
+         encre SE RE-DÉRIVE — elle ne se recopie pas. Voir la note complète au
+         pied de `primitives.css`, où les deux alphas sont déclarés.
+
+         Le jeton existe pour que `button.css` cesse d'écrire deux `rgba()`
+         littéraux dans une feuille de composant, où aucune couleur n'a le droit
+         de vivre : une encre écrite en dur là est une encre qui ne bascule pas
+         avec le thème, et surtout une encre qu'aucun contrat ne mesure. */
+  --accent-shadow-ink: var(--tc-indigo-308-a24);
+  --accent-shadow-ink-pressed: var(--tc-indigo-308-a28);
+
+  /* --- LES HALOS ----------------------------------------------------------
+
+         Des APLATS, et c'est assumé : le mécanisme est `background:
+         var(--halo-tint); opacity: var(--halo-opacity)` — des DISQUES PLEINS,
+         sans dégradé, sans cœur éclairci, sans bord fondu. Ce qui protège le
+         texte n'est pas l'effacement de la bulle, c'est le remplissage teinté
+         de la carte posée dessus.
+
+         CONSÉQUENCE POUR TOUTE MESURE : le support d'une carte n'est ni
+         `--site-background` ni `--glass-fill-solid`, c'est le halo composé sous
+         le remplissage de verre. Chaîne mesurée en clair : #deedf0 → halo à 0,9
+         → rgb(141, 206.4, 222) → blanc 0,40 → rgb(186.6, 225.84, 235.2).
+         Une palette validée contre `--site-background` seul est validée contre
+         le meilleur cas.
+
+         PARITÉ DES DEUX HALOS, tenue à dessein : mesuré, la bulle froide
+         composée sur le sol est à ΔE OKLab 13,28 et la chaude à 13,36, soit
+         0,086 d'écart en clair ; 12,83 et 12,89 en sombre, soit 0,062. Laisser
+         l'un des deux dériver laisse la couche la plus forte écraser
+         visuellement l'autre, ce qui défait la raison même d'avoir une couche
+         chaude. Le contrat épingle cette parité. Contraste contre le sol :
+         1,45:1 froid, 1,44:1 chaud. */
+  --halo-tint: var(--tc-teal-801);
+  --halo-tint-warm: var(--tc-copper-819);
+  --halo-opacity: 0.9;
+
+  /* --- TUILES D'ICÔNE ------------------------------------------------------
+
+         Dérivées du HALO et non de l'accent : une tuile est du décor, elle
+         appartient donc à la couche halo. Mesuré contre la carte, la tuile lève
+         de 1,120:1 à l'arrêt de départ et 1,221:1 à l'arrêt d'arrivée.
+
+         L'ALPHA D'ARRIVÉE EST À 0,42 ET PAS PLUS, et c'est le seul degré de
+         liberté qui restait. Une icône seule dans un bouton reste un CONTRÔLE :
+         son encre et son liseré se mesurent sur les deux arrêts, sur les quatre
+         sols de carte, lavis de survol compris. À 0,55, --control-border
+         tombait à 2,90:1 au pire (arrêt d'arrivée, carte sur halo chaud, lavis
+         de survol), sous le 3:1 de WCAG 1.4.11 ; à 0,42 le pire cas remonte à
+         3,01:1. Seul l'alpha bouge, la dérivation depuis le halo est préservée.
+         Le § 15 du contrat rejoue ces quatre sols : c'est cette contrainte qui
+         dimensionne l'alpha, pas le goût. */
+  --icon-surface-start: var(--tc-teal-801-a24);
+  --icon-surface-end: var(--tc-teal-801-a42);
+}
+
+/* --- 2. La préférence système, sans une ligne de JavaScript. -------------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    /* En sombre le verre CREUSE au lieu de lever : un lavis quasi noir à faible
+       alpha, exact miroir du blanc à 0,40 du thème clair. Mesuré, il assombrit
+       la carte de 1,037:1 contre le sol. */
+    --glass-fill: var(--tc-pitch-a20);
+
+    /* Le liseré fait RÉELLEMENT un bord ici, contrairement au thème clair : son
+       arrêt le plus lumineux mesure ΔE OKLab 59,9 contre le remplissage sur
+       lequel il est tracé (plafond à alpha 1,0 : ΔE 74,3). Et c'est lui qui
+       détache la carte, l'ombre étant quasi inopérante en sombre : ΔE 18,5
+       contre le sol nu. */
+    --glass-border: var(--tc-veil-a22);
+
+    /* Le spéculaire et le halo de verre reprennent le NEUTRE CLAIR de la
+       palette (rgb(225, 234, 236)), celui-là même que portent `--glass-border`,
+       `--panel-surface` et `--border-subtle` dans ce thème : un seul clair pour
+       tout ce qui éclaire une surface sombre. */
+    --glass-specular: linear-gradient(
+      142deg,
+      rgba(225, 234, 236, 0.78) 0%,
+      rgba(225, 234, 236, 0.42) 16%,
+      rgba(225, 234, 236, 0.12) 38%,
+      rgba(225, 234, 236, 0.05) 58%,
+      rgba(225, 234, 236, 0.13) 78%,
+      rgba(225, 234, 236, 0.5) 96%,
+      rgba(225, 234, 236, 0.26) 100%
+    );
+    --glass-highlight:
+      radial-gradient(
+        115% 80% at 86% -16%,
+        rgba(225, 234, 236, 0.18) 0%,
+        rgba(225, 234, 236, 0.06) 44%,
+        transparent 72%
+      ),
+      radial-gradient(90% 70% at 4% 108%, rgba(8, 116, 135, 0.14) 0%, transparent 66%);
+
+    /* Chaîne mesurée en sombre : #0f191c → halo à 0,8 → rgb(3, 59.4, 71.2) →
+       --glass-fill → rgb(2.4, 48.32, 58.16). C'est ce sol, et non le fond de
+       page, qui décide des encres de texte. */
+    --halo-tint: var(--tc-teal-357);
+    --halo-tint-warm: var(--tc-copper-340);
+    /* 0,8 et non 0,9 : la course disponible n'est pas la même sur un sol
+       sombre. C'est le seul jeton non coloré de ce fichier qui SE DÉCLINE par
+       thème, et le contrat le sait. */
+    --halo-opacity: 0.8;
+
+    /* Arrêt de départ dérivé de l'ACCENT et arrivée du HALO sombre : le dégradé
+       reste ici quasi plat (ΔE OKLab 0,9 entre les deux arrêts composés), les
+       deux arrêts ayant des luminosités voisines. Mesuré contre la carte, la
+       tuile lève de 1,195:1 au départ et 1,222:1 à l'arrivée.
+       MÊME AJUSTEMENT D'ALPHA QU'EN CLAIR, pour la même mesure : à 0,34 le teal
+       éclaircissait trop la tuile et --control-border tombait à 2,74:1 (arrêt de
+       départ, carte sur halo froid, lavis de survol). À 0,20 le pire cas remonte
+       à 3,09:1. */
+    --icon-surface-start: var(--tc-teal-a20);
+    --icon-surface-end: var(--tc-teal-357-a45);
+  }
+}
+
+/* --- 3. Le choix explicite, qui doit gagner sur l'OS. Duplication
+       volontaire ; le contrat vérifie que les deux blocs ne divergent pas. -- */
+:root[data-theme='dark'] {
+  --glass-fill: var(--tc-pitch-a20);
+  --glass-border: var(--tc-veil-a22);
+  --glass-specular: linear-gradient(
+    142deg,
+    rgba(225, 234, 236, 0.78) 0%,
+    rgba(225, 234, 236, 0.42) 16%,
+    rgba(225, 234, 236, 0.12) 38%,
+    rgba(225, 234, 236, 0.05) 58%,
+    rgba(225, 234, 236, 0.13) 78%,
+    rgba(225, 234, 236, 0.5) 96%,
+    rgba(225, 234, 236, 0.26) 100%
+  );
+  --glass-highlight:
+    radial-gradient(
+      115% 80% at 86% -16%,
+      rgba(225, 234, 236, 0.18) 0%,
+      rgba(225, 234, 236, 0.06) 44%,
+      transparent 72%
+    ),
+    radial-gradient(90% 70% at 4% 108%, rgba(8, 116, 135, 0.14) 0%, transparent 66%);
+
+  --halo-tint: var(--tc-teal-357);
+  --halo-tint-warm: var(--tc-copper-340);
+  --halo-opacity: 0.8;
+
+  --icon-surface-start: var(--tc-teal-a20);
+  --icon-surface-end: var(--tc-teal-357-a45);
+}
+
+/* --- 4. APLATISSEMENT — voir la note détaillée en fin de `roles.css`, qui
+       porte le même bloc pour les lavis de panneau. Ici : les deux arrêts de la
+       tuile d'icône, composés sur `--surface` du thème correspondant. Les
+       quatre primitives existaient déjà ou ont été battues pour ce seul usage,
+       et leur luminosité mesurée est ce qui les nomme.
+
+       Trois sélecteurs, parce que la librairie a deux chemins vers le sombre :
+       sans le `@media (prefers-color-scheme: dark)` imbriqué, le `:root` nu
+       (spécificité 0,1,0) ne bat pas le bloc sombre système (0,2,0) et la
+       préférence serait ignorée en sombre système. ------------------------- */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :root {
+    --icon-surface-start: var(--tc-mist-921); /* halo 0,24 sur la carte claire */
+    --icon-surface-end: var(--tc-mist-893); /*   halo 0,42 */
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --icon-surface-start: var(--tc-mist-258); /* accent 0,20 sur la carte sombre */
+      --icon-surface-end: var(--tc-mist-265); /*   halo 0,45 */
+    }
+  }
+
+  :root[data-theme='dark'] {
+    --icon-surface-start: var(--tc-mist-258);
+    --icon-surface-end: var(--tc-mist-265);
+  }
+}

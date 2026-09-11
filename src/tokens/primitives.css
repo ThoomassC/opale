@@ -1,73 +1,110 @@
 /* =============================================================================
-   @thomascaron/ui — COUCHE 1 : PRIMITIVES
+   @thomascaron/opale — COUCHE 1 : PRIMITIVES
 
    Les hexadécimaux nus, et rien d'autre. Aucun composant ne cite ce fichier ;
-   seule `roles.css` en a le droit. Une primitive ne connaît pas le thème : elle
-   est une couleur, pas un emploi.
+   seules `roles.css` et `materials.css` en ont le droit. Une primitive ne
+   connaît pas le thème : elle est une couleur, pas un emploi.
 
    NOMMAGE — le nombre est une mesure, pas un rang.
    `--tc-<famille>-<L>` où <L> est la luminosité OKLab de la couleur, ×1000 et
    arrondie. `--tc-teal-515` vaut #087487 parce que sa L vaut 0,515. Le contrat
    le vérifie : renommer une primitive sans la remesurer fait échouer la suite.
    Suffixe `-aNN` : la même couleur à l'alpha 0,NN.
+
+   LE NOMBRE NE SUFFIT PAS À IDENTIFIER UNE COULEUR, et c'est le seul endroit où
+   la convention a failli tomber. Deux couleurs de familles différentes peuvent
+   partager la même luminosité : `--tc-mist-921` (#d2eaf0, chroma 0,027, teinte
+   214,4°) et `--tc-amber-921` (#ffe0af, chroma 0,072, teinte 79,0°) mesurent
+   tous deux L 921 et n'ont rien à voir. Le cas d'école qui a levé la question
+   vient du header du portfolio : #dae5e7 et #beecf7 mesurent tous deux L 914,
+   à chroma 0,012 / teinte 209,8° contre chroma 0,050 / teinte 213,9° — mêmes
+   luminosité ET même famille de teinte, séparés par la seule CHROMA. Ces
+   deux-là ne sont pas portés ici (jetons de header, hors périmètre) mais la
+   leçon reste : c'est le couple <famille>+<L> qui identifie, jamais <L> seul,
+   et une famille dont deux membres ne se distinguent que par la chroma
+   réclamerait un troisième segment de nom. Le contrat vérifie qu'aucune
+   famille n'est dans ce cas aujourd'hui.
+
+   Une primitive `-aNN` bâtie sur une primitive nommée porte le nom de sa base :
+   `--tc-teal-801-a24` est `--tc-teal-801` à l'alpha 0,24, et le contrat vérifie
+   canal par canal que c'est bien vrai. Les alphas SANS luminosité dans le nom
+   (`--tc-teal-a10`, `--tc-shade-a14`) sont des encres de couche dont la base
+   n'est pas une primitive opaque de ce fichier — sauf `--tc-teal-aNN`, qui est
+   `--tc-teal-515` et le reste.
    ========================================================================== */
 
 :root {
   /* --- MIST — les neutres. Le teal des actions, vidé de sa chroma.
-         Teintes tenues entre 211° et 220° : rien ne devient sale, et l'aplat
-         accent reste le seul champ saturé de l'écran. ---------------------- */
+         Teintes tenues entre 211,0° et 220,5°, chroma entre 0,010 et 0,041 :
+         rien ne devient sale, et l'aplat accent reste le seul champ saturé de
+         l'écran. Le contrat borne la teinte à 205–225°. ------------------- */
   --tc-mist-961: #ebf4f6;
   --tc-mist-936: #deedf0;
   --tc-mist-928: #e0e9eb;
+  --tc-mist-921: #d2eaf0;
   --tc-mist-894: #d5dee0;
+  --tc-mist-893: #c0e3eb;
   --tc-mist-873: #ced7da;
   --tc-mist-865: #b6dae3;
   --tc-mist-813: #aac8d0;
   --tc-mist-762: #9eb7bd;
   --tc-mist-687: #8d9ea2;
+  /* 658 EXISTE POUR UN LISERÉ DE CHAMP QUI NE SE LISE PAS COMME UN TRAIT
+     NOIR. Entre 687 (2,78:1 sur blanc — sous le seuil de 1.4.11) et 509
+     (5,73:1 — un contour dur à 1 px), la rampe n'avait rien : la vitrine
+     n'avait donc le choix qu'entre un champ non conforme et un champ
+     cerné. Mesurée sur blanc, cette marche vaut 3,11:1, c'est-à-dire le
+     plancher de 1.4.11 et pas un cran de plus. */
+  --tc-mist-658: #859599;
   --tc-mist-509: #59696d;
   --tc-mist-427: #3e5359;
   --tc-mist-375: #2b464c;
   --tc-mist-334: #2f383b;
   --tc-mist-324: #193940;
   --tc-mist-302: #273032;
+  --tc-mist-265: #072a32;
+  --tc-mist-258: #0b282e;
   --tc-mist-232: #161f22;
   --tc-mist-205: #0f191c;
   --tc-mist-188: #0c1518;
 
-  /* --- PAPER — les sols clairs, depuis la v0.2.0. Une feuille, pas un écran.
+  /* PAPER — RETIRÉE en v0.3.0. Cinq sols chauds (#fbf1de … #ded4c1) posés à la
+     luminosité exacte des `mist` qu'ils remplaçaient. Le portfolio reprend la
+     main sur l'apparence : ses sols sont des `mist` froids, la famille n'était
+     plus citée nulle part (vérifié par grep sur opale et sur les treize
+     arbres travels_in_world) et cinq primitives qu'aucun rôle ne cite sont une
+     invitation à réintroduire par erreur un sol chaud. Elle est retirée plutôt
+     que gardée « au cas où » : la retrouver, c'est un `git show`. */
 
-         Chaque valeur est posée à la luminosité OKLab EXACTE d'un `mist` qu'elle
-         remplace en thème clair : 961, 936, 928, 894, 873. Ce n'est pas une
-         coquetterie de nommage, c'est ce qui fait que réchauffer les sols ne
-         rouvre pas toutes les décisions de contraste du socle — le contraste WCAG
-         suit la luminance, et deux couleurs de même L n'en sont jamais loin. Le
-         contrat mesure de combien exactement, et les commentaires de `roles.css`
-         portent les nouveaux chiffres.
-
-         Teintes tenues entre 82° et 86°, chroma ~0,027 : assez pour que la page
-         se lise comme du papier, assez peu pour qu'elle ne devienne pas jaune.
-         Le thème sombre n'en a pas et n'en veut pas — une feuille éclairée par
-         l'arrière n'existe pas, et les `mist` sombres restent les sols de nuit. */
-  --tc-paper-961: #fbf1de;
-  --tc-paper-936: #f2e9d6;
-  --tc-paper-928: #f0e6d4;
-  --tc-paper-894: #e5dbc7;
-  --tc-paper-873: #ded4c1;
-
-  /* --- TEAL — l'encre des actions. Teinte 213° à 217°. ------------------- */
+  /* --- TEAL — l'encre des actions et le décor froid qui la prolonge.
+         Teintes tenues entre 213,4° et 219,7°, chroma entre 0,064 et 0,089.
+         `-416` (la pastille d'état) est le membre le plus excentré de la
+         famille à 219,7°, soit 5,1° de l'accent : la famille tient, mais c'est
+         la contrainte la plus tendue de la palette. ------------------------ */
+  --tc-teal-801: #84cbdc; /* halo froid, thème clair */
   --tc-teal-753: #78bbca;
   --tc-teal-555: #208093;
-  --tc-teal-515: #087487;
+  --tc-teal-515: #087487; /* l'accent, dans les DEUX thèmes */
   --tc-teal-477: #00687b;
   --tc-teal-473: #00677a;
   --tc-teal-441: #005d6f;
   --tc-teal-429: #0e5968;
+  --tc-teal-416: #005568; /* pastille d'état, un cran plus profond que l'accent */
+  --tc-teal-357: #004452; /* halo froid, thème sombre */
 
-  /* --- COPPER — le décor. Tenu en opposition au teal : 179,3° en clair,
-         179,5° en sombre. ---------------------------------------------------- */
+  /* --- COPPER — le décor. Tenu en opposition au teal : teintes 34,0° à 35,1°,
+         chroma 0,074 à 0,076. -------------------------------------------- */
+  --tc-copper-819: #f0b3a4; /* halo chaud, thème clair */
   --tc-copper-671: #bf8576;
   --tc-copper-425: #723e32;
+  --tc-copper-340: #58281c; /* halo chaud, thème sombre */
+
+  /* --- INDIGO — l'ombre que projette l'aplat accent, et un seul membre.
+         Teinte 271,2° et luminosité 0,308, toutes deux MESURÉES : la famille
+         n'entre dans aucune plage froide du contrat, et elle n'est pas non plus
+         dérivée de l'accent actuel. C'est un ORPHELIN, l'histoire complète est
+         écrite au-dessus de ses deux alphas, plus bas dans ce fichier. ---- */
+  --tc-indigo-308: #222c56; /* encre d'ombre de l'aplat accent */
 
   /* --- Encres sémantiques. Le rouge n'est séparé du cuivre que de 11,3° de
          teinte : c'est la LUMINOSITÉ qui porte la distinction, pas la teinte. */
@@ -75,8 +112,36 @@
   --tc-red-339: #66151a;
   --tc-green-812: #88d6a4;
   --tc-green-378: #0d4f2c;
+
+  /* AMBER — l'avertissement, et la pastille « en cours ». Teintes 70,3° à
+     85,3°. Franchement hors de toute plage froide : la contrainte de teinte du
+     contrat ne s'applique qu'aux familles qu'elle nomme. */
+  --tc-amber-921: #ffe0af; /* pastille « en cours », aplat clair */
   --tc-amber-831: #e0c489;
+  --tc-amber-673: #b19061; /* pastille « en cours », encre sombre */
+  --tc-amber-508: #845d22; /* pastille « en cours », encre claire */
   --tc-amber-482: #7b5620;
+  /* Encre d'avertissement du thème clair. Battue exprès entre 482 et 300 :
+     aucune primitive ambre n'y tombait, et les deux voisines sont fausses pour
+     cet emploi — 482 ne tient que 3,35:1 sous son propre lavis sur un décor,
+     300 tient 7,04:1 mais passe DEVANT --text-strong (10,28:1) sur le sol, ce
+     qu'une encre d'avertissement ne doit pas faire. Mesuré : L 0,389681,
+     chroma 0,066, teinte 73,5° — donc 390, et la teinte reste dans la famille. */
+  --tc-amber-390: #5a3f18;
+  --tc-amber-300: #422700; /* pastille « en cours », aplat sombre */
+
+  /* VIOLET — réservé à la pastille « à venir », et à rien d'autre. Teintes
+     299,8° à 303,0°. Il n'existe QUE pour que les trois états ne se lisent pas
+     comme trois teals : acquis (teal), en cours (ambre), à venir (violet).
+     Le garde-fou réel de ces trois états est le LIBELLÉ TEXTUEL, pas la
+     couleur — mesuré en simulation deutéranope, l'ambre et le violet tombent à
+     1,16:1 l'un contre l'autre en clair et les trois s'effondrent ensemble en
+     sombre (1,06 / 1,21 / 1,14:1). Un composant qui rendrait ces pastilles sans
+     texte serait cassé, quelle que soit la palette. */
+  --tc-violet-902: #e6d6ff; /* aplat clair */
+  --tc-violet-656: #9886bb; /* encre sombre */
+  --tc-violet-498: #6b5591; /* encre claire */
+  --tc-violet-279: #2f1e48; /* aplat sombre */
 
   /* --- Extrêmes. `citron-985` est l'anneau de focus : ni blanc ni jaune pur,
          choisi pour tenir à la fois contre l'aplat accent et contre le noir. */
@@ -87,21 +152,124 @@
   /* --- Couches translucides. Une couche alpha n'a pas de luminosité propre :
          elle en prend une en se composant. D'où le nommage par alpha seul. -- */
 
-  /* Teal à quatre alphas : lavis d'accent et son liseré. */
+  /* Teal à cinq alphas : lavis d'accent, son liseré, la tuile d'icône sombre.
+     Base : `--tc-teal-515` (#087487). */
   --tc-teal-a10: rgba(8, 116, 135, 0.1);
   --tc-teal-a16: rgba(8, 116, 135, 0.16);
+  --tc-teal-a20: rgba(8, 116, 135, 0.2);
   --tc-teal-a42: rgba(8, 116, 135, 0.42);
   --tc-teal-a55: rgba(8, 116, 135, 0.55);
+
+  /* Décor froid à l'alpha : les deux arrêts de la tuile d'icône claire, et
+     l'arrêt d'arrivée de la sombre. Dérivés des halos, pas de l'accent — une
+     tuile décorative appartient à la couche halo. */
+  --tc-teal-801-a24: rgba(132, 203, 220, 0.24);
+  --tc-teal-801-a42: rgba(132, 203, 220, 0.42);
+  --tc-teal-357-a45: rgba(0, 68, 82, 0.45);
 
   /* Ombre portée. Même encre dans les deux thèmes, deux alphas. */
   --tc-soot-a30: rgba(4, 15, 19, 0.3);
   --tc-soot-a50: rgba(4, 15, 19, 0.5);
 
-  /* Traits : encre sombre sur fond clair, voile clair sur fond sombre. */
+  /* Ombre de l'APLAT ACCENT, deux alphas — repos (0,24) et appui (0,28). Base :
+     `--tc-indigo-308` (#222c56), et le contrat vérifie canal par canal que ces
+     deux lignes sont bien cette base à ces alphas.
+
+     CETTE ENCRE EST L'ORPHELIN D'UN ACCENT RETIRÉ. Il faut l'écrire, parce que
+     la source dit le contraire : le commentaire du portfolio annonce une
+     « teinte reprise de l'accent (271,2 deg mesuré) » et un « ΔL −0,083 ». Les
+     deux chiffres sont faux ensemble. Mesuré ici avec `oklab()` et `oklchHue()`
+     du contrat : `--accent` (#087487) vaut h 214,6 / L 0,515, cette encre
+     h 271,2 / L 0,308 — 56,6° de teinte d'écart et ΔL −0,207, soit deux fois et
+     demie l'écart annoncé. Elle descend d'une palette INDIGO que le portfolio a
+     remplacée par le teal sans remesurer son ombre. L'accent est parti, l'ombre
+     est restée.
+
+     CE QUI LA TIENT DEBOUT N'EST DONC PAS LA TEINTE, C'EST L'ÉCART DE
+     LUMINOSITÉ SOUS L'ACCENT. À luminosité figée, un accent plus sombre finit
+     par recevoir une ombre plus CLAIRE que le bouton qu'elle porte — et une
+     ombre plus claire que son émetteur se lit comme un halo. Au prochain
+     déplacement de l'accent, cette encre SE RE-DÉRIVE : on repart de la
+     luminosité de l'accent moins un écart, on ne recopie pas ces deux valeurs.
+     Tant que l'accent ne bouge pas, la garder est la seule façon de ne pas
+     changer l'apparence du bouton du portfolio, et le portfolio gagne.
+
+     La famille `indigo` n'est soumise à aucune plage de teinte, et ce n'est pas
+     un contournement : `COOL_HUE_FAMILIES` de `primitives.contract.test.ts` est
+     une liste ÉCRITE — `mist` et `teal`, le champ neutre et l'encre des
+     actions, les deux seules familles dont une dérive salit la page. `indigo`
+     n'est ni l'un ni l'autre, il ne se peint jamais qu'en ombre translucide. */
+  --tc-indigo-308-a24: rgba(34, 44, 86, 0.24);
+  --tc-indigo-308-a28: rgba(34, 44, 86, 0.28);
+
+  /* Traits et lavis d'état : encre sombre sur fond clair, voile clair sur fond
+     sombre. L'échelle repos / survol / appui d'un panneau est portée par ces
+     trois alphas, et non par trois aplats — sur une carte dont le repli opaque
+     est #ebf4f6 il ne reste rien à éclaircir (le blanc pur n'est qu'à 1,200:1
+     du sol), donc la couche d'état CREUSE en clair et ÉCLAIRCIT en sombre. */
+  --tc-shade-a05: rgba(7, 20, 23, 0.05);
+  --tc-shade-a10: rgba(7, 20, 23, 0.1);
+  --tc-shade-a13: rgba(7, 20, 23, 0.13);
   --tc-shade-a14: rgba(7, 20, 23, 0.138);
   --tc-shade-a16: rgba(7, 20, 23, 0.16);
+  --tc-shade-a25: rgba(7, 20, 23, 0.25);
+  --tc-veil-a05: rgba(225, 234, 236, 0.05);
   --tc-veil-a12: rgba(225, 234, 236, 0.121);
   --tc-veil-a16: rgba(225, 234, 236, 0.16);
+  --tc-veil-a22: rgba(225, 234, 236, 0.22);
+
+  /* Remplissages de verre. En clair le verre ÉCLAIRCIT (blanc à 0,40, qui lève
+     la carte de 1,078:1 contre le sol quand le blanc PUR ne lèverait que de
+     1,200:1 — il n'y a plus rien à acheter en blanchissant) ; en sombre il
+     CREUSE, d'où une encre quasi noire à faible alpha. `pitch` est cette encre
+     de fond de verre : plus sombre que `soot`, et elle ne sert qu'à ça. */
+  --tc-white-a40: rgba(255, 255, 255, 0.4);
+  --tc-pitch-a20: rgba(0, 4, 6, 0.2);
+
+  /* LE MÊME ALPHA DANS LES DEUX THÈMES, ET C'EST LA SEULE PAIRE DE CE FICHIER
+     QUI EN EST LÀ. Ces deux valeurs servent le voile de la LENTILLE
+     (`styles/lens.css`), dont le fond est flouté avant d'être voilé : la
+     séparation y est portée par le flou autant que par le voile.
+
+     0,32 EST UNE FRONTIÈRE MESURÉE. Au-dessus du pire fond que j'aie su
+     construire — damier de 20 px noir/blanc surchargé de texte gras — le
+     couple (voile 0,32 ; flou 8 px) tient 5,42:1 en clair et 4,81:1 en sombre,
+     et 5,39 / 4,60 à la position la plus défavorable du damier.
+     Un cran plus transparent, 0,24, tient encore en clair (4,82:1) et TOMBE en
+     sombre à 4,09:1 — et il y tombe quel que soit le flou : 4,03:1 à 12 px,
+     3,78:1 à 6 px. Le flou plafonne parce qu'il fait converger la plaque vers
+     la moyenne du fond, qu'un `--text-strong` clair ne peut pas quitter ;
+     seul le voile déplace cette moyenne. La mesure est dans les deux sens.
+
+     La symétrie des deux alphas n'est pas une élégance : c'est la conséquence
+     du flou, qui est absolu et non thémé. `--glass-fill` reste asymétrique
+     (0,40 / 0,20) parce que lui n'a pas de flou pour l'aider en clair. */
+  --tc-white-a32: rgba(255, 255, 255, 0.32);
+  --tc-pitch-a32: rgba(0, 4, 6, 0.32);
+
+  /* LE LAVIS D'ÉTAT DE LA LENTILLE, ET SA FAMILLE EST LA CORRECTION D'UNE
+     NON-CONFORMITÉ. Le survol et l'appui empruntaient `--panel-surface-hover`
+     et `-active`, c'est-à-dire l'échelle d'état des panneaux — qui CREUSE en
+     clair et ÉCLAIRCIT en sombre. C'est juste pour un panneau, dont l'encre
+     est du côté opposé ; c'est faux pour la lentille, dont le voile va dans
+     l'autre sens (blanc en clair, pitch en sombre) et dont l'encre suit le
+     voile. Chaque état rapprochait donc la plaque du libellé.
+
+     Mesuré au pixel, plaque nue sous le libellé sur damier hostile :
+     5,32:1 au repos → 4,47:1 au survol → 4,26:1 à l'appui en clair, et
+     4,72 → 3,60 → 3,30 en sombre. Deux états sous 4,5:1 en clair, trois en
+     sombre : la frontière (voile 0,32 ; flou 8 px) avait été calibrée sur le
+     seul état de REPOS. Avec ces quatre valeurs, remesuré : 5,39 → 5,85 →
+     6,07 en clair et 4,60 → 5,48 → 5,74 en sombre.
+
+     Ces quatre valeurs reprennent les ALPHAS de l'échelle d'état de la
+     librairie (0,10 et 0,13) dans la famille DU VOILE. Le retour visuel
+     épaissit donc le verre au lieu de le teinter, et il s'éloigne de l'encre :
+     le contraste MONTE au survol au lieu de tomber. */
+  --tc-white-a10: rgba(255, 255, 255, 0.1);
+  --tc-white-a13: rgba(255, 255, 255, 0.13);
+  --tc-pitch-a10: rgba(0, 4, 6, 0.1);
+  --tc-pitch-a13: rgba(0, 4, 6, 0.13);
 
   /* Lavis sémantiques. 0,10 en clair, 0,14 en sombre : le thème sombre a plus
      de course, et égaliser les deux raboterait son retour visuel. */
