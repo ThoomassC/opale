@@ -28,3 +28,4 @@ dist-showcase
 
 # Rapport de couverture, régénéré par `npm run coverage`.
 coverage
+.vercel
