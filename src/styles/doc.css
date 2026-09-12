@@ -1846,6 +1846,378 @@ body {
   }
 }
 
+/* --- Navigation mobile -----------------------------------------------------
+   Sous 60 rem, la barre du haut devient une petite grille de deux rangées :
+   la marque et le thème restent accessibles au premier regard, puis la
+   recherche prend toute la largeur. Le sommaire suit le même principe : une
+   seule commande en haut à droite, et son contenu se déploie VERS LE BAS.
+
+   Le pli reste un `<details>` natif. `::details-content` anime la hauteur dans
+   les moteurs qui l'exposent ; les autres gardent le comportement natif sans
+   que la navigation dépende de JavaScript.
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 59.999rem) {
+  :root {
+    /* 44 + 10 + 44 px de contenu, 12 + 14 px de coussin : la hauteur interne
+       de la barre mobile, utilisée par le scroll-padding. La bordure de la
+       surface est ajoutée par l'enveloppe du verre. */
+    --doc-topbar-size: 7.75rem;
+  }
+
+  .tc-doc-topbar {
+    min-block-size: 0;
+  }
+
+  .tc-doc-topbar .tc-doc-topbar__bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'brand actions'
+      'search search';
+    grid-template-rows: auto auto;
+    gap: var(--space-2) var(--space-3);
+    min-block-size: var(--doc-topbar-size);
+    padding: var(--space-3) var(--space-4) var(--space-3);
+  }
+
+  .tc-doc-topbar__bar > .tc-doc-topbar__side:first-child {
+    grid-area: brand;
+    min-inline-size: 0;
+  }
+
+  .tc-doc-topbar__bar > .tc-doc-topbar__field {
+    grid-area: search;
+    inline-size: 100%;
+    min-inline-size: 0;
+  }
+
+  .tc-doc-topbar__bar > .tc-doc-topbar__side:last-child {
+    grid-area: actions;
+    align-self: center;
+    margin-inline-start: 0;
+  }
+
+  .tc-doc-topbar__brand {
+    min-inline-size: 0;
+    gap: var(--space-2);
+    font-size: var(--text-xs);
+  }
+
+  .tc-doc-topbar__glyph {
+    inline-size: var(--space-7);
+    block-size: var(--space-7);
+  }
+
+  .tc-doc-search {
+    inline-size: 100%;
+    min-inline-size: 0;
+    max-inline-size: none;
+  }
+
+  /* Le sommaire ouvert est une vraie zone de navigation, bornée pour que le
+     contenu de la page reste rapidement atteignable. Il conserve son défilement
+     interne quand les groupes dépassent la hauteur du téléphone. */
+  .tc-doc-nav {
+    position: relative;
+    inline-size: 100%;
+    max-block-size: min(48dvh, 30rem);
+    padding: var(--space-3) var(--space-4) var(--space-4);
+    overflow-y: auto;
+    border-block-end: 1px solid var(--rule);
+    transition:
+      inline-size var(--motion-move) var(--motion-ease),
+      max-block-size var(--motion-move) var(--motion-ease),
+      padding var(--motion-move) var(--motion-ease);
+  }
+
+  .tc-doc-nav > [class*='glassContainer'] {
+    inline-size: 100%;
+  }
+
+  .tc-doc-nav__panel {
+    inline-size: 100%;
+    min-block-size: 0;
+    gap: 0;
+    padding: var(--space-3) var(--space-4) var(--space-4);
+  }
+
+  .tc-doc-nav__head {
+    align-items: flex-start;
+    padding-block: 0 var(--space-3);
+    padding-inline-end: calc(var(--target-min) + var(--space-3));
+  }
+
+  .tc-doc-nav__eyebrow {
+    margin-block-start: 0;
+  }
+
+  .tc-doc-nav__title {
+    font-size: var(--text-lg);
+  }
+
+  .tc-doc-nav__version {
+    margin-block: var(--space-3) var(--space-3);
+    padding-block-end: var(--space-3);
+    padding-inline-end: calc(var(--target-min) + var(--space-3));
+  }
+
+  .tc-doc-nav__versionnumber {
+    font-size: var(--text-xs);
+  }
+
+  .tc-doc-nav__versionnote {
+    font-size: var(--text-xs);
+  }
+
+  /* Le bouton est visuellement dans la tête du sommaire, même s'il reste le
+     premier enfant du `<details>` pour garder le contrôle natif. */
+  .tc-doc-nav__panel {
+    position: relative;
+  }
+
+  .tc-doc-nav__all {
+    position: static;
+    padding-block-start: 0;
+    interpolate-size: allow-keywords;
+  }
+
+  .tc-doc-nav .tc-doc-nav__alltitle {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: var(--space-4);
+    inline-size: 3rem;
+    block-size: 3rem;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-pill);
+    background: var(--tc-white-a10);
+    color: var(--text-strong);
+    font-size: 0;
+    line-height: 3rem;
+    text-align: center;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    transition:
+      background-color var(--motion-color) var(--motion-ease),
+      border-color var(--motion-color) var(--motion-ease);
+  }
+
+  .tc-doc-nav__alltitle::before {
+    position: absolute;
+    inset: 0;
+    content: '\203a';
+    display: grid;
+    place-items: center;
+    inline-size: auto;
+    margin-inline-end: 0;
+    color: var(--accent);
+    font-size: var(--text-md);
+    line-height: 1;
+    transform: rotate(90deg);
+    transition: transform var(--motion-move) var(--motion-ease);
+  }
+
+  .tc-doc-nav__all[open] > .tc-doc-nav__alltitle::before {
+    content: '\203a';
+    transform: rotate(-90deg);
+  }
+
+  .tc-doc-nav__alltitle:hover {
+    border-color: var(--accent);
+    background: var(--accent-quiet);
+  }
+
+  .tc-doc-nav__group {
+    margin-block-start: var(--space-3);
+  }
+
+  .tc-doc-nav__group:first-of-type {
+    margin-block-start: 0;
+  }
+
+  .tc-doc-nav__grouptitle {
+    margin-block-end: var(--space-1);
+    padding-block: var(--space-2);
+    padding-inline: var(--space-2);
+  }
+
+  .tc-doc-nav__link {
+    min-block-size: var(--target-min);
+    padding-inline: var(--space-3) var(--space-2);
+    border-radius: var(--radius-sm);
+  }
+
+  /* Une fermeture garde le même repère horizontal que l'état ouvert. Le
+     panneau devient invisible, mais sa largeur reste celle du sommaire pour
+     que la flèche ne saute pas vers le bord de l'écran entre deux états. */
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open])) {
+    justify-self: stretch;
+    inline-size: 100%;
+    block-size: 0;
+    min-block-size: 0;
+    max-block-size: 0;
+    padding: 0;
+    overflow: visible;
+    border-block-end: 0;
+  }
+
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open])) > [class*='glassContainer'] {
+    inline-size: 100%;
+  }
+
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open])) .tc-doc-nav__panel {
+    inline-size: 100%;
+    block-size: 0;
+    min-block-size: 0;
+    padding: 0;
+  }
+
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open])) .tc-doc-nav__all {
+    block-size: 0;
+    min-block-size: 0;
+  }
+
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open])) .tc-doc-nav__alltitle {
+    inset-block-start: calc(-1 * (var(--target-min) + var(--space-4)) - 1px);
+    inset-inline-end: calc(2 * var(--space-4));
+    inset-inline-start: auto;
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--text-on-accent);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* Le champ s'aligne à gauche pour laisser le bouton replié dans la même
+     rangée, avec 8 px de respiration entre les deux cibles. */
+  .tc-doc:has(.tc-doc-nav__all:not([open])) .tc-doc-topbar__field {
+    justify-content: flex-start;
+  }
+
+  .tc-doc:has(.tc-doc-nav__all:not([open])) .tc-doc-search {
+    inline-size: calc(100% - 3rem - var(--space-2) - var(--space-4));
+    flex: 0 0 calc(100% - 3rem - var(--space-2) - var(--space-4));
+  }
+
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open])) > [class*='glassContainer'] {
+    overflow: visible;
+  }
+
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open])) .tc-doc-nav__alltitle::before {
+    color: var(--text-on-accent);
+  }
+
+  /* En mode fermé, les couches du verre s'arrêtent au bouton : aucune petite
+     plaque ne reste autour de lui. */
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open]))
+    > [class*='glassContainer']
+    > [class*='glassFilter'],
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open]))
+    > [class*='glassContainer']
+    > [class*='glassOverlay'],
+  .tc-doc-nav:has(.tc-doc-nav__all:not([open]))
+    > [class*='glassContainer']
+    > [class*='glassSpecular'] {
+    display: none;
+  }
+
+  @supports selector(details::details-content) {
+    .tc-doc-nav__all::details-content {
+      block-size: 0;
+      opacity: 0;
+      overflow: clip;
+      transition:
+        block-size var(--motion-move) var(--motion-ease),
+        opacity var(--motion-color) var(--motion-ease),
+        content-visibility var(--motion-move) allow-discrete;
+    }
+
+    .tc-doc-nav__all[open]::details-content {
+      block-size: auto;
+      opacity: 1;
+    }
+  }
+}
+
+/* --- Démonstration Liquid Glass -------------------------------------------
+   Cette recette reste limitée à la modale de l'onglet « Verre liquide » :
+   transparence basse, relief de bulle, filet spéculaire et filtre de
+   déplacement doux. Les autres composants conservent leur rendu vendoré. */
+
+.tc-doc-liquid-filter {
+  position: absolute;
+  inline-size: 0;
+  block-size: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.tc-doc-liquid-modal > [class*='glassFilter'] {
+  backdrop-filter: blur(0.75px) saturate(1.08);
+  -webkit-backdrop-filter: blur(0.75px) saturate(1.08);
+  filter: url('#tc-doc-liquid-modal-dist');
+  transform: scale(1.018);
+}
+
+.tc-doc-liquid-modal > [class*='glassOverlay'] {
+  overflow: hidden;
+  background:
+    radial-gradient(88% 125% at 8% 0%, rgba(255, 255, 255, 0.2), transparent 52%),
+    radial-gradient(80% 120% at 100% 100%, rgba(5, 35, 48, 0.16), transparent 58%),
+    var(--lg-bg-color);
+}
+
+/* Le relief reste diffus : les gradients donnent le bombé sans dessiner
+   d'arc circulaire. Le seul contour visible vient du calque spéculaire natif
+   de `Glass`, afin que la modale et le bouton n'aient qu'une bordure. */
+
+.tc-doc-liquid-modal > [class*='glassContent'].tc-doc-liquid-action-button:hover,
+.tc-doc-liquid-modal > [class*='glassContent'].tc-doc-squire-circle__button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.tc-doc-squire-circle__button {
+  inline-size: 100%;
+  block-size: 100%;
+  padding: 0;
+  border-radius: 0.75rem;
+  background: transparent;
+}
+
+/* Le contrôle reprend la même empreinte que la bascule de thème. Les trois
+   cellules restent dans la même rangée avec le `gap` commun de la scène. */
+.tc-doc-squire-circle__stage {
+  display: grid;
+  place-items: center;
+  min-inline-size: var(--target-min);
+  min-block-size: 108px;
+}
+
+.tc-doc-squire-circle__app-icon {
+  display: block;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  overflow: visible;
+  transform: translateX(-1px);
+}
+
+/* La scène Liquid Glass expose trois variantes : elles respirent sur toute la
+   largeur disponible, et chaque nom reste centré sous l’objet qu’il décrit. */
+.tc-doc-magicstage:has(.tc-doc-squire-circle__root) {
+  justify-content: space-between;
+}
+
+.tc-doc-magicstage:has(.tc-doc-squire-circle__root) .tc-doc-magicstage__cell {
+  align-items: center;
+}
+
+.tc-doc-magicstage:has(.tc-doc-squire-circle__root) .tc-doc-magicstage__label {
+  inline-size: 100%;
+  text-align: center;
+}
+
 /* --- La page ----------------------------------------------------------------
    `<main>` porte lui-même la mesure et les coussins : la coquille n'a AUCUN
    conteneur entre lui et le titre — le contrat de DOM exige que le `<h1>`, le
@@ -3081,5 +3453,130 @@ body {
     background: var(--tc-white-a10);
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
+  }
+}
+
+/* Le contrôle mobile appartient au header : il ne doit jamais apparaître
+   comme une pastille flottante dans le sommaire. */
+.tc-doc-mobile-nav-toggle {
+  display: none;
+}
+
+@media (max-width: 59.999rem) {
+  /* Le bouton occupe une cellule fixe à côté de la recherche. La grille ne
+     change pas lorsque le sommaire est plié : le bouton reste donc au même
+     endroit dans les deux états. */
+  .tc-doc-topbar .tc-doc-topbar__bar {
+    grid-template-columns: minmax(0, 1fr) var(--target-min);
+    grid-template-areas:
+      'brand actions'
+      'search nav-toggle';
+    column-gap: var(--space-2);
+  }
+
+  .tc-doc-topbar .tc-doc-topbar__actions {
+    grid-area: actions;
+    align-self: center;
+    margin-inline-start: 0;
+  }
+
+  .tc-doc-topbar .tc-doc-topbar__field {
+    grid-area: search;
+    inline-size: 100%;
+    min-inline-size: 0;
+  }
+
+  .tc-doc-topbar .tc-doc-search {
+    inline-size: 100%;
+    max-inline-size: none;
+    min-inline-size: 0;
+    flex: 1 1 auto;
+  }
+
+  .tc-doc-mobile-nav-toggle {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-area: nav-toggle;
+    place-items: center;
+    inline-size: var(--target-min);
+    block-size: var(--target-min);
+    margin-inline-end: var(--space-4);
+    padding: 0;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    color: var(--text-on-accent);
+    font: inherit;
+    cursor: pointer;
+    pointer-events: auto;
+    touch-action: manipulation;
+    transition:
+      background-color var(--motion-color) var(--motion-ease),
+      border-color var(--motion-color) var(--motion-ease);
+  }
+
+  .tc-doc-mobile-nav-toggle::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 50%;
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    border-inline-end: 0.125rem solid currentColor;
+    border-block-end: 0.125rem solid currentColor;
+    color: var(--text-on-accent);
+    transform: translate(-50%, -50%) rotate(45deg);
+    transform-origin: center;
+    transition: transform var(--motion-move) var(--motion-ease);
+  }
+
+  .tc-doc-mobile-nav-toggle[aria-expanded='true']::before {
+    transform: translate(-50%, -50%) rotate(225deg);
+  }
+
+  .tc-doc-mobile-nav-toggle:hover {
+    background: var(--accent-active);
+    border-color: var(--accent-active);
+  }
+
+  /* Le focus clavier reste visible, mais son anneau ne reprend pas le noir
+     global de la page autour du bouton accentué. */
+  .tc-doc-mobile-nav-toggle:focus-visible {
+    outline: 3px solid var(--text-on-accent);
+    outline-offset: 2px;
+    box-shadow:
+      0 0 0 2px var(--accent),
+      0 0 0 5px var(--text-on-accent);
+  }
+
+  /* Le summary natif reste dans le DOM pour porter le pliage et rester
+     disponible hors mobile ; sur mobile le seul contrôle visible est celui du
+     header. */
+  .tc-doc-nav .tc-doc-nav__alltitle {
+    display: none;
+  }
+
+  /* Les anciens ajustements de l'état fermé ne doivent plus réduire la
+     recherche ni réserver une rangée fantôme : le contrôle est maintenant
+     toujours dans la grille du header. */
+  .tc-doc:has(.tc-doc-nav__all:not([open])) .tc-doc-search {
+    inline-size: 100%;
+    flex: 1 1 auto;
+  }
+
+  /* Une fois ouvert, le sommaire commence directement sous le header : les
+     deux coussins empilés repoussaient inutilement « Opale UI » vers le bas. */
+  .tc-doc-nav:has(.tc-doc-nav__all[open]) {
+    padding-block-start: 0;
+  }
+
+  .tc-doc-nav:has(.tc-doc-nav__all[open]) .tc-doc-nav__panel {
+    padding-block-start: 0;
+  }
+
+  .tc-doc-nav:has(.tc-doc-nav__all[open]) .tc-doc-nav__head {
+    align-items: flex-start;
+    padding-block-start: 0;
   }
 }

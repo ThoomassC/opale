@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { Topbar } from '../magic';
@@ -94,6 +94,7 @@ function PageContent({ page }: { page: DocPage }): ReactNode {
 export function DocShell({ pages }: DocShellProps) {
   const slug = useRoute();
   const page = findPage(pages, slug) ?? findPage(pages, HOME_SLUG) ?? EMPTY_REGISTRY_PAGE;
+  const [mobileNavOpen, setMobileNavOpen] = useState(true);
 
   /* LE TITRE, ET NON `<main>`, EST LA CIBLE DU FOCUS. Deux raisons mesurées :
      — `<main>` fait la hauteur entière de la page, donc l'anneau de
@@ -250,11 +251,30 @@ export function DocShell({ pages }: DocShellProps) {
           <Topbar.Actions className="tc-doc-topbar__side tc-doc-topbar__actions">
             <ThemeToggle />
           </Topbar.Actions>
+
+          {/* Sur mobile, le contrôle du sommaire vit dans cette même grille que
+              la recherche. Il garde donc exactement la même position quand le
+              panneau s'ouvre ou se ferme, au lieu de flotter avec sa hauteur. */}
+          <button
+            className="tc-doc-mobile-nav-toggle"
+            type="button"
+            aria-label="Afficher ou masquer le sommaire"
+            aria-expanded={mobileNavOpen}
+            aria-controls="tc-doc-nav-content"
+            onClick={() => setMobileNavOpen((open) => !open)}
+          >
+            <span aria-hidden="true" />
+          </button>
         </Topbar>
       </div>
 
       <div className="tc-doc-body">
-        <DocNav pages={pages} currentSlug={page.slug} />
+        <DocNav
+          pages={pages}
+          currentSlug={page.slug}
+          mobileNavOpen={mobileNavOpen}
+          onMobileNavOpenChange={setMobileNavOpen}
+        />
 
         <div className="tc-doc-column">
           {/* `tabIndex={-1}` sur `<main>` reste le FILET du lien d'évitement :

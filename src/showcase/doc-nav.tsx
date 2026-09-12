@@ -11,6 +11,10 @@ export interface DocNavProps {
    * est à l'écran, donc c'est l'accueil qui porte `aria-current`.
    */
   readonly currentSlug: string;
+  /** État contrôlé par la commande du header mobile lorsqu'elle est fournie. */
+  readonly mobileNavOpen?: boolean;
+  /** Synchronise le pli global avec la commande du header mobile. */
+  readonly onMobileNavOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -66,7 +70,21 @@ export interface DocNavProps {
  * CSS n'entre pas dans son nom accessible.
  * ==========================================================================
  */
-export function DocNav({ pages, currentSlug }: DocNavProps) {
+export function DocNav({
+  pages,
+  currentSlug,
+  mobileNavOpen,
+  onMobileNavOpenChange,
+}: DocNavProps) {
+  const handleNavToggle = (event: { currentTarget: HTMLDetailsElement }) => {
+    onMobileNavOpenChange?.(event.currentTarget.open);
+  };
+
+  const detailsStateProps =
+    mobileNavOpen === undefined
+      ? ({ open: true } as const)
+      : { open: mobileNavOpen, onToggle: handleNavToggle };
+
   return (
     /* L'ENVELOPPE EST À MOI, POUR LA MÊME RAISON QUE CELLE DE LA BARRE DU
        HAUT : `Sidebar` rend son `<aside>` dans un `Glass`, dont l'enveloppe
@@ -113,7 +131,7 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
           {/* LE SOMMAIRE ENTIER SE PLIE. Le contrôle reste volontairement réduit
               à une flèche : la région est déjà nommée par `Sidebar.Items`,
               tandis que le `<summary>` natif annonce l'état ouvert/fermé. */}
-          <details className="tc-doc-nav__all" open>
+          <details id="tc-doc-nav-content" className="tc-doc-nav__all" {...detailsStateProps}>
             <summary
               className="tc-doc-nav__alltitle"
               aria-label="Afficher ou masquer le sommaire"

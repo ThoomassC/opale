@@ -426,6 +426,7 @@ describe('DocShell — la bascule de la barre du haut', () => {
   function toggleTexts(): readonly string[] {
     return topbar()
       .getAllByRole('button')
+      .filter((button) => button.hasAttribute('aria-pressed'))
       .map((button) => button.textContent ?? '');
   }
 
@@ -489,6 +490,30 @@ describe('DocShell — la bascule de la barre du haut', () => {
         `<html> : aucune feuille publiée ne lit plus « data-material », donc rien ` +
         `ne doit le poser`,
     ).toEqual({ 'data-theme': 'dark', 'data-material': null });
+  });
+
+  it('devrait piloter le sommaire depuis le header mobile', async () => {
+    render(<DocShell pages={FIXTURE_PAGES} />);
+    const user = userEvent.setup();
+
+    const navigationToggle = topbar().getByRole('button', {
+      name: 'Afficher ou masquer le sommaire',
+    });
+    const navigationDetails = document.querySelector<HTMLDetailsElement>('#tc-doc-nav-content');
+
+    expect(navigationToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(navigationToggle).toHaveAttribute('aria-controls', 'tc-doc-nav-content');
+    expect(navigationDetails?.open).toBe(true);
+
+    await user.click(navigationToggle);
+
+    expect(navigationToggle).toHaveAttribute('aria-expanded', 'false');
+    expect(navigationDetails?.open).toBe(false);
+
+    await user.click(navigationToggle);
+
+    expect(navigationToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(navigationDetails?.open).toBe(true);
   });
 });
 
