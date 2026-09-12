@@ -2141,6 +2141,83 @@ body {
   }
 }
 
+/* --- Démonstration Liquid Glass -------------------------------------------
+   Cette recette reste limitée à la modale de l'onglet « Verre liquide » :
+   transparence basse, relief de bulle, filet spéculaire et filtre de
+   déplacement doux. Les autres composants conservent leur rendu vendoré. */
+
+.tc-doc-liquid-filter {
+  position: absolute;
+  inline-size: 0;
+  block-size: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.tc-doc-liquid-modal > [class*='glassFilter'] {
+  backdrop-filter: blur(0.75px) saturate(1.08);
+  -webkit-backdrop-filter: blur(0.75px) saturate(1.08);
+  filter: url('#tc-doc-liquid-modal-dist');
+  transform: scale(1.018);
+}
+
+.tc-doc-liquid-modal > [class*='glassOverlay'] {
+  overflow: hidden;
+  background:
+    radial-gradient(88% 125% at 8% 0%, rgba(255, 255, 255, 0.2), transparent 52%),
+    radial-gradient(80% 120% at 100% 100%, rgba(5, 35, 48, 0.16), transparent 58%),
+    var(--lg-bg-color);
+}
+
+/* Le relief reste diffus : les gradients donnent le bombé sans dessiner
+   d'arc circulaire. Le seul contour visible vient du calque spéculaire natif
+   de `Glass`, afin que la modale et le bouton n'aient qu'une bordure. */
+
+.tc-doc-liquid-modal > [class*='glassContent'].tc-doc-liquid-action-button:hover,
+.tc-doc-liquid-modal > [class*='glassContent'].tc-doc-squire-circle__button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.tc-doc-squire-circle__button {
+  inline-size: 100%;
+  block-size: 100%;
+  padding: 0;
+  border-radius: 0.75rem;
+  background: transparent;
+}
+
+/* Le contrôle reprend la même empreinte que la bascule de thème. Les trois
+   cellules restent dans la même rangée avec le `gap` commun de la scène. */
+.tc-doc-squire-circle__stage {
+  display: grid;
+  place-items: center;
+  min-inline-size: var(--target-min);
+  min-block-size: 108px;
+}
+
+.tc-doc-squire-circle__app-icon {
+  display: block;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  overflow: visible;
+  transform: translateX(-1px);
+}
+
+/* La scène Liquid Glass expose trois variantes : elles respirent sur toute la
+   largeur disponible, et chaque nom reste centré sous l’objet qu’il décrit. */
+.tc-doc-magicstage:has(.tc-doc-squire-circle__root) {
+  justify-content: space-between;
+}
+
+.tc-doc-magicstage:has(.tc-doc-squire-circle__root) .tc-doc-magicstage__cell {
+  align-items: center;
+}
+
+.tc-doc-magicstage:has(.tc-doc-squire-circle__root) .tc-doc-magicstage__label {
+  inline-size: 100%;
+  text-align: center;
+}
+
 /* --- La page ----------------------------------------------------------------
    `<main>` porte lui-même la mesure et les coussins : la coquille n'a AUCUN
    conteneur entre lui et le titre — le contrat de DOM exige que le `<h1>`, le
