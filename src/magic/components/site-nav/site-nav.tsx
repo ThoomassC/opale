@@ -13,42 +13,23 @@ export type SiteNavItem = {
   readonly label: ReactNode;
 };
 
-export type SiteNavLanguageItem = {
-  /** Stable key for React and the current-language marker. */
-  readonly id: string;
-  readonly href: string;
-  readonly label: ReactNode;
-  /** Optional flag or other compact visual marker. */
-  readonly flag?: ReactNode;
-  /** Language metadata forwarded to the anchor. */
-  readonly lang?: string;
-  readonly hrefLang?: string;
-  readonly current?: boolean;
-};
-
-export type SiteNavLanguage = {
-  /** Current-language visual, usually a flag. */
-  readonly current: ReactNode;
-  /** Accessible name of the disclosure summary. */
-  readonly label: string;
-  readonly title?: ReactNode;
-  readonly items: readonly SiteNavLanguageItem[];
-  readonly note?: ReactNode;
-};
+/** Default destinations for the compact site navigation. */
+export const DEFAULT_SITE_NAV_ITEMS: readonly SiteNavItem[] = [
+  { id: 'map', href: '/', label: 'Carte' },
+  { id: 'countries', href: '/countries', label: 'Pays' },
+  { id: 'cities', href: '/cities', label: 'Villes' },
+  { id: 'about', href: '/about', label: 'À propos' },
+];
 
 export type SiteNavProps = Omit<ComponentPropsWithoutRef<'header'>, 'children'> & {
-  /** Brand lock-up supplied by the consuming application. */
-  readonly brand: ReactNode;
+  /** Optional brand lock-up supplied by the consuming application. */
+  readonly brand?: ReactNode;
   /** Main destinations. The liquid navigation is designed for four items. */
-  readonly items: readonly SiteNavItem[];
+  readonly items?: readonly SiteNavItem[];
   /** Identifier of the destination that owns the active bubble. */
   readonly activeItem?: string;
   /** Accessible name of the navigation landmark. */
-  readonly navLabel: string;
-  /** Search control supplied by the consuming application. */
-  readonly search?: ReactNode;
-  /** Optional native language disclosure. */
-  readonly language?: SiteNavLanguage;
+  readonly navLabel?: string;
   /**
    * Optional client-side navigation hook. When provided, the component keeps
    * the clicked bubble visible and delegates routing to the consumer.
@@ -60,73 +41,25 @@ export type SiteNavProps = Omit<ComponentPropsWithoutRef<'header'>, 'children'> 
  * Reusable liquid-glass site navigation.
  *
  * The component owns the chrome and the animated active surface. Application
- * concerns stay in slots and data: brand, search, routes, labels and locales.
+ * concerns stay in slots and data: optional brand, routes and labels.
  */
 export function SiteNav({
   brand,
-  items,
+  items = DEFAULT_SITE_NAV_ITEMS,
   activeItem,
-  navLabel,
-  search,
-  language,
+  navLabel = 'Navigation principale',
   onNavigate,
   className,
   ...headerProps
 }: SiteNavProps) {
   return (
     <header className={[styles.bar, className].filter(Boolean).join(' ')} {...headerProps}>
-      <div className={styles.brandZone}>{brand}</div>
+      {brand && <div className={styles.brandZone}>{brand}</div>}
 
       <div className={styles.inner}>
         <nav aria-label={navLabel}>
           <NavBubble items={items} activeKey={activeItem} onNavigate={onNavigate} />
         </nav>
-
-        {(search || language) && (
-          <div className={styles.chromeEnd}>
-            {search}
-            {language && (
-              <details className={styles.language}>
-                <summary>
-                  <span className={styles.flag}>{language.current}</span>
-                  <span className={styles.visuallyHidden}>{language.label}</span>
-                  <svg
-                    className={styles.chevron}
-                    viewBox="0 0 12 8"
-                    aria-hidden="true"
-                    focusable="false"
-                  >
-                    <path
-                      d="M1,1.5 L6,6.5 L11,1.5"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </summary>
-                <div className={styles.languagePanel}>
-                  {language.title && <p className={styles.languageTitle}>{language.title}</p>}
-                  {language.items.map((item) => (
-                    <a
-                      key={item.id}
-                      className={styles.languageLink}
-                      href={item.href}
-                      lang={item.lang}
-                      hrefLang={item.hrefLang}
-                      aria-current={item.current ? 'true' : undefined}
-                    >
-                      {item.flag && <span className={styles.flag}>{item.flag}</span>}
-                      <span>{item.label}</span>
-                    </a>
-                  ))}
-                  {language.note && <p className={styles.languageNote}>{language.note}</p>}
-                </div>
-              </details>
-            )}
-          </div>
-        )}
       </div>
     </header>
   );

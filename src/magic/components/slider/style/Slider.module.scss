@@ -15,8 +15,11 @@
 }
 
 .sliderTrack {
-    @apply relative cursor-pointer w-full;
+    @apply relative w-full;
+    width: calc(100% - 1.5rem);
+    margin-inline: 0.75rem;
     height: 6px;
+    touch-action: none;
 }
 
 .trackBackground {
@@ -36,6 +39,7 @@
 .thumb {
     @apply absolute top-1/2 left-0;
     @apply cursor-grab;
+    touch-action: none;
     transform: translate(-50%, -50%);
 
     /* Capsule Shape */
@@ -54,6 +58,7 @@
         inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 
     transition: transform 0.1s ease;
+    will-change: left, transform;
     z-index: 10;
 
     &.dragging {

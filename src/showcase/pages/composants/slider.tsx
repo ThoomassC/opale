@@ -100,12 +100,11 @@ export const sliderPage: DocPage = {
       <UsageBlock label="Import et appels représentatifs de Slider" code={USAGE} />
 
       <Specimen
-        title="Les trois crans — glissez-les à la souris"
+        title="Les trois tailles — glissez la poignée"
         note={
           <>
-            <strong>À la souris seulement</strong> : la piste est un <code>&lt;div&gt;</code> avec{' '}
-            <code>onMouseDown</code>, sans <code>tabindex</code>, sans rôle et sans gestion du
-            clavier. <MagicGroundNote />
+            Seule la poignée accepte le glisser à la souris ou au tactile. Elle ne réagit pas au
+            simple déplacement du pointeur ; le clavier reste hors contrat. <MagicGroundNote />
           </>
         }
       >
@@ -116,8 +115,8 @@ export const sliderPage: DocPage = {
         title="Le pas, et l’état désactivé"
         note={
           <>
-            Avec <code>step={'{25}'}</code>, le pointeau ne s’arrête que sur cinq positions —
-            l’arrondi est visible à l’œil pendant le glisser.
+            Avec <code>step={'{25}'}</code>, la valeur émise reste arrondie à cinq positions tandis
+            que la poignée suit le pointeur sans à-coups.
           </>
         }
       >
@@ -141,14 +140,13 @@ export const sliderPage: DocPage = {
       />
 
       <p className="tc-doc-prose">
-        <strong>Ce composant n’est pas utilisable sans souris, et ce n’est pas rattrapable.</strong>{' '}
+        <strong>Ce composant n’est pas utilisable au clavier, et ce n’est pas rattrapable.</strong>{' '}
         Il n’y a ni <code>role=&quot;slider&quot;</code>, ni{' '}
         <code>aria-valuenow / valuemin / valuemax</code>, ni <code>tabindex</code>, ni écoute du
-        clavier, ni gestion du tactile (<code>onMouseDown</code> seul, pas de{' '}
-        <code>pointerdown</code>). Comme le type n’accepte aucun attribut supplémentaire, un
-        appelant ne peut rien ajouter. Un <code>&lt;input type=&quot;range&quot;&gt;</code> habillé
-        obtiendrait les six gratuitement — c’est ce qu’il faudrait remonter en amont chez{' '}
-        <code>@tweeedlex</code>.
+        clavier. Le glisser souris et tactile passe par <code>pointerdown</code>. Comme le type
+        n’accepte aucun attribut supplémentaire, un appelant ne peut rien ajouter. Un{' '}
+        <code>&lt;input type=&quot;range&quot;&gt;</code> habillé obtiendrait les six gratuitement —
+        c’est ce qu’il faudrait remonter en amont chez <code>@tweeedlex</code>.
       </p>
 
       <p className="tc-doc-prose">
