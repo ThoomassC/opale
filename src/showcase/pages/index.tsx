@@ -17,9 +17,11 @@ import { checkboxPage } from './composants/checkbox';
 import { glassPage } from './composants/glass';
 import { inputPage } from './composants/input';
 import { modalPage } from './composants/modal';
+import { searchBarPage } from './composants/search-bar';
 import { selectPage } from './composants/select';
 import { sidebarPage } from './composants/sidebar';
 import { sliderPage } from './composants/slider';
+import { siteNavPage } from './composants/site-nav';
 import { switchPage } from './composants/switch';
 import { tabsPage } from './composants/tabs';
 import { toastPage } from './composants/toast';
@@ -83,8 +85,10 @@ export const PAGES: readonly DocPage[] = [
   glassPage,
   inputPage,
   modalPage,
+  searchBarPage,
   selectPage,
   sidebarPage,
+  siteNavPage,
   sliderPage,
   switchPage,
   tabsPage,

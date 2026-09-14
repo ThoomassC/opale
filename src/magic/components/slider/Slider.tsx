@@ -5,13 +5,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, jsx-a11y/no-static-element-interactions -- écart assumé au profit de la fidélité.
    Deux défauts réels de leur `Slider`, gardés tels quels :
    - `showValue` est déstructuré mais jamais lu : cette prop n'a aucun effet ;
-   - la piste est un `<div>` avec `onMouseDown`, sans rôle, sans tabindex et
-     sans clavier : le curseur est inutilisable sans souris.
+   - la piste est un `<div>` sans rôle, sans tabindex et sans clavier.
    La surface Glass est ajoutée par Opale pour aligner ce dernier composant sur
-   le matériau liquide commun ; elle ne change pas la mécanique de la piste.
+   le matériau liquide commun. Seule la poignée se déplace après une prise en
+   main, en continu à l'écran, même lorsque `step` arrondit la valeur émise.
    À corriger en amont chez tweeedlex, pas par une divergence locale. */
 
-import React, { useState, useRef, type MouseEvent } from "react";
+import React, { useState, useRef, type PointerEvent } from "react";
 import styles from "./style/Slider.module.scss";
 import clsx from "clsx";
 import Glass from "../glass/Glass";
@@ -41,9 +41,11 @@ const Slider: React.FC<SliderProps> = ({
     ...props
 }) => {
     const [isDragging, setIsDragging] = useState(false);
+    const [dragPercentage, setDragPercentage] = useState<number | null>(null);
     const sliderRef = useRef<HTMLDivElement>(null);
 
-    const percentage = ((value - min) / (max - min)) * 100;
+    const percentage = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
+    const displayedPercentage = dragPercentage ?? percentage;
 
     const updateValue = (clientX: number) => {
         if (!sliderRef.current || disabled) return;
@@ -55,6 +57,7 @@ const Slider: React.FC<SliderProps> = ({
 
         // Clamp percentage between 0 and 100
         newPercentage = Math.max(0, Math.min(100, newPercentage));
+        setDragPercentage(newPercentage);
 
         // Calculate new value
         let newValue = min + (newPercentage / 100) * (max - min);
@@ -70,59 +73,49 @@ const Slider: React.FC<SliderProps> = ({
         }
     };
 
-    const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
+    const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {
         if (disabled) return;
+
+        e.currentTarget.setPointerCapture(e.pointerId);
         setIsDragging(true);
         updateValue(e.clientX);
     };
 
-    const handleMouseMove = (e: globalThis.MouseEvent) => {
+    const handlePointerMove = (e: PointerEvent<HTMLDivElement>) => {
         if (isDragging && !disabled) {
             updateValue(e.clientX);
         }
     };
 
-    const handleMouseUp = () => {
-        setIsDragging(false);
-    };
-
-    React.useEffect(() => {
-        if (isDragging) {
-            document.addEventListener("mousemove", handleMouseMove);
-            document.addEventListener("mouseup", handleMouseUp);
+    const handlePointerUp = (e: PointerEvent<HTMLDivElement>) => {
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+            e.currentTarget.releasePointerCapture(e.pointerId);
         }
-
-        return () => {
-            document.removeEventListener("mousemove", handleMouseMove);
-            document.removeEventListener("mouseup", handleMouseUp);
-        };
-    }, [isDragging]);
+        setIsDragging(false);
+        setDragPercentage(null);
+    };
 
     return (
         <Glass
             rootStyle={{ width: "100%" }}
             enableLiquidAnimation={!disabled && enableClickAnimation}
             {...props}
-            className={clsx(
-                styles.sliderContainer,
-                styles[size],
-                disabled && styles.disabled
-            )}
+            className={clsx(styles.sliderContainer, styles[size], disabled && styles.disabled)}
         >
-            <div
-                ref={sliderRef}
-                className={clsx(styles.sliderTrack, styles[size])}
-                onMouseDown={handleMouseDown}
-            >
+            <div ref={sliderRef} className={clsx(styles.sliderTrack, styles[size])}>
                 <div className={clsx(styles.trackBackground, styles[size])}>
                     <div
                         className={styles.trackFill}
-                        style={{ width: `${percentage}%` }}
+                        style={{ width: `${displayedPercentage}%` }}
                     />
                 </div>
                 <div
                     className={clsx(styles.thumb, isDragging && styles.dragging)}
-                    style={{ left: `${percentage}%` }}
+                    style={{ left: `${displayedPercentage}%` }}
+                    onPointerDown={handlePointerDown}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    onPointerCancel={handlePointerUp}
                 />
             </div>
         </Glass>

@@ -4,10 +4,10 @@
    contract and is not styled with Opale's tokens. See src/magic/README.md. */
 
 :root {
-    --lg-bg-color: rgba(255, 255, 255, 0.10);
-    --lg-highlight: rgba(255, 255, 255, 0.25);
+    --lg-bg-color: rgba(255, 255, 255, 0.06);
+    --lg-highlight: rgba(255, 255, 255, 0.32);
     --lg-text: #ffffff;
-    --lg-hover-glow: rgba(255, 255, 255, 0.2);
+    --lg-hover-glow: rgba(255, 255, 255, 0.12);
 }
 
 .glassContainer {
@@ -31,7 +31,7 @@
 
        `z-index: 0` ET NON `isolation: isolate`, délibérément : `isolate` crée
        aussi une RACINE DE FOND, et `.glassFilter` porte un
-       `backdrop-filter: blur(2px)` qui n'échantillonnerait alors plus que
+       `backdrop-filter: blur(0.75px)` qui n'échantillonnerait alors plus que
        l'intérieur du conteneur — le verre cesserait de refracter la page. Un
        `z-index` numérique sur un élément déjà positionné suffit à contenir les
        couches sans toucher à ce que le fond laisse voir. */
@@ -58,10 +58,11 @@
     border-radius: inherit;
     inset: 0;
     z-index: 0;
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(0.75px) saturate(1.08);
+    -webkit-backdrop-filter: blur(0.75px) saturate(1.08);
     filter: url("#lg-dist");
     isolation: isolate;
-    transform: scale(1.015);
+    transform: scale(1.018);
     transform-origin: center;
     transition: filter 0.3s ease, transform 0.3s ease;
 }
@@ -74,7 +75,11 @@
     position: absolute;
     inset: 0;
     z-index: 1;
-    background: var(--lg-bg-color);
+    overflow: hidden;
+    background:
+        radial-gradient(88% 125% at 8% 0%, rgba(255, 255, 255, 0.2), transparent 52%),
+        radial-gradient(80% 120% at 100% 100%, rgba(5, 35, 48, 0.16), transparent 58%),
+        var(--lg-bg-color);
     transition: background 0.3s ease;
 }
 

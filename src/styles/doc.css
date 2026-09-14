@@ -2142,9 +2142,10 @@ body {
 }
 
 /* --- Démonstration Liquid Glass -------------------------------------------
-   Cette recette reste limitée à la modale de l'onglet « Verre liquide » :
+   Cette couche documente la recette globale de `Glass` sur la scène paysage :
    transparence basse, relief de bulle, filet spéculaire et filtre de
-   déplacement doux. Les autres composants conservent leur rendu vendoré. */
+   déplacement doux. Les composants de la librairie l'emploient désormais
+   directement depuis leur primitive commune. */
 
 .tc-doc-liquid-filter {
   position: absolute;
@@ -3222,8 +3223,8 @@ body {
      laisse le décor vivre derrière lui au lieu de poser un aplat opaque. */
   --doc-shell-ground: transparent;
   --doc-shell-edge: transparent;
-  --lg-bg-color: var(--tc-white-a10);
-  --lg-highlight: rgba(255, 255, 255, 0.25);
+  --lg-bg-color: color-mix(in srgb, var(--tc-white) 6%, transparent);
+  --lg-highlight: color-mix(in srgb, var(--tc-white) 32%, transparent);
   --lg-radius: 0;
   background: transparent;
   border-radius: 0;
@@ -3234,8 +3235,8 @@ body {
 .tc-doc-nav__glass {
   --doc-shell-ground: transparent;
   --doc-shell-edge: transparent;
-  --lg-bg-color: var(--tc-white-a10);
-  --lg-highlight: rgba(255, 255, 255, 0.25);
+  --lg-bg-color: color-mix(in srgb, var(--tc-white) 6%, transparent);
+  --lg-highlight: color-mix(in srgb, var(--tc-white) 32%, transparent);
   --lg-radius: var(--radius-lg);
   background: transparent;
   border-color: transparent;
@@ -3322,6 +3323,13 @@ body {
 
 .tc-doc-nav__items {
   gap: 0;
+}
+
+/* Le dernier lien doit rester entièrement dans la surface arrondie du
+   sommaire. Ce coussin supplémentaire évite que son fond actif soit rogné par
+   le bord inférieur du verre quand la navigation arrive en butée. */
+.tc-doc-nav__panel {
+  padding-block-end: var(--space-5);
 }
 
 .tc-doc-nav__version {
@@ -3450,9 +3458,9 @@ body {
   /* La flèche porte seule la surface translucide, avec le même voile que les
      boutons et modales. */
   .tc-doc-nav:has(.tc-doc-nav__all:not([open])) .tc-doc-nav__alltitle:not(:focus-visible) {
-    background: var(--tc-white-a10);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
+    background: color-mix(in srgb, var(--tc-white) 6%, transparent);
+    backdrop-filter: blur(0.75px) saturate(1.08);
+    -webkit-backdrop-filter: blur(0.75px) saturate(1.08);
   }
 }
 

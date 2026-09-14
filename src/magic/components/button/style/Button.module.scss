@@ -10,11 +10,11 @@
     transition: background-color 0.15s, box-shadow 0.3s;
 
     &:hover {
-        @apply bg-white/30;
+        background: rgba(255, 255, 255, 0.12);
     }
 
     &:active {
-        @apply bg-white/40;
+        background: rgba(255, 255, 255, 0.18);
     }
 }
 

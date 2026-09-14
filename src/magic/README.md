@@ -19,7 +19,7 @@ de notices et les bandeaux.
 
 **Ce dossier n'emploie aucun jeton `--tc-*` et n'est pas soumis au contrat de
 couleur d'Opale.** Ses couleurs sont celles de tweeedlex : des blancs
-semi-transparents (`rgba(255,255,255,.10)` à `.40`) posés sur un fond sombre,
+semi-transparents (`rgba(255,255,255,.06)` à `.40`) posés sur un fond sombre,
 plus les neuf couleurs de leur `@theme`. Aucun ratio de contraste n'a été mesuré
 sur ce code et aucun ne le sera : il est gardé fidèle, pas conforme.
 
@@ -72,6 +72,15 @@ composant, c'est-à-dire du code copié au caractère. Chacune corrige une faute
 qui rendait le composant inutilisable **dans une page hôte**, pas un choix
 esthétique de l'amont — et chacune est mesurée.
 
+### `glass/Glass.tsx` et `glass/style/Glass.module.scss` — le matériau commun
+
+La primitive `Glass` reprend maintenant la recette validée dans la vitrine de
+« Verre liquide » pour tous les composants qui la composent : voile à alpha
+0,06, relief radial, saturation à 1,08, blur à 0,75 px, déformation SVG douce
+(échelle 12) et reflet à alpha 0,32. `Button`, `Card`, `Input`, `Select`,
+`Modal`, `Sidebar`, `Tabs`, `Toast`, `Topbar` et les autres composants héritent
+ainsi d'un même matériau sans recopier la recette dans chaque module.
+
 ### `glass/style/Glass.module.scss` — le rayon de l'enveloppe
 
 `8px` figé → `var(--lg-radius, 22px)`, et `.glassFilter` passe de `8px` à
@@ -95,10 +104,10 @@ sur la vitrine : aucun contexte d'empilement entre la glace et la racine,
 composant se peignait par-dessus l'en-tête au défilement.
 
 `z-index: 0` et non `isolation: isolate`, délibérément : `isolate` crée aussi une
-**racine de fond**, et `.glassFilter` porte un `backdrop-filter: blur(2px)` qui
+**racine de fond**, et `.glassFilter` porte un `backdrop-filter: blur(0.75px)` qui
 n'échantillonnerait alors plus que l'intérieur de l'enveloppe — le verre
 cesserait de réfracter la page. Vérifié après correction : `backdrop-filter:
-blur(2px)` et `filter: url("#lg-dist")` toujours actifs, un seul contexte
+blur(0.75px) saturate(1.08)` et `filter: url("#lg-dist")` toujours actifs, un seul contexte
 d'empilement, sur l'enveloppe.
 
 ### `modal/style/Modal.module.scss` et `modal/Modal.tsx` — la coquille
@@ -344,7 +353,8 @@ l'exige.
 `Slider.tsx` monte désormais `Glass`, comme les autres composants de la
 librairie. Il partage donc le `filter: url("#lg-dist")`, le reflet spéculaire et
 la déformation liquide au clic. Sa piste reste volontairement celle de l'amont :
-un `<div>` avec `onMouseDown`, sans rôle ni clavier.
+un `<div>` sans rôle ni clavier. Seule la poignée se déplace après une prise en
+main, en continu à l'écran, y compris lorsque `step` arrondit la valeur émise.
 
 ## Reste ouvert
 
