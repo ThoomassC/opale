@@ -70,19 +70,19 @@ const Glass = forwardRef(
     return (
       <>
         <svg style={{ display: "none" }}>
-          <filter id="lg-dist" x="0%" y="0%" width="100%" height="100%">
+          <filter id="lg-dist" x="-20%" y="-20%" width="140%" height="140%">
             <feTurbulence
               type="fractalNoise"
-              baseFrequency="0.012 0.012"
-              numOctaves="3"
-              seed="92"
-              result="noise"
+              baseFrequency="0.025 0.018"
+              numOctaves="2"
+              seed="18"
+              result="liquidNoise"
             />
-            <feGaussianBlur in="noise" stdDeviation="1" result="blurred" />
+            <feGaussianBlur in="liquidNoise" stdDeviation="0.7" result="softNoise" />
             <feDisplacementMap
               in="SourceGraphic"
-              in2="blurred"
-              scale="24"
+              in2="softNoise"
+              scale="12"
               xChannelSelector="R"
               yChannelSelector="G"
             />
