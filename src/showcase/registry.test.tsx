@@ -123,13 +123,10 @@ const PUBLISHED_COMPONENTS: readonly string[] = Object.entries(library)
  * monte d'un — et il faut aussi lui écrire une page, ce que le test suivant
  * exige.
  *
- * DIX-HUIT EN 1.0, QUATORZE EN 2.0. Le chiffre a baissé parce que les dix-huit
- * composants d'Opale sont supprimés et que l'entrée racine publie désormais les
- * quatorze composants verre liquide. Les quatorze sont : `Badge`, `Button`,
- * `Card`, `Checkbox`, `Glass`, `Input`, `Modal`, `Select`, `Sidebar`, `Slider`,
- * `Switch`, `Tabs`, `ToastProvider`, `Topbar`.
+ * DIX-HUIT EN 1.0, SEIZE EN 2.0. L'entrée racine publie les quatorze composants
+ * verre liquide historiques, ainsi que `SiteNav` et `SearchBar`.
  */
-const PUBLISHED_COMPONENT_COUNT = 15;
+const PUBLISHED_COMPONENT_COUNT = 16;
 
 /** Le libellé de la page attendue pour un composant. */
 function pageLabelFor(component: string): string {
@@ -202,7 +199,7 @@ afterEach(() => {
 
 describe('Le registre des pages', () => {
   describe('la couverture des composants publiés', () => {
-    it('devrait trouver les 15 composants publiés par l’entrée racine', () => {
+    it('devrait trouver les 16 composants publiés par l’entrée racine', () => {
       /* Garde-fou du garde-fou : si la reconnaissance des exports cassait, le
          test suivant passerait sur une liste tronquée et ne dirait plus rien. */
       expect(

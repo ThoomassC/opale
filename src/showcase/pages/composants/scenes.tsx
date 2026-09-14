@@ -170,7 +170,7 @@ export function SliderSizeScene() {
   );
 }
 
-/** Le pas de 25 : cinq positions atteignables, l'arrondi se voit à l'œil. */
+/** Le pas de 25 : cinq valeurs émises, avec une poignée visuellement continue. */
 export function SliderStepScene() {
   const [value, setValue] = useState(50);
 

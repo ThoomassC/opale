@@ -353,7 +353,8 @@ l'exige.
 `Slider.tsx` monte désormais `Glass`, comme les autres composants de la
 librairie. Il partage donc le `filter: url("#lg-dist")`, le reflet spéculaire et
 la déformation liquide au clic. Sa piste reste volontairement celle de l'amont :
-un `<div>` avec `onMouseDown`, sans rôle ni clavier.
+un `<div>` sans rôle ni clavier. Seule la poignée se déplace après une prise en
+main, en continu à l'écran, y compris lorsque `step` arrondit la valeur émise.
 
 ## Reste ouvert
 

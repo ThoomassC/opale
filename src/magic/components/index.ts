@@ -18,3 +18,4 @@ export * from './checkbox';
 export * from './select';
 export * from './slider';
 export * from './site-nav';
+export * from './search-bar';
