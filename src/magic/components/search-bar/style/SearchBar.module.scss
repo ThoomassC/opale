@@ -20,6 +20,9 @@
 
 .searchBar:focus-within {
   border-color: color-mix(in srgb, #ffffff 94%, transparent);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, #ffffff 18%, transparent),
+    0 0 1rem color-mix(in srgb, #ffffff 10%, transparent);
 }
 
 .icon {
@@ -39,6 +42,14 @@
   color: inherit;
   font: inherit;
   line-height: 1;
+}
+
+/* The global focus recipe is intentionally replaced by the rounded surface
+   above. Keeping the reset on the input prevents the browser from painting a
+   rectangular black-and-white ring inside the liquid-glass pill. */
+.input:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .input::placeholder {
