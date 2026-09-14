@@ -195,7 +195,7 @@ export function DocShell({ pages }: DocShellProps) {
           `doc-shell.test.tsx` continue de la trouver.
 
           LE SOL OPAQUE EST AUSSI CE QUI REND LE VERRE SÛR. `Glass` floute son
-          arrière-plan (`backdrop-filter: blur(2px)`) : sur un fond
+          arrière-plan (`backdrop-filter: blur(0.75px) saturate(1.08)`) : sur un fond
           TRANSPARENT, ce serait le contenu de la page qui remonterait sous
           l'encre de la barre — le défaut exact que `doc.css` mesurait pour
           refuser le verre sur la barre en 1.x (encre de marque à 2,64:1

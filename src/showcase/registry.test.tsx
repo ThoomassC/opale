@@ -129,7 +129,7 @@ const PUBLISHED_COMPONENTS: readonly string[] = Object.entries(library)
  * `Card`, `Checkbox`, `Glass`, `Input`, `Modal`, `Select`, `Sidebar`, `Slider`,
  * `Switch`, `Tabs`, `ToastProvider`, `Topbar`.
  */
-const PUBLISHED_COMPONENT_COUNT = 14;
+const PUBLISHED_COMPONENT_COUNT = 15;
 
 /** Le libellé de la page attendue pour un composant. */
 function pageLabelFor(component: string): string {
@@ -202,7 +202,7 @@ afterEach(() => {
 
 describe('Le registre des pages', () => {
   describe('la couverture des composants publiés', () => {
-    it('devrait trouver les 14 composants publiés par l’entrée racine', () => {
+    it('devrait trouver les 15 composants publiés par l’entrée racine', () => {
       /* Garde-fou du garde-fou : si la reconnaissance des exports cassait, le
          test suivant passerait sur une liste tronquée et ne dirait plus rien. */
       expect(

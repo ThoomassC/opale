@@ -20,6 +20,7 @@ import { modalPage } from './composants/modal';
 import { selectPage } from './composants/select';
 import { sidebarPage } from './composants/sidebar';
 import { sliderPage } from './composants/slider';
+import { siteNavPage } from './composants/site-nav';
 import { switchPage } from './composants/switch';
 import { tabsPage } from './composants/tabs';
 import { toastPage } from './composants/toast';
@@ -85,6 +86,7 @@ export const PAGES: readonly DocPage[] = [
   modalPage,
   selectPage,
   sidebarPage,
+  siteNavPage,
   sliderPage,
   switchPage,
   tabsPage,
