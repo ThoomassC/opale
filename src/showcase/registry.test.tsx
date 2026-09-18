@@ -123,10 +123,11 @@ const PUBLISHED_COMPONENTS: readonly string[] = Object.entries(library)
  * monte d'un — et il faut aussi lui écrire une page, ce que le test suivant
  * exige.
  *
- * DIX-HUIT EN 1.0, SEIZE EN 2.0. L'entrée racine publie les quatorze composants
+ * SEIZE COMPOSANTS HISTORIQUES, PLUS LE CATALOGUE CANOPUI DE LA V3. L'entrée
+ * racine publie les composants historiques et les nouvelles briques compatibles.
  * verre liquide historiques, ainsi que `SiteNav` et `SearchBar`.
  */
-const PUBLISHED_COMPONENT_COUNT = 16;
+const PUBLISHED_COMPONENT_COUNT = 93;
 
 /** Le libellé de la page attendue pour un composant. */
 function pageLabelFor(component: string): string {

@@ -9,29 +9,13 @@ import { DocSearch } from './doc-search';
 import { PageBoundary } from './page-boundary';
 import { ThemeToggle } from './theme-toggle';
 import { useRoute } from './use-route';
+import { UI_VERSION } from './version';
 
-/* =============================================================================
-   DEUX ÉLÉMENTS ONT ÉTÉ RETIRÉS DE CETTE COQUILLE EN 2.0, ET AUCUN DES DEUX
-   N'ÉTAIT UN CHOIX D'APPARENCE.
-
-   `<GlassLens />` était monté ici, une fois pour tout le site, parce qu'il rend
-   un `<filter>` à `id` littéral et qu'un identifiant ne vaut qu'une fois par
-   document. Le composant n'est plus publié et `lens.css` n'existe plus : il n'y
-   a plus de bouton bulle à filtrer.
-
-   `<MaterialToggle />` était la bascule « Verre liquide » de la barre du haut.
-   Elle écrivait `data-material="glass"` sur `<html>`, et la SEULE feuille qui
-   lisait ce porteur était `src/styles/glass.css`, supprimée. Vérifié :
-   `data-material` n'apparaît plus dans `src/tokens/**`, dans `src/magic/**` ni
-   dans `doc.css` — zéro lecteur. Un bouton `aria-pressed` qui annonce un état
-   sans que rien ne change est pire qu'absent : il promet une commande à
-   quelqu'un qui ne peut pas vérifier qu'elle n'a pas marché. `material-toggle`
-   et `use-material` sont donc supprimés avec elle.
-
-   CE QUI N'EST PLUS OFFERT, DIT EN CLAIR : la vitrine n'a plus qu'UN axe de
-   présentation, le thème. Le matériau en était le second, et il ne reste de lui
-   que les jetons — voir la page « Verre », qui documente ce qui survit.
-   ========================================================================== */
+/* La coquille conserve les composants historiques de navigation, mais son
+   habillage V3 suit désormais les tokens CanopUI. Le choix de matériau n'est
+   plus un contrôle séparé : `ThemeToggle` écrit `data-theme="liquid-glass"` et
+   `data-material="glass"`, tandis que les composants Canop activent leur
+   surface Liquid Glass avec le prop `liquidGlass`. */
 
 /** Le nom du paquet, affiché dans la barre du haut et dans `document.title`. */
 const SITE_NAME = '@thomascaron/opale';
@@ -94,7 +78,7 @@ function PageContent({ page }: { page: DocPage }): ReactNode {
 export function DocShell({ pages }: DocShellProps) {
   const slug = useRoute();
   const page = findPage(pages, slug) ?? findPage(pages, HOME_SLUG) ?? EMPTY_REGISTRY_PAGE;
-  const [mobileNavOpen, setMobileNavOpen] = useState(true);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   /* LE TITRE, ET NON `<main>`, EST LA CIBLE DU FOCUS. Deux raisons mesurées :
      — `<main>` fait la hauteur entière de la page, donc l'anneau de
@@ -224,10 +208,21 @@ export function DocShell({ pages }: DocShellProps) {
               `<a>` est donc passé en enfants, avec l'icône du favicon dedans pour
               qu'il fasse partie de la cible ; le composant apporte la boîte
               (`min-w-0`, l'alignement, la gouttière). */}
-          <Topbar.Brand className="tc-doc-topbar__side">
+          <Topbar.Brand className="tc-doc-topbar__side tc-doc-topbar__brand-container">
             <a className="tc-doc-topbar__brand" href={hrefFor(HOME_SLUG)}>
-              <img className="tc-doc-topbar__glyph" src="/favicon.svg" alt="" aria-hidden="true" />
+              <span className="tc-doc-topbar__glyph" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+              </span>
               {SITE_NAME}
+              <span className="tc-doc-topbar__version">v{UI_VERSION}</span>
             </a>
           </Topbar.Brand>
 

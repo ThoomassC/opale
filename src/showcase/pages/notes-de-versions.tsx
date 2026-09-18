@@ -88,8 +88,8 @@ export const notesVersionsPage: DocPage = {
 
       <p className="tc-doc-prose tc-doc-release-footnote">
         Le numéro de version est géré depuis <code>package.json</code> et vérifié par la suite de
-        tests. Une évolution compatible augmente le mineur ou le hotfix ; le passage en 3.0.0
-        attendra une rupture volontaire du contrat.
+        tests. Une évolution compatible augmentera le mineur ou le hotfix ; les prochaines ruptures
+        majeures suivront le même registre sans écraser les archives existantes.
       </p>
     </PageBody>
   ),

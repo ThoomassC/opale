@@ -62,6 +62,7 @@ import './magic/magic.scss';
 // L'habillage de la vitrine, et lui seul : `doc.css` n'est pas publié dans le
 // paquet, donc aucun consommateur ne le télécharge. Il vient en dernier.
 import './styles/doc.css';
+import './styles/doc-v3.css';
 
 import { CharterPage } from './showcase/charter-page';
 

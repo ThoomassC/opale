@@ -501,19 +501,19 @@ describe('DocShell — la bascule de la barre du haut', () => {
     });
     const navigationDetails = document.querySelector<HTMLDetailsElement>('#tc-doc-nav-content');
 
-    expect(navigationToggle).toHaveAttribute('aria-expanded', 'true');
-    expect(navigationToggle).toHaveAttribute('aria-controls', 'tc-doc-nav-content');
-    expect(navigationDetails?.open).toBe(true);
-
-    await user.click(navigationToggle);
-
     expect(navigationToggle).toHaveAttribute('aria-expanded', 'false');
+    expect(navigationToggle).toHaveAttribute('aria-controls', 'tc-doc-nav-content');
     expect(navigationDetails?.open).toBe(false);
 
     await user.click(navigationToggle);
 
     expect(navigationToggle).toHaveAttribute('aria-expanded', 'true');
     expect(navigationDetails?.open).toBe(true);
+
+    await user.click(navigationToggle);
+
+    expect(navigationToggle).toHaveAttribute('aria-expanded', 'false');
+    expect(navigationDetails?.open).toBe(false);
   });
 });
 

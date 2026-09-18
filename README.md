@@ -3,19 +3,16 @@
 Le socle d'interface partagé par [`portfolio`](https://github.com/ThoomassC/portfolio) et
 [`travels_in_world`](https://github.com/ThoomassC/travels_in_world).
 
-> **La 2.0 change la nature du paquet, et il faut le lire avant la première ligne de code.**
-> Les dix-huit composants maison ont été retirés. Les composants publiés à la racine sont
-> désormais **quatorze composants « verre liquide » copiés de
-> [`react-magic-ui`](https://github.com/tweeedlex/react-magic-ui)** de `@tweeedlex`
-> (version 1.0.9, **licence MIT, Copyright (c) 2025 tweeedlex** — voir
-> [`THIRD-PARTY-NOTICES.md`](./THIRD-PARTY-NOTICES.md)). Ils vivent dans `src/magic/`, ils
-> sont gardés **fidèles au caractère**, défauts compris, et ils sont **hors du contrat de
-> couleur d'Opale**. La section « [Ce que la 2.0 ne garantit
-> pas](#ce-que-la-20-ne-garantit-pas) » est la plus importante de ce fichier.
+> **La 3.0 adopte le langage visuel de CanopUI.** Les quatorze composants verre liquide
+> historiques restent publiés et utilisables ; le catalogue V3 ajoute les primitives,
+> composants de données, feedback, navigation, layout et modules compatibles avec CanopUI.
+> Le matériau Liquid Glass est opt-in composant par composant et les trois thèmes de la
+> vitrine sont `light`, `dark` et `liquid-glass`.
 
-La vitrine est actuellement en **2.1.0**. Son historique est consultable dans l’onglet
+La vitrine est actuellement en **3.0.0**. Son historique est consultable dans l’onglet
 « Notes de versions » ; chaque état antérieur dispose aussi d’un snapshot utilisable sous
-`public/versions/`.
+`public/versions/`. La version **2.0** et ses composants vendorés restent documentés dans
+la section historique dédiée plus bas.
 
 Ce qui reste d'Opale, et qui est le cœur du dépôt : **la charte** — les jetons OKLab, les
 trois thèmes — et **le contrat de couleur exécutable** qui la garde.
@@ -36,11 +33,12 @@ Ce dépôt est ce garde. Il publie, dans cet ordre de valeur :
    les commentaires annoncent. Un chiffre faux fait échouer la CI le jour où il est écrit ;
 2. **la feuille de jetons canonique** — la palette du portfolio, devenue référence parce
    qu'elle est la seule des deux à être mesurée et testée ;
-3. **quatorze composants verre liquide vendorés**, qui ne sont ni mesurés ni couverts par
-   les deux points précédents. C'est un choix de style assumé, et c'est aussi la seule
-   partie du paquet qui n'a aucune garantie de contraste.
+3. **le catalogue de composants**, qui réunit les quatorze composants verre liquide
+   historiques et les nouvelles briques CanopUI. Les composants historiques restent hors
+   du contrat de couleur ; les primitives V3 utilisent les tokens CanopUI dédiés.
 
-Les deux premiers points sont vrais et testés. Le troisième est la 2.0.
+Les trois points sont vrais et testés à leur niveau : le contrat mesure la charte, la vitrine
+mesure les routes et le catalogue, et les composants historiques conservent leur provenance.
 
 ## Ce que la 2.0 ne garantit pas
 
@@ -82,9 +80,9 @@ Le paquet s'installe depuis git, et il n'est pas publié sur npm.
 npm i "@thomascaron/opale@github:ThoomassC/opale"
 ```
 
-> **Les tags de publication restent la source de vérité du paquet.** La vitrine 2.1.0 et les
+> **Les tags de publication restent la source de vérité du paquet.** La vitrine 3.0.0 et les
 > snapshots historiques sont conservés séparément pour permettre la comparaison visuelle ;
-> au moment de publier une version, poser et pousser le tag correspondant (`v2.1.0`, puis les
+> au moment de publier une version, poser et pousser le tag correspondant (`v3.0.0`, puis les
 > suivants) permet de l’installer sans dépendre d’un HEAD de branche.
 
 Le paquet se compile à l'installation (`prepare` → `build:lib`). **Quatre points d'entrée**,
@@ -93,7 +91,7 @@ et les deux premiers suffisent :
 ```js
 import '@thomascaron/opale/tokens.css'; // la palette, les échelles, le focus, le mouvement
 import '@thomascaron/opale/opale.css'; // les styles des quatorze composants, une fois par app
-import { Button, Glass } from '@thomascaron/opale';
+import { Button, Glass, CanopButton } from '@thomascaron/opale';
 ```
 
 ```ts
@@ -104,7 +102,7 @@ La forme exacte, telle qu'elle est déclarée dans `package.json` :
 
 | Spécifieur      | Cible                       | Ce que c'est                                     |
 | --------------- | --------------------------- | ------------------------------------------------ |
-| `.`             | `dist/magic/index.js`       | Les quatorze composants vendorés                 |
+| `.`             | `dist/magic/index.js`       | Les composants historiques et le catalogue V3    |
 | `./contract`    | `dist/contract/index.js`    | Le contrat de couleur — dépendance de dev, zéro octet à l'exécution |
 | `./tokens.css`  | `dist/tokens/tokens.css`    | La charte : primitives, rôles, matériaux         |
 | `./opale.css`   | `dist/magic/magic.css`      | La feuille des composants                        |
@@ -128,12 +126,20 @@ propres surfaces dans la palette d'Opale.
 > npm, image de build minimale), `dist/` sera absent et le build cassera en production sans
 > avoir cassé en local. À vérifier par un déploiement de préversion.
 
-## Les quatorze composants
+## Le catalogue de composants
 
-Publiés à la racine, exportés par `src/magic/index.ts` :
+Les composants historiques sont publiés à la racine, exportés par `src/magic/index.ts` :
 
 `Badge`, `Button`, `Card`, `Checkbox`, `Glass`, `Input`, `Modal`, `Select`, `Sidebar`,
 `Slider`, `Switch`, `Tabs`, `ToastProvider` (plus le hook `useToast`), `Topbar`.
+
+La V3 ajoute les exports `Canop*` correspondants au catalogue CanopUI : boutons, champs,
+cartes, données, feedback, navigation, layout et modules. La liste complète et une page de
+démonstration par composant sont générées depuis `CANOP_CATALOG` dans
+`src/magic/canop.tsx`. Le namespace `CanopUI` expose aussi ces briques sous les noms de la
+librairie de référence (`CanopUI.Button`, `CanopUI.Card`, etc.), sans écraser les exports
+historiques `Button`, `Card`, `Input` et leurs pairs. Les composants qui portent `liquidGlass`
+activent le matériau composant par composant lorsque le thème Liquid Glass est choisi.
 
 `Glass` est la primitive de matériau, et **douze des treize autres la montent**. La seule
 exception, vérifiée dans le code, est **`Slider`** : il n'importe pas `Glass` du tout et
@@ -447,7 +453,7 @@ dans le script, jamais en appauvrissant la source.
 
 Par coût de retour en arrière décroissant.
 
-1. **Le tag de publication `v2.1.0`.** Le code et la vitrine sont prêts ; le tag doit être posé
+1. **Le tag de publication `v3.0.0`.** Le code et la vitrine sont prêts ; le tag doit être posé
    au moment de la publication pour rendre l’installation git immuable.
 2. **Le contraste des quatorze composants.** Le dépôt publie une charte mesurée et des
    composants qui ne le sont pas. Deux issues cohérentes, et aucune n'est prise : documenter

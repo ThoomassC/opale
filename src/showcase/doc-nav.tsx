@@ -92,7 +92,7 @@ export function DocNav({
        collant, la piste de grille et le sol opaque vivent donc dehors. Elle
        porte la surface visible, tandis que le `<details>` natif ci-dessous
        porte l'état du sommaire global. */
-    <div className="tc-doc-nav">
+    <div className="tc-doc-nav" data-open={mobileNavOpen === undefined ? 'true' : String(mobileNavOpen)}>
       <Sidebar
         className="tc-doc-nav__panel"
         /* L'ENVELOPPE A BESOIN DE SON PROPRE CROCHET, et pas seulement le

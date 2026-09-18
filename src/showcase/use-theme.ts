@@ -7,18 +7,18 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
  *
  * ET IL N'Y A PAS D'ENTRÉE `./client` : ce hook n'est pas publiable, parce
  * qu'il n'y a pas UNE bascule à publier mais trois mécaniques incompatibles.
- * Celle-ci veut deux états et écrit toujours `data-theme` ; celle qu'il
+ * Celle-ci gère les trois états de la vitrine et écrit toujours `data-theme` ; celle qu'il
  * faudrait à un site prérendu veut un script en `<head>` ou un cookie, pas un
  * `localStorage` lu dans un initialiseur de `useState` — qui produit un flash.
  * Publier l'une reviendrait à publier la mauvaise deux fois.
  */
-export type Theme = 'light' | 'dark';
+export type Theme = 'light' | 'dark' | 'liquid-glass';
 
 const STORAGE_KEY = 'tc-theme';
 const DARK_SCHEME_QUERY = '(prefers-color-scheme: dark)';
 
 function isTheme(value: string | null): value is Theme {
-  return value === 'light' || value === 'dark';
+  return value === 'light' || value === 'dark' || value === 'liquid-glass';
 }
 
 /**
@@ -120,6 +120,8 @@ export interface ThemeControl {
   /** Le thème réellement appliqué : le choix mémorisé, sinon celui de l'OS. */
   readonly theme: Theme;
   readonly isDarkTheme: boolean;
+  readonly isLiquidGlass: boolean;
+  readonly setTheme: (theme: Theme) => void;
   readonly toggleTheme: () => void;
 }
 
@@ -166,6 +168,12 @@ export function useTheme(): ThemeControl {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
 
+    if (theme === 'liquid-glass') {
+      document.documentElement.dataset.material = 'glass';
+    } else {
+      document.documentElement.removeAttribute('data-material');
+    }
+
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     if (meta === null) return;
 
@@ -175,8 +183,7 @@ export function useTheme(): ThemeControl {
     meta.setAttribute('content', ground);
   }, [theme]);
 
-  const toggleTheme = useCallback(() => {
-    const nextTheme: Theme = theme === 'dark' ? 'light' : 'dark';
+  const setTheme = useCallback((nextTheme: Theme) => {
 
     try {
       window.localStorage.setItem(STORAGE_KEY, nextTheme);
@@ -185,7 +192,17 @@ export function useTheme(): ThemeControl {
     }
 
     setStoredTheme(nextTheme);
-  }, [theme]);
+  }, []);
 
-  return { theme, isDarkTheme: theme === 'dark', toggleTheme };
+  const toggleTheme = useCallback(() => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  }, [setTheme, theme]);
+
+  return {
+    theme,
+    isDarkTheme: theme === 'dark',
+    isLiquidGlass: theme === 'liquid-glass',
+    setTheme,
+    toggleTheme,
+  };
 }
