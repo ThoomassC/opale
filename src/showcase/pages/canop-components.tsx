@@ -10,7 +10,6 @@ import {
   CanopCheckbox,
   CanopDataTable,
   CanopFeedback,
-  CanopHeading,
   CanopInput,
   CanopProgressBar,
   CanopSegmentedControl,
@@ -18,11 +17,8 @@ import {
   CanopStatCard,
   CanopToggle,
 } from '../../magic';
+import { catalogComponentLabel, catalogComponentSlug } from '../doc-model';
 import type { DocPage } from '../doc-model';
-
-function kebabCase(value: string): string {
-  return value.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-}
 
 function Preview({ name, liquidGlass }: { name: string; liquidGlass: boolean }): ReactNode {
   let preview: ReactNode;
@@ -47,7 +43,7 @@ function Preview({ name, liquidGlass }: { name: string; liquidGlass: boolean }):
       preview = <CanopSegmentedControl options={[{ value: 'all', label: 'Tout' }, { value: 'active', label: 'Actifs' }, { value: 'archived', label: 'Archivés' }]} value="all" />;
       break;
     case 'CanopCard':
-      preview = <CanopCard liquidGlass={liquidGlass} title="Une surface CanopUI" subtitle="Carte, actions et élévation." actions={<CanopBadge>Stable</CanopBadge>}><p className="tc-doc-prose">Une surface claire, lisible et responsive.</p></CanopCard>;
+      preview = <CanopCard liquidGlass={liquidGlass} title="Une surface Opale" subtitle="Carte, actions et élévation." actions={<CanopBadge>Stable</CanopBadge>}><p className="tc-doc-prose">Une surface claire, lisible et responsive.</p></CanopCard>;
       break;
     case 'CanopCardGrid':
       preview = <CanopCardGrid><CanopStatCard liquidGlass={liquidGlass} label="Composants" value="77" delta="+12 cette version" /><CanopStatCard liquidGlass={liquidGlass} label="Thèmes" value="2 globaux + 1 matériau" /></CanopCardGrid>;
@@ -62,7 +58,7 @@ function Preview({ name, liquidGlass }: { name: string; liquidGlass: boolean }):
       preview = <CanopProgressBar label="Progression" value={72} />;
       break;
     default:
-      preview = <CanopCard liquidGlass={liquidGlass} title={name} subtitle="Démo interactive CanopUI"><CanopButton liquidGlass={liquidGlass} variant="tonal">Explorer</CanopButton></CanopCard>;
+      preview = <CanopCard liquidGlass={liquidGlass} title={catalogComponentLabel(name)} subtitle="Démonstration interactive Opale"><p className="tc-doc-prose">Ce composant conserve ses états et ses variantes dans la bibliothèque Opale.</p></CanopCard>;
   }
 
   return (
@@ -73,7 +69,7 @@ function Preview({ name, liquidGlass }: { name: string; liquidGlass: boolean }):
 }
 
 function CanopComponentPage({ entry }: { entry: CanopCatalogEntry }) {
-  const displayName = entry.name.replace(/^Canop/, '');
+  const displayName = catalogComponentLabel(entry.name);
   const [liquidGlass, setLiquidGlass] = useState(false);
 
   return (
@@ -81,10 +77,10 @@ function CanopComponentPage({ entry }: { entry: CanopCatalogEntry }) {
       <p className="tc-doc-lede">{entry.description}</p>
       <div className="tc-doc-canop-meta">
         <CanopBadge>{entry.category}</CanopBadge>
-        <span>CanopUI compatible · TypeScript strict</span>
+        <span>Composant Opale · TypeScript strict</span>
       </div>
       <div className="tc-doc-code tc-doc-code--canop">
-        <code>{`import { ${entry.name} } from '@thomascaron/opale';`}</code>
+        <code>{`import { Opale } from '@thomascaron/opale';\n\n<Opale.${displayName} />`}</code>
       </div>
       <section className="tc-doc-specimen tc-doc-specimen--canop" aria-label={`Démonstration ${displayName}`}>
         <div className="tc-doc-specimen__header">
@@ -109,18 +105,14 @@ function CanopComponentPage({ entry }: { entry: CanopCatalogEntry }) {
           <Preview name={entry.name} liquidGlass={liquidGlass} />
         </div>
       </section>
-      <section className="tc-doc-canop-api">
-        <CanopHeading level={2}>API</CanopHeading>
-        <p className="tc-doc-prose">Cette brique reprend les tokens, états et règles de composition de CanopUI. Le contrôle local active le prop <code>liquidGlass</code> uniquement sur ce spécimen, sans modifier les autres composants de la page.</p>
-      </section>
     </div>
   );
 }
 
-export const canopComponentPages: readonly DocPage[] = CANOP_CATALOG.map((entry) => ({
-  slug: `composants/${kebabCase(entry.name)}`,
-  label: entry.name,
+export const opaleComponentPages: readonly DocPage[] = CANOP_CATALOG.map((entry) => ({
+  slug: catalogComponentSlug(entry.name),
+  label: catalogComponentLabel(entry.name),
   group: 'composants',
-  title: entry.name.replace(/^Canop/, ''),
+  title: catalogComponentLabel(entry.name),
   render: () => <CanopComponentPage entry={entry} />,
 }));

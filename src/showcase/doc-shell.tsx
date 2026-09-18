@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 
 import { Topbar } from '../magic';
@@ -12,8 +12,8 @@ import { useRoute } from './use-route';
 import { UI_VERSION } from './version';
 
 /* La coquille conserve les composants historiques de navigation, mais son
-   habillage V3 suit désormais les tokens CanopUI. Le thème global est limité au
-   clair/sombre ; les composants Canop activent leur surface Liquid Glass avec
+   habillage V3 suit désormais les tokens Opale. Le thème global est limité au
+   clair/sombre ; les composants Opale activent leur surface Liquid Glass avec
    leur contrôle local et le prop `liquidGlass`. */
 
 /** Le nom du paquet, affiché dans la barre du haut et dans `document.title`. */
@@ -59,6 +59,49 @@ function PageContent({ page }: { page: DocPage }): ReactNode {
   return page.render();
 }
 
+interface HeaderNavProps {
+  readonly page: DocPage;
+  readonly className: string;
+  readonly ariaLabel: string;
+}
+
+function HeaderNav({ page, className, ariaLabel }: HeaderNavProps) {
+  return (
+    <nav className={className} aria-label={ariaLabel}>
+      <a
+        className="tc-doc-topbar__tab"
+        href={hrefFor(HOME_SLUG)}
+        aria-current={page.slug === HOME_SLUG ? 'page' : undefined}
+        onClick={(event) => {
+          event.currentTarget.closest('details')?.removeAttribute('open');
+        }}
+      >
+        Accueil
+      </a>
+      <a
+        className="tc-doc-topbar__tab"
+        href={hrefFor('installation')}
+        aria-current={page.slug === 'installation' ? 'page' : undefined}
+        onClick={(event) => {
+          event.currentTarget.closest('details')?.removeAttribute('open');
+        }}
+      >
+        Installation
+      </a>
+      <a
+        className="tc-doc-topbar__tab"
+        href={hrefFor('notes-de-versions')}
+        aria-current={page.slug === 'notes-de-versions' ? 'page' : undefined}
+        onClick={(event) => {
+          event.currentTarget.closest('details')?.removeAttribute('open');
+        }}
+      >
+        Notes de versions
+      </a>
+    </nav>
+  );
+}
+
 /**
  * La coquille du site de documentation : barre du haut, barre de gauche,
  * contenu, pied de page.
@@ -77,8 +120,6 @@ function PageContent({ page }: { page: DocPage }): ReactNode {
 export function DocShell({ pages }: DocShellProps) {
   const slug = useRoute();
   const page = findPage(pages, slug) ?? findPage(pages, HOME_SLUG) ?? EMPTY_REGISTRY_PAGE;
-  const [mobileNavOpen, setMobileNavOpen] = useState(true);
-
   /* LE TITRE, ET NON `<main>`, EST LA CIBLE DU FOCUS. Deux raisons mesurées :
      — `<main>` fait la hauteur entière de la page, donc l'anneau de
        `:focus-visible` devenait un rectangle de plusieurs milliers de pixels
@@ -229,17 +270,21 @@ export function DocShell({ pages }: DocShellProps) {
           </Topbar.Brand>
 
           <Topbar.Section className="tc-doc-topbar__tabs" gap="tight">
-            <nav className="tc-doc-topbar__tabs-nav" aria-label="Navigation principale">
-              <a className="tc-doc-topbar__tab" href={hrefFor(HOME_SLUG)} aria-current={page.slug === HOME_SLUG ? 'page' : undefined}>
-                Accueil
-              </a>
-              <a className="tc-doc-topbar__tab" href={hrefFor('installation')} aria-current={page.slug === 'installation' ? 'page' : undefined}>
-                Installation
-              </a>
-              <a className="tc-doc-topbar__tab" href={hrefFor('notes-de-versions')} aria-current={page.slug === 'notes-de-versions' ? 'page' : undefined}>
-                Notes de versions
-              </a>
-            </nav>
+            <HeaderNav
+              page={page}
+              className="tc-doc-topbar__tabs-nav"
+              ariaLabel="Navigation principale"
+            />
+            <details className="tc-doc-topbar__menu">
+              <summary className="tc-doc-topbar__menu-toggle" aria-label="Ouvrir le menu">
+                <span aria-hidden="true" />
+              </summary>
+              <HeaderNav
+                page={page}
+                className="tc-doc-topbar__menu-nav"
+                ariaLabel="Menu principal"
+              />
+            </details>
           </Topbar.Section>
 
           {/* LA RECHERCHE EST LA SECTION ÉLASTIQUE, et `grow` est exactement ce
@@ -263,19 +308,6 @@ export function DocShell({ pages }: DocShellProps) {
             <ThemeToggle />
           </Topbar.Actions>
 
-          {/* Sur mobile, le contrôle du sommaire vit dans cette même grille que
-              la recherche. Il garde donc exactement la même position quand le
-              panneau s'ouvre ou se ferme, au lieu de flotter avec sa hauteur. */}
-          <button
-            className="tc-doc-mobile-nav-toggle"
-            type="button"
-            aria-label="Afficher ou masquer le sommaire"
-            aria-expanded={mobileNavOpen}
-            aria-controls="tc-doc-nav-content"
-            onClick={() => setMobileNavOpen((open) => !open)}
-          >
-            <span aria-hidden="true" />
-          </button>
         </Topbar>
       </div>
 
@@ -283,8 +315,6 @@ export function DocShell({ pages }: DocShellProps) {
         <DocNav
           pages={pages}
           currentSlug={page.slug}
-          mobileNavOpen={mobileNavOpen}
-          onMobileNavOpenChange={setMobileNavOpen}
         />
 
         <div className="tc-doc-column">
@@ -293,7 +323,7 @@ export function DocShell({ pages }: DocShellProps) {
               gestionnaire de clic n'a pas encore été attaché. Le focus visé
               par le code, lui, est le titre juste en dessous. */}
           <main
-            className={`tc-doc-main${page.group === 'composants' ? ' tc-doc-main--components' : ''}`}
+            className={`tc-doc-main${page.slug === HOME_SLUG ? ' tc-doc-main--home' : ''}${page.group === 'composants' ? ' tc-doc-main--components' : ''}`}
             id="contenu"
             tabIndex={-1}
           >

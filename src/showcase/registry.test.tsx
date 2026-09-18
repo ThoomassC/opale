@@ -20,7 +20,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as library from '../magic';
 
 import type { DocPage } from './doc-model';
-import { GROUPS, HOME_SLUG, parseSlug } from './doc-model';
+import { GROUPS, HOME_SLUG, catalogComponentLabel, parseSlug } from './doc-model';
 import { PAGES } from './pages';
 
 /* ============================================================================
@@ -123,7 +123,7 @@ const PUBLISHED_COMPONENTS: readonly string[] = Object.entries(library)
  * monte d'un — et il faut aussi lui écrire une page, ce que le test suivant
  * exige.
  *
- * SEIZE COMPOSANTS HISTORIQUES, PLUS LE CATALOGUE CANOPUI DE LA V3. L'entrée
+ * SEIZE COMPOSANTS HISTORIQUES, PLUS LE CATALOGUE OPALE DE LA V3. L'entrée
  * racine publie les composants historiques et les nouvelles briques compatibles.
  * verre liquide historiques, ainsi que `SiteNav` et `SearchBar`.
  */
@@ -131,7 +131,7 @@ const PUBLISHED_COMPONENT_COUNT = 93;
 
 /** Le libellé de la page attendue pour un composant. */
 function pageLabelFor(component: string): string {
-  return DOCUMENTED_WITH[component] ?? component;
+  return DOCUMENTED_WITH[component] ?? catalogComponentLabel(component);
 }
 
 /** `ChipList` → `chip-list`. Le slug d'une page de composant. */
@@ -315,12 +315,16 @@ describe('Le registre des pages', () => {
     });
 
     it('devrait nommer chaque page de composant par le kebab-case de son libellé', () => {
-      const wrong = COMPONENT_PAGES.filter(
-        (page) => page.slug !== `${COMPONENT_PREFIX}${kebabCase(page.label)}`,
-      ).map(
-        (page) =>
-          `${page.label} : « ${page.slug} » au lieu de « ${COMPONENT_PREFIX}${kebabCase(page.label)} »`,
-      );
+      const wrong = COMPONENT_PAGES.filter((page) => {
+        const prefix = page.slug.startsWith(`${COMPONENT_PREFIX}opale-`) ? 'opale-' : '';
+
+        return page.slug !== `${COMPONENT_PREFIX}${prefix}${kebabCase(page.label)}`;
+      }).map((page) => {
+        const prefix = page.slug.startsWith(`${COMPONENT_PREFIX}opale-`) ? 'opale-' : '';
+        const expected = `${COMPONENT_PREFIX}${prefix}${kebabCase(page.label)}`;
+
+        return `${page.label} : « ${page.slug} » au lieu de « ${expected} »`;
+      });
 
       expect(
         wrong,

@@ -424,7 +424,7 @@ export const CANOP_CATALOG: readonly CanopCatalogEntry[] = [
   ['CanopLegend', 'Affichage de données', 'Légende de statuts pour tableaux et graphiques.'],
   ['CanopHeading', 'Affichage de données', 'Titres hiérarchisés avec échelle typographique.'],
   ['CanopText', 'Affichage de données', 'Corps de texte, labels, légendes et métriques.'],
-  ['CanopIcon', 'Affichage de données', 'Icônes du set CanopUI en plusieurs tailles.'],
+  ['CanopIcon', 'Affichage de données', 'Icônes Opale en plusieurs tailles.'],
   ['CanopFeedback', 'Feedback', 'Encart de message contextuel en quatre sévérités.'],
   ['CanopToast', 'Feedback', 'Notification éphémère avec fermeture automatique.'],
   ['CanopSpinner', 'Feedback', 'Indicateur de chargement circulaire.'],
@@ -448,7 +448,7 @@ export const CANOP_CATALOG: readonly CanopCatalogEntry[] = [
   ['CanopPageContent', 'Mise en page', 'Conteneur de contenu avec en-tête et footer.'],
   ['CanopDivider', 'Mise en page', 'Séparateur horizontal ou vertical.'],
   ['CanopSeparator', 'Mise en page', 'Séparateur décoratif léger.'],
-  ['CanopCanopyBackground', 'Mise en page', 'Fond animé de canopée par thème.'],
+  ['CanopCanopyBackground', 'Mise en page', 'Fond animé par thème.'],
   ['CanopShapeBackground', 'Mise en page', 'Arrière-plan décoratif à formes organiques.'],
   ['CanopSlidingIndicator', 'Mise en page', 'Indicateur coulissant partagé entre éléments.'],
   ['CanopFileUploader', 'Modules', 'Upload de fichiers par chunks.'],
@@ -547,3 +547,6 @@ export const CanopUI = {
   Clipboard: CanopClipboard,
   SvgMap: CanopSvgMap,
 } as const;
+
+/** Namespace public Opale pour les composants du catalogue V3. */
+export const Opale = { ...CanopUI, Background: CanopCanopyBackground } as const;

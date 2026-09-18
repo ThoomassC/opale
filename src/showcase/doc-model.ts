@@ -48,7 +48,7 @@ export interface DocPage {
   readonly render: () => ReactNode;
 }
 
-/** Une entrée de la navigation visuelle inspirée de CanopUI. */
+/** Une entrée de la navigation visuelle inspirée de la référence V3. */
 export interface DocNavEntry {
   readonly label: string;
   readonly page: DocPage;
@@ -60,6 +60,10 @@ export interface DocNavSection {
   readonly label: string;
   readonly entries: readonly DocNavEntry[];
 }
+
+/* Ces pages sont accessibles depuis les onglets permanents du header. Elles
+   ne doivent donc pas être répétées dans le rail latéral. */
+const HEADER_NAV_SLUGS = new Set(['', 'installation', 'notes-de-versions']);
 
 interface DocNavEntryDefinition {
   readonly label: string;
@@ -76,12 +80,24 @@ function kebabCase(value: string): string {
   return value.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
+function normalizeCatalogLabel(value: string): string {
+  return value === 'CanopyBackground' ? 'Background' : value;
+}
+
+export function catalogComponentLabel(name: string): string {
+  return normalizeCatalogLabel(name.replace(/^Canop/, ''));
+}
+
+export function catalogComponentSlug(name: string): string {
+  return `composants/opale-${kebabCase(catalogComponentLabel(name))}`;
+}
+
 function canopEntry(name: string, label = name.replace(/^Canop/, '')): DocNavEntryDefinition {
-  return { label, slug: `composants/${kebabCase(name)}` };
+  return { label: normalizeCatalogLabel(label), slug: catalogComponentSlug(name) };
 }
 
 /**
- * Le plan du sommaire CanopUI, relevé dans l'application de référence.
+ * Le plan du sommaire V3, relevé dans l'application de référence.
  *
  * Les pages restent libres de leur groupe historique (`GROUPS`) : cette liste
  * décrit seulement l'ordre éditorial du rail. C'est ce qui permet de copier
@@ -92,7 +108,6 @@ export const CANOP_NAV_SECTIONS: readonly DocNavSectionDefinition[] = [
     id: 'prise-en-main',
     label: 'PRISE EN MAIN',
     entries: [
-      { label: 'Installation', slug: 'installation' },
       { label: 'Utilisation', slug: 'utilisation' },
       { label: 'Theming', slug: 'theming' },
       { label: 'Typographie', slug: 'typographie' },
@@ -100,9 +115,16 @@ export const CANOP_NAV_SECTIONS: readonly DocNavSectionDefinition[] = [
     ],
   },
   {
-    id: 'versions',
-    label: 'VERSIONS',
-    entries: [{ label: 'Notes de version', slug: 'notes-de-versions' }],
+    id: 'fondations',
+    label: 'FONDATIONS',
+    entries: [
+      { label: 'La palette', slug: 'palette' },
+      { label: 'Espacement et rayons', slug: 'espacement' },
+      { label: 'Élévation', slug: 'elevation' },
+      { label: 'Verre', slug: 'verre' },
+      { label: 'Le verre liquide', slug: 'verre-liquide' },
+      { label: 'Accessibilité', slug: 'accessibilite' },
+    ],
   },
   {
     id: 'inputs',
@@ -122,6 +144,13 @@ export const CANOP_NAV_SECTIONS: readonly DocNavSectionDefinition[] = [
       canopEntry('CanopLanguageSelector', 'LanguageSelector'),
       canopEntry('CanopSegmentedControl', 'SegmentedControl'),
       canopEntry('CanopThemeToggle', 'ThemeToggle'),
+      { label: 'Button', slug: 'composants/button' },
+      { label: 'Input', slug: 'composants/input' },
+      { label: 'Checkbox', slug: 'composants/checkbox' },
+      { label: 'Slider', slug: 'composants/slider' },
+      { label: 'Select', slug: 'composants/select' },
+      { label: 'Switch', slug: 'composants/switch' },
+      { label: 'SearchBar', slug: 'composants/search-bar' },
     ],
   },
   {
@@ -156,6 +185,9 @@ export const CANOP_NAV_SECTIONS: readonly DocNavSectionDefinition[] = [
       canopEntry('CanopHeading', 'Heading'),
       canopEntry('CanopText', 'Text'),
       canopEntry('CanopIcon', 'Icon'),
+      { label: 'Badge', slug: 'composants/badge' },
+      { label: 'Card', slug: 'composants/card' },
+      { label: 'Glass', slug: 'composants/glass' },
     ],
   },
   {
@@ -168,6 +200,8 @@ export const CANOP_NAV_SECTIONS: readonly DocNavSectionDefinition[] = [
       canopEntry('CanopProgressBar', 'ProgressBar'),
       canopEntry('CanopConfirmDialog', 'ConfirmDialog'),
       canopEntry('CanopEmptyState', 'EmptyState'),
+      { label: 'Modal', slug: 'composants/modal' },
+      { label: 'Toast', slug: 'composants/toast' },
     ],
   },
   {
@@ -185,6 +219,10 @@ export const CANOP_NAV_SECTIONS: readonly DocNavSectionDefinition[] = [
       canopEntry('CanopCookieBanner', 'CookieBanner'),
       canopEntry('CanopScrollbar', 'Scrollbar'),
       canopEntry('CanopSelectionBar', 'SelectionBar'),
+      { label: 'Tabs', slug: 'composants/tabs' },
+      { label: 'Sidebar', slug: 'composants/sidebar' },
+      { label: 'SiteNav', slug: 'composants/site-nav' },
+      { label: 'Topbar', slug: 'composants/topbar' },
     ],
   },
   {
@@ -197,7 +235,7 @@ export const CANOP_NAV_SECTIONS: readonly DocNavSectionDefinition[] = [
       canopEntry('CanopPageContent', 'PageContent'),
       canopEntry('CanopDivider', 'Divider'),
       canopEntry('CanopSeparator', 'Separator'),
-      canopEntry('CanopCanopyBackground', 'CanopyBackground'),
+      canopEntry('CanopCanopyBackground', 'Background'),
       canopEntry('CanopShapeBackground', 'ShapeBackground'),
       canopEntry('CanopSlidingIndicator', 'SlidingIndicator'),
     ],
@@ -225,7 +263,7 @@ export const CANOP_NAV_SECTIONS: readonly DocNavSectionDefinition[] = [
   },
 ];
 
-const CANOP_NAV_MARKER_SLUG = 'composants/canop-button';
+const CANOP_NAV_MARKER_SLUG = 'composants/opale-button';
 
 function legacyNavSectionsForPages(pages: readonly DocPage[]): readonly DocNavSection[] {
   return GROUPS.flatMap((group) => {
@@ -238,13 +276,14 @@ function legacyNavSectionsForPages(pages: readonly DocPage[]): readonly DocNavSe
 }
 
 /**
- * Résout le plan CanopUI contre le registre fourni.
+ * Résout le plan V3 contre le registre fourni.
  *
  * Les petits registres de test et les intégrations historiques qui ne
- * contiennent pas le catalogue CanopUI gardent l'ancien classement par
+ * contiennent pas le catalogue V3 gardent l'ancien classement par
  * familles. Le registre de la vitrine V3, lui, contient le marqueur du
- * catalogue et reçoit le plan complet ci-dessus, puis une section OPALE pour
- * les pages historiques qui ne doivent pas disparaître du sommaire.
+ * catalogue et reçoit le plan thématique complet ci-dessus. Les pages
+ * historiques sont volontairement intégrées à la famille qui correspond à
+ * leur rôle : il n'existe pas de catégorie « Opale » fourre-tout.
  */
 export function navSectionsForPages(pages: readonly DocPage[]): readonly DocNavSection[] {
   if (!pages.some((page) => page.slug === CANOP_NAV_MARKER_SLUG)) {
@@ -266,12 +305,12 @@ export function navSectionsForPages(pages: readonly DocPage[]): readonly DocNavS
     return entries.length > 0 ? [{ ...section, entries }] : [];
   });
 
-  const opaleEntries = pages
-    .filter((page) => !assignedSlugs.has(page.slug))
+  const unassignedEntries = pages
+    .filter((page) => !assignedSlugs.has(page.slug) && !HEADER_NAV_SLUGS.has(page.slug))
     .map((page) => ({ label: page.label, page }));
 
-  return opaleEntries.length > 0
-    ? [...sections, { id: 'opale', label: 'OPALE', entries: opaleEntries }]
+  return unassignedEntries.length > 0
+    ? [...sections, { id: 'autres', label: 'AUTRES', entries: unassignedEntries }]
     : sections;
 }
 

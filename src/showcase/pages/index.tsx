@@ -29,7 +29,7 @@ import { switchPage } from './composants/switch';
 import { tabsPage } from './composants/tabs';
 import { toastPage } from './composants/toast';
 import { topbarPage } from './composants/topbar';
-import { canopComponentPages } from './canop-components';
+import { opaleComponentPages } from './canop-components';
 
 /* =============================================================================
    LE REGISTRE — l'unique liste des pages du site, et donc de sa navigation.
@@ -103,5 +103,5 @@ export const PAGES: readonly DocPage[] = [
   tabsPage,
   toastPage,
   topbarPage,
-  ...canopComponentPages,
+  ...opaleComponentPages,
 ];

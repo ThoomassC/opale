@@ -264,6 +264,16 @@ describe('DocShell — les onglets du header', () => {
     ]);
     expect(links[0]).toHaveAttribute('aria-current', 'page');
   });
+
+  it('devrait préparer un menu compact pour les largeurs où les onglets ne tiennent plus', () => {
+    render(<DocShell pages={PAGES} />);
+
+    const menu = document.querySelector('.tc-doc-topbar__menu');
+
+    expect(menu).toBeInstanceOf(HTMLDetailsElement);
+    expect(menu?.querySelector('summary')).toHaveAttribute('aria-label', 'Ouvrir le menu');
+    expect(menu?.querySelectorAll('.tc-doc-topbar__menu-nav a')).toHaveLength(3);
+  });
 });
 
 describe('DocShell — les entrées du sommaire', () => {
@@ -340,14 +350,11 @@ describe('DocShell — les entrées du sommaire', () => {
 
     const nav = sommaire();
 
-    /* CIBLÉ PAR LE `<summary>` ET SON `aria-label`, et non par le texte : le
-       libellé d'un groupe se retrouve aussi dans des libellés de page, si bien
-       qu'un `queryByText` en trouve plusieurs. C'est le même
-       idiome que `doc-nav.test.tsx`, et il est EXACT — l'`aria-label` vaut le
-       libellé nu, précisément parce que le chevron du `::before` entrerait
-       sinon dans le nom accessible. */
+    /* CIBLÉ PAR L'ID DU LIBELLÉ STATIQUE, et non par le texte : un libellé de
+       groupe peut aussi se retrouver dans une entrée de page, si bien qu'un
+       `queryByText` en trouverait plusieurs. */
     expect(
-      nav.querySelector('summary[aria-label="Fondations"]'),
+      nav.querySelector('#tc-doc-nav-section-fondations'),
       `le groupe « Fondations » n'a plus aucune page dans ce registre et ne doit ` +
         `pas apparaître dans la barre`,
     ).toBeNull();
@@ -358,7 +365,7 @@ describe('DocShell — les entrées du sommaire', () => {
   });
 
   /* Le pendant du précédent : avec les trois groupes peuplés, les trois sont
-     rendus. Sans lui, un `doc-nav.tsx` qui ne rendrait JAMAIS de groupe
+     rendus. Sans lui, un `doc-nav.tsx` qui ne rendrait jamais de groupe
      passerait le test ci-dessus. */
   it('devrait rendre une liste par groupe peuplé', () => {
     render(<DocShell pages={FIXTURE_PAGES} />);
@@ -371,9 +378,11 @@ describe('DocShell — les entrées du sommaire', () => {
     ).toHaveLength(3);
     for (const label of ['Introduction', 'Fondations', 'Composants']) {
       expect(
-        nav.querySelector(`summary[aria-label="${label}"]`),
+        [...nav.querySelectorAll('.tc-doc-nav__grouptitle')].some(
+          (title) => title.textContent?.trim() === label,
+        ),
         `le groupe « ${label} » a des pages dans ce registre et n'apparaît pas`,
-      ).not.toBeNull();
+      ).toBe(true);
     }
   });
 
@@ -514,28 +523,14 @@ describe('DocShell — la bascule de la barre du haut', () => {
     ).toEqual({ 'data-theme': 'dark', 'data-material': null });
   });
 
-  it('devrait piloter le sommaire depuis le header mobile', async () => {
+  it('ne devrait plus rendre de commande pour plier le sommaire', () => {
     render(<DocShell pages={FIXTURE_PAGES} />);
-    const user = userEvent.setup();
 
-    const navigationToggle = topbar().getByRole('button', {
-      name: 'Afficher ou masquer le sommaire',
-    });
-    const navigationDetails = document.querySelector<HTMLDetailsElement>('#tc-doc-nav-content');
-
-    expect(navigationToggle).toHaveAttribute('aria-expanded', 'true');
-    expect(navigationToggle).toHaveAttribute('aria-controls', 'tc-doc-nav-content');
-    expect(navigationDetails?.open).toBe(true);
-
-    await user.click(navigationToggle);
-
-    expect(navigationToggle).toHaveAttribute('aria-expanded', 'false');
-    expect(navigationDetails?.open).toBe(false);
-
-    await user.click(navigationToggle);
-
-    expect(navigationToggle).toHaveAttribute('aria-expanded', 'true');
-    expect(navigationDetails?.open).toBe(true);
+    expect(
+      topbar().queryByRole('button', { name: 'Afficher ou masquer le sommaire' }),
+    ).toBeNull();
+    expect(document.querySelector('#tc-doc-nav-content')).toBeNull();
+    expect(sommaire()).toBeInTheDocument();
   });
 });
 
@@ -562,6 +557,31 @@ describe('DocShell — le rendu de la page', () => {
       screen.getByRole('main').textContent,
       `le contenu principal ne se lit pas « titre, corps »`,
     ).toBe('Le soclecorps de l’accueil');
+  });
+
+  it('devrait rendre l’accueil Opale sans la carte Beta de la référence', () => {
+    render(<DocShell pages={PAGES} />);
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Le design system de l’écosystème Opale.',
+    );
+    expect(screen.getByRole('heading', { name: 'Opale UI 3.0.0' })).toBeInTheDocument();
+    expect(screen.getByText('91 composants')).toBeInTheDocument();
+    expect(screen.queryByText(/Rejoindre la bêta/i)).toBeNull();
+    expect(document.body).not.toHaveTextContent(/Canop/i);
+    expect(screen.queryByText(/Explorer/i)).toBeNull();
+  });
+
+  it('devrait présenter les composants comme Opale sans bloc API ni habillage de référence', () => {
+    render(<DocShell pages={PAGES} />);
+
+    navigate('#/composants/opale-button');
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Button');
+    expect(screen.getByText(/import \{ Opale \}/)).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'API' })).toBeNull();
+    expect(screen.queryByText(/Explorer/i)).toBeNull();
+    expect(document.body).not.toHaveTextContent(/Canop/i);
   });
 
   it('ne devrait rien insérer entre le titre et le corps quand la page n’a pas de chapeau', () => {
@@ -630,12 +650,13 @@ describe('DocShell — la navigation par fragment', () => {
   });
 
   /* Le vrai registre, avec l'adresse que `registry.test.tsx` garantit — le
-     kebab-case du libellé sous le préfixe `composants/`. */
-  it('devrait servir la page de Button du registre réel sur #/composants/button', () => {
-    const expected = PAGES.find((page) => page.slug === 'composants/button');
+     kebab-case du libellé sous le préfixe `composants/`, et `opale-` pour les
+     composants ajoutés au catalogue V3. */
+  it('devrait servir la page de Button du catalogue Opale sur #/composants/opale-button', () => {
+    const expected = PAGES.find((page) => page.slug === 'composants/opale-button');
 
     render(<DocShell pages={PAGES} />);
-    navigate('#/composants/button');
+    navigate('#/composants/opale-button');
 
     expect(
       screen.getByRole('heading', { level: 1 }).textContent,

@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type PointerEvent,
+} from 'react';
 
 import { Sidebar } from '../magic';
 import type { DocPage } from './doc-model';
@@ -13,10 +20,21 @@ export interface DocNavProps {
    * est à l'écran, donc c'est l'accueil qui porte `aria-current`.
    */
   readonly currentSlug: string;
-  /** État contrôlé par la commande du header mobile lorsqu'elle est fournie. */
-  readonly mobileNavOpen?: boolean;
-  /** Synchronise le pli global avec la commande du header mobile. */
-  readonly onMobileNavOpenChange?: (open: boolean) => void;
+}
+
+interface ScrollbarState {
+  readonly size: number;
+  readonly offset: number;
+  readonly scrollTop: number;
+  readonly maxScrollTop: number;
+}
+
+interface ScrollbarDrag {
+  readonly pointerId: number;
+  readonly startY: number;
+  readonly startScrollTop: number;
+  readonly maxScrollTop: number;
+  readonly travel: number;
 }
 
 /**
@@ -28,9 +46,8 @@ export interface DocNavProps {
  *
  * La colonne était du HTML natif habillé par `doc.css`. Elle est désormais un
  * `Sidebar` — `Sidebar`, `.Header` et `.Items` — parce que la vitrine doit
- * manger sa propre cuisine. Les liens et les groupes pliables restent natifs :
- * le composant vendoré ne sait pas porter ces deux sémantiques sans les
- * dégrader.
+ * manger sa propre cuisine. Le rail reste une navigation statique, toujours
+ * visible, et le composant vendoré conserve la surface qu'il sait rendre.
  *
  * `Sidebar.Item` N'EST PAS EMPLOYÉ, ET C'EST LA SEULE PIÈCE NON ADOPTÉE.
  * Il est câblé sur `<button>` — `ComponentPropsWithoutRef<"button">`,
@@ -45,38 +62,27 @@ export interface DocNavProps {
  * AUCUN TITRE DE SECTION ICI, ET C'EST DÉLIBÉRÉ. La nav précède le contenu
  * dans le DOM ; un `<h2>` par groupe placerait plusieurs titres de niveau 2 avant
  * le `<h1>` de la page, c'est-à-dire un plan de document inversé pour qui
- * navigue par titres. Les titres de groupe sont donc des `<summary>` visibles —
- * ni `<h2>` ni `<h3>` —, et chaque liste est nommée par `aria-label` : elle
- * s'annonce « Fondations, liste, 5 éléments » sans rien ajouter au plan.
+ * navigue par titres. Les libellés de groupe sont donc des `<div>` statiques —
+ * ni `<h2>` ni `<h3>` —, et chaque liste est nommée par `aria-label`.
  *
- * PLIABLE PAR GROUPE, EN `<details>`/`<summary>` NATIFS. Aucun composant de la
- * librairie n'offre un groupe pliable, donc les familles restent en
- * `<details>` natifs :
- * ils sont focusables, ils s'actionnent à `Entrée` comme à `Espace`, et ils
- * s'annoncent « Composants, groupe réduit » chez NVDA, JAWS et VoiceOver, ce
- * qu'un `<div>` plus `aria-expanded` n'obtiendrait qu'en réimplémentant les
- * trois.
+ * Les groupes ne sont pas pliables : le rail reste permanent et aucun bouton
+ * de navigation secondaire ne concurrence les onglets du header.
  *
- * `open` EST ÉCRIT EN DUR ET NON CALCULÉ, et c'est la décision qui fait que le
- * pliage par groupe tient. React n'écrit un attribut dans le DOM que lorsque sa
- * valeur CHANGE d'un rendu à l'autre : à `open` constant, un groupe replié à la
- * main le reste, parce que rien ne vient le rouvrir. Calculer
- * `open={groupeCourant}` paraissait mieux — le groupe de la page lue serait
- * toujours ouvert — mais la valeur change alors à chaque navigation, donc React
- * réécrit l'attribut, et un groupe que le visiteur venait d'ouvrir se refermait
- * sous ses yeux dès qu'il changeait de page. Le prix de ce choix est assumé et
- * il est réel : un groupe replié cache le lien `aria-current` de la page en
- * cours. C'est le visiteur qui l'a replié, et il est à un clic.
- *
- * `aria-label` ET NON `aria-labelledby` VERS LE TITRE DE GROUPE, après mesure.
- * Le libellé est fixé directement sur le contrôle afin que le chevron peint par
- * CSS n'entre pas dans son nom accessible.
+ * Les libellés sont nommés par `aria-labelledby` afin que chaque liste
+ * reste clairement associée à sa famille sans introduire de titre hiérarchique.
  * ==========================================================================
  */
-export function DocNav({ pages, currentSlug, mobileNavOpen, onMobileNavOpenChange }: DocNavProps) {
+export function DocNav({ pages, currentSlug }: DocNavProps) {
   const sections = navSectionsForPages(pages);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [scrollbar, setScrollbar] = useState({ size: 0.28, offset: 0 });
+  const scrollbarRef = useRef<HTMLSpanElement>(null);
+  const dragRef = useRef<ScrollbarDrag | null>(null);
+  const [scrollbar, setScrollbar] = useState<ScrollbarState>({
+    size: 0.28,
+    offset: 0,
+    scrollTop: 0,
+    maxScrollTop: 0,
+  });
 
   useEffect(() => {
     const scrollElement = scrollRef.current;
@@ -86,17 +92,17 @@ export function DocNav({ pages, currentSlug, mobileNavOpen, onMobileNavOpenChang
     const updateScrollbar = () => {
       const viewport = scrollElement.clientHeight;
       const content = scrollElement.scrollHeight;
+      const maxScrollTop = Math.max(0, content - viewport);
 
-      if (!viewport || content <= viewport) {
-        setScrollbar({ size: 1, offset: 0 });
+      if (!viewport || maxScrollTop === 0) {
+        setScrollbar({ size: 1, offset: 0, scrollTop: 0, maxScrollTop: 0 });
         return;
       }
 
       const size = Math.max(0.14, Math.min(1, viewport / content));
-      const travel = Math.max(0, content - viewport);
-      const offset = (scrollElement.scrollTop / travel) * (1 - size);
+      const offset = (scrollElement.scrollTop / maxScrollTop) * (1 - size);
 
-      setScrollbar({ size, offset });
+      setScrollbar({ size, offset, scrollTop: scrollElement.scrollTop, maxScrollTop });
     };
 
     updateScrollbar();
@@ -131,28 +137,90 @@ export function DocNav({ pages, currentSlug, mobileNavOpen, onMobileNavOpenChang
       resizeObserver?.disconnect();
       mutationObserver?.disconnect();
     };
-  }, [mobileNavOpen, pages.length]);
+  }, [pages.length]);
 
-  const handleNavToggle = (event: { currentTarget: HTMLDetailsElement }) => {
-    onMobileNavOpenChange?.(event.currentTarget.open);
+  const handleScrollbarPointerDown = (event: PointerEvent<HTMLSpanElement>) => {
+    const scrollElement = scrollRef.current;
+    const scrollbarElement = scrollbarRef.current;
+
+    if (!scrollElement || !scrollbarElement || scrollbar.maxScrollTop === 0) return;
+
+    const trackHeight = scrollbarElement.getBoundingClientRect().height;
+    const thumbHeight = event.currentTarget.getBoundingClientRect().height;
+
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      startScrollTop: scrollElement.scrollTop,
+      maxScrollTop: scrollbar.maxScrollTop,
+      travel: Math.max(1, trackHeight - thumbHeight),
+    };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    event.preventDefault();
   };
 
-  const detailsStateProps =
-    mobileNavOpen === undefined
-      ? ({ open: true } as const)
-      : { open: mobileNavOpen, onToggle: handleNavToggle };
+  const handleScrollbarPointerMove = (event: PointerEvent<HTMLSpanElement>) => {
+    const scrollElement = scrollRef.current;
+    const drag = dragRef.current;
+
+    if (!scrollElement || !drag || event.pointerId !== drag.pointerId) return;
+
+    const nextScrollTop = drag.startScrollTop +
+      ((event.clientY - drag.startY) / drag.travel) * drag.maxScrollTop;
+
+    scrollElement.scrollTop = Math.max(0, Math.min(drag.maxScrollTop, nextScrollTop));
+  };
+
+  const stopScrollbarDrag = (event: PointerEvent<HTMLSpanElement>) => {
+    if (dragRef.current?.pointerId !== event.pointerId) return;
+
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+    dragRef.current = null;
+  };
+
+  const handleScrollbarKeyDown = (event: KeyboardEvent<HTMLSpanElement>) => {
+    const scrollElement = scrollRef.current;
+
+    if (!scrollElement || scrollbar.maxScrollTop === 0) return;
+
+    const step = Math.max(24, scrollElement.clientHeight * 0.8);
+    let nextScrollTop: number | undefined;
+
+    switch (event.key) {
+      case 'ArrowUp':
+        nextScrollTop = scrollElement.scrollTop - step;
+        break;
+      case 'ArrowDown':
+        nextScrollTop = scrollElement.scrollTop + step;
+        break;
+      case 'PageUp':
+        nextScrollTop = scrollElement.scrollTop - scrollElement.clientHeight;
+        break;
+      case 'PageDown':
+        nextScrollTop = scrollElement.scrollTop + scrollElement.clientHeight;
+        break;
+      case 'Home':
+        nextScrollTop = 0;
+        break;
+      case 'End':
+        nextScrollTop = scrollbar.maxScrollTop;
+        break;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    scrollElement.scrollTop = Math.max(0, Math.min(scrollbar.maxScrollTop, nextScrollTop));
+  };
 
   return (
     /* L'ENVELOPPE EST À MOI, POUR LA MÊME RAISON QUE CELLE DE LA BARRE DU
        HAUT : `Sidebar` rend son `<aside>` dans un `Glass`, dont l'enveloppe
        est un contexte d'empilement et dont la largeur est `fit-content`. Le
        collant, la piste de grille et le sol opaque vivent donc dehors. Elle
-       porte la surface visible, tandis que le `<details>` natif ci-dessous
-       porte l'état du sommaire global. */
-    <div
-      className="tc-doc-nav"
-      data-open={mobileNavOpen === undefined ? 'true' : String(mobileNavOpen)}
-    >
+       porte la surface visible, tandis que le rail statique porte l'état du
+       sommaire sans contrôle de pliage. */
+    <div className="tc-doc-nav">
       <Sidebar
         className="tc-doc-nav__panel"
         /* L'ENVELOPPE A BESOIN DE SON PROPRE CROCHET, et pas seulement le
@@ -161,9 +229,9 @@ export function DocNav({ pages, currentSlug, mobileNavOpen, onMobileNavOpenChang
            `rootClassName` va sur l'enveloppe, qui est la surface visible. */
         rootClassName="tc-doc-nav__glass"
       >
-        <div className="tc-doc-nav__scroll" ref={scrollRef}>
+        <div className="tc-doc-nav__scroll" id="tc-doc-nav-scroll" ref={scrollRef}>
           {/* L'EN-TÊTE RESTE DANS LA COLONNE DÉFILANTE. Il est masqué visuellement
-              par la couche V3 pour laisser le plan CanopUI commencer dès le
+              par la couche V3 pour laisser le plan du catalogue commencer dès le
               premier groupe, mais sa structure est conservée pour les lecteurs
               et pour les intégrations qui réutilisent ce composant. */}
           <Sidebar.Header className="tc-doc-nav__head">
@@ -184,45 +252,58 @@ export function DocNav({ pages, currentSlug, mobileNavOpen, onMobileNavOpenChang
               </span>
             </p>
 
-            {/* LE SOMMAIRE ENTIER SE PLIE. Le bouton reste natif et pilotable
-                depuis le header, tandis que les familles gardent leur état
-                individuel pour les longues listes de composants. */}
-            <details id="tc-doc-nav-content" className="tc-doc-nav__all" {...detailsStateProps}>
-              <summary
-                className="tc-doc-nav__alltitle"
-                aria-label="Afficher ou masquer le sommaire"
-                title="Afficher ou masquer le sommaire"
+            {sections.map((section) => (
+              <section
+                className="tc-doc-nav__group"
+                key={section.id}
+                aria-labelledby={'tc-doc-nav-section-' + section.id}
               >
-                <span aria-hidden="true" />
-              </summary>
-
-              {sections.map((section) => (
-                <details className="tc-doc-nav__group" key={section.id} open>
-                  <summary className="tc-doc-nav__grouptitle" aria-label={section.label}>
-                    {section.label}
-                  </summary>
-                  <ul className="tc-doc-nav__list" aria-label={section.label}>
-                    {section.entries.map(({ page, label }) => (
-                      <li key={page.slug}>
-                        <a
-                          className="tc-doc-nav__link"
-                          href={hrefFor(page.slug)}
-                          aria-current={page.slug === currentSlug ? 'page' : undefined}
-                        >
-                          {label}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              ))}
-            </details>
+                <div className="tc-doc-nav__grouptitle" id={'tc-doc-nav-section-' + section.id}>
+                  {section.label}
+                </div>
+                <ul className="tc-doc-nav__list" aria-label={section.label}>
+                  {section.entries.map(({ page, label }) => (
+                    <li key={page.slug}>
+                      <a
+                        className="tc-doc-nav__link"
+                        href={hrefFor(page.slug)}
+                        aria-current={page.slug === currentSlug ? 'page' : undefined}
+                        title={label}
+                      >
+                        {label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
           </Sidebar.Items>
         </div>
 
-        <span className="tc-doc-nav__scrollbar" aria-hidden="true">
+        <span
+          className="tc-doc-nav__scrollbar"
+          ref={scrollbarRef}
+          role="scrollbar"
+          aria-label="Défilement du sommaire"
+          aria-controls="tc-doc-nav-scroll"
+          aria-orientation="vertical"
+          aria-valuemin={0}
+          aria-valuemax={Math.round(scrollbar.maxScrollTop)}
+          aria-valuenow={Math.round(scrollbar.scrollTop)}
+          aria-valuetext={
+            scrollbar.maxScrollTop === 0
+              ? 'Début du sommaire'
+              : `${Math.round((scrollbar.scrollTop / scrollbar.maxScrollTop) * 100)} %`
+          }
+          tabIndex={0}
+          onKeyDown={handleScrollbarKeyDown}
+        >
           <span
             className="tc-doc-nav__scrollbar-thumb"
+            onPointerDown={handleScrollbarPointerDown}
+            onPointerMove={handleScrollbarPointerMove}
+            onPointerUp={stopScrollbarDrag}
+            onPointerCancel={stopScrollbarDrag}
             style={
               {
                 '--tc-doc-nav-thumb-size': `${scrollbar.size * 100}%`,

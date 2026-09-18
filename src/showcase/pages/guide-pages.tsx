@@ -37,7 +37,7 @@ function guidePage(options: GuidePageOptions): DocPage {
   };
 }
 
-/** Page de prise en main conservée pour reprendre le plan exact de CanopUI. */
+/** Page de prise en main conservée pour reprendre le plan exact de la référence. */
 export const utilisationPage = guidePage({
   slug: 'utilisation',
   label: 'Utilisation',
@@ -45,7 +45,7 @@ export const utilisationPage = guidePage({
   lede: 'Composez une page Opale en partant des primitives et des composants dont vous avez besoin.',
   overview:
     'Chaque composant peut être utilisé indépendamment. Les exemples de la documentation restent interactifs afin de comparer les états et les variantes directement dans la page.',
-  code: "import { CanopButton, CanopCard } from '@thomascaron/opale';",
+  code: "import { Opale } from '@thomascaron/opale';",
   points: [
     'Commencez par une primitive de mise en page, puis ajoutez les composants métier.',
     'Conservez les libellés visibles et les états de focus dans chaque composition.',
@@ -60,7 +60,7 @@ export const themingPage = guidePage({
   lede: 'Le thème clair, le thème sombre et le matériau Liquid Glass partagent les mêmes composants.',
   overview:
     'Le thème global règle la lumière de l’interface. Le matériau Liquid Glass reste un choix local : il se déclenche composant par composant dans les spécimens de la vitrine.',
-  code: '<CanopCard liquidGlass title="Surface locale" />',
+  code: '<Opale.Card liquidGlass title="Surface locale" />',
   points: [
     'Le soleil et la lune changent uniquement le thème global de la documentation.',
     'Le mode Liquid Glass ne modifie pas les autres composants de la page.',
@@ -75,7 +75,7 @@ export const iconesPage = guidePage({
   lede: 'Les icônes renforcent la compréhension sans remplacer un libellé ni une action explicite.',
   overview:
     'Utilisez une icône quand elle apporte une information ou une affordance immédiate. Les actions restent nommées pour les technologies d’assistance.',
-  code: '<CanopIcon name="check" aria-label="Validé" />',
+  code: '<Opale.Icon name="check" aria-label="Validé" />',
   points: [
     'Une icône décorative est masquée aux technologies d’assistance.',
     'Une action icon-only reçoit un nom accessible et une cible confortable.',
