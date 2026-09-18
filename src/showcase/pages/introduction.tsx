@@ -1,5 +1,6 @@
 import type { DocPage } from '../doc-model';
 import { hrefFor } from '../doc-model';
+import { UI_VERSION } from '../version';
 import { Specimen } from '../section';
 import { PageBody, UsageBlock } from './api';
 
@@ -26,7 +27,7 @@ import { PageBody, UsageBlock } from './api';
    souvenir de la version précédente.
    ========================================================================== */
 
-const INSTALL = `npm i "@thomascaron/opale@github:ThoomassC/opale#v2.0.0"`;
+const INSTALL = `npm i "@thomascaron/opale@github:ThoomassC/opale#v${UI_VERSION}"`;
 
 /* LES TROIS LIGNES D'INSTALLATION, ET ELLES SUIVENT `exports` AU MOT.
    `package.json` déclare quatre entrées : `.` vers `dist/magic/index.js`,
