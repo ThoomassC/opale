@@ -1,8 +1,6 @@
 import {
   useEffect,
   useRef,
-  useState,
-  type CSSProperties,
   type KeyboardEvent,
   type PointerEvent,
 } from 'react';
@@ -36,6 +34,13 @@ interface ScrollbarDrag {
   readonly maxScrollTop: number;
   readonly travel: number;
 }
+
+const INITIAL_SCROLLBAR_STATE: ScrollbarState = {
+  size: 0.28,
+  offset: 0,
+  scrollTop: 0,
+  maxScrollTop: 0,
+};
 
 /**
  * La barre de navigation du site de documentation, bâtie avec le `Sidebar` de
@@ -77,17 +82,40 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollbarRef = useRef<HTMLSpanElement>(null);
   const dragRef = useRef<ScrollbarDrag | null>(null);
-  const [scrollbar, setScrollbar] = useState<ScrollbarState>({
-    size: 0.28,
-    offset: 0,
-    scrollTop: 0,
-    maxScrollTop: 0,
-  });
+  const scrollbarStateRef = useRef<ScrollbarState>(INITIAL_SCROLLBAR_STATE);
 
   useEffect(() => {
     const scrollElement = scrollRef.current;
 
     if (!scrollElement) return;
+
+    /* Le rail défile souvent au même rythme que la molette. Modifier l'état
+       React à chaque événement forçait le rendu de l'intégralité des entrées
+       du sommaire et créait un retard perceptible. Le thumb est un indicateur
+       décoratif : ses variables CSS et son état ARIA sont donc écrits
+       directement dans le DOM, sans rerendre la navigation. */
+    const applyScrollbarState = (next: ScrollbarState) => {
+      scrollbarStateRef.current = next;
+
+      const scrollbarElement = scrollbarRef.current;
+      const thumbElement = scrollbarElement?.firstElementChild;
+
+      if (thumbElement instanceof HTMLElement) {
+        thumbElement.style.setProperty('--tc-doc-nav-thumb-size', `${next.size * 100}%`);
+        thumbElement.style.setProperty('--tc-doc-nav-thumb-offset', `${next.offset * 100}%`);
+      }
+
+      if (!scrollbarElement) return;
+
+      scrollbarElement.setAttribute('aria-valuemax', String(Math.round(next.maxScrollTop)));
+      scrollbarElement.setAttribute('aria-valuenow', String(Math.round(next.scrollTop)));
+      scrollbarElement.setAttribute(
+        'aria-valuetext',
+        next.maxScrollTop === 0
+          ? 'Début du sommaire'
+          : `${Math.round((next.scrollTop / next.maxScrollTop) * 100)} %`,
+      );
+    };
 
     const updateScrollbar = () => {
       const viewport = scrollElement.clientHeight;
@@ -95,14 +123,14 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
       const maxScrollTop = Math.max(0, content - viewport);
 
       if (!viewport || maxScrollTop === 0) {
-        setScrollbar({ size: 1, offset: 0, scrollTop: 0, maxScrollTop: 0 });
+        applyScrollbarState({ size: 1, offset: 0, scrollTop: 0, maxScrollTop: 0 });
         return;
       }
 
       const size = Math.max(0.14, Math.min(1, viewport / content));
       const offset = (scrollElement.scrollTop / maxScrollTop) * (1 - size);
 
-      setScrollbar({ size, offset, scrollTop: scrollElement.scrollTop, maxScrollTop });
+      applyScrollbarState({ size, offset, scrollTop: scrollElement.scrollTop, maxScrollTop });
     };
 
     updateScrollbar();
@@ -143,7 +171,9 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
     const scrollElement = scrollRef.current;
     const scrollbarElement = scrollbarRef.current;
 
-    if (!scrollElement || !scrollbarElement || scrollbar.maxScrollTop === 0) return;
+    const scrollbarState = scrollbarStateRef.current;
+
+    if (!scrollElement || !scrollbarElement || scrollbarState.maxScrollTop === 0) return;
 
     const trackHeight = scrollbarElement.getBoundingClientRect().height;
     const thumbHeight = event.currentTarget.getBoundingClientRect().height;
@@ -152,7 +182,7 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
       pointerId: event.pointerId,
       startY: event.clientY,
       startScrollTop: scrollElement.scrollTop,
-      maxScrollTop: scrollbar.maxScrollTop,
+      maxScrollTop: scrollbarState.maxScrollTop,
       travel: Math.max(1, trackHeight - thumbHeight),
     };
     event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -181,7 +211,9 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
   const handleScrollbarKeyDown = (event: KeyboardEvent<HTMLSpanElement>) => {
     const scrollElement = scrollRef.current;
 
-    if (!scrollElement || scrollbar.maxScrollTop === 0) return;
+    const scrollbarState = scrollbarStateRef.current;
+
+    if (!scrollElement || scrollbarState.maxScrollTop === 0) return;
 
     const step = Math.max(24, scrollElement.clientHeight * 0.8);
     let nextScrollTop: number | undefined;
@@ -203,14 +235,14 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
         nextScrollTop = 0;
         break;
       case 'End':
-        nextScrollTop = scrollbar.maxScrollTop;
+        nextScrollTop = scrollbarState.maxScrollTop;
         break;
       default:
         return;
     }
 
     event.preventDefault();
-    scrollElement.scrollTop = Math.max(0, Math.min(scrollbar.maxScrollTop, nextScrollTop));
+    scrollElement.scrollTop = Math.max(0, Math.min(scrollbarState.maxScrollTop, nextScrollTop));
   };
 
   return (
@@ -288,13 +320,9 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
           aria-controls="tc-doc-nav-scroll"
           aria-orientation="vertical"
           aria-valuemin={0}
-          aria-valuemax={Math.round(scrollbar.maxScrollTop)}
-          aria-valuenow={Math.round(scrollbar.scrollTop)}
-          aria-valuetext={
-            scrollbar.maxScrollTop === 0
-              ? 'Début du sommaire'
-              : `${Math.round((scrollbar.scrollTop / scrollbar.maxScrollTop) * 100)} %`
-          }
+          aria-valuemax={0}
+          aria-valuenow={0}
+          aria-valuetext="Début du sommaire"
           tabIndex={0}
           onKeyDown={handleScrollbarKeyDown}
         >
@@ -304,12 +332,6 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
             onPointerMove={handleScrollbarPointerMove}
             onPointerUp={stopScrollbarDrag}
             onPointerCancel={stopScrollbarDrag}
-            style={
-              {
-                '--tc-doc-nav-thumb-size': `${scrollbar.size * 100}%`,
-                '--tc-doc-nav-thumb-offset': `${scrollbar.offset * 100}%`,
-              } as CSSProperties
-            }
           >
             <span className="tc-doc-nav__scrollbar-grip" />
           </span>
