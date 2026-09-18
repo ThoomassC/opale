@@ -17,6 +17,7 @@ body { font-size: 1rem; line-height: 1.5; }
 
 .tc-doc {
   min-height: 100vh;
+  --tc-doc-control-radius: 1rem;
   background: radial-gradient(circle at 14% 22%, color-mix(in srgb, var(--canop-primary-light) 8%, transparent), transparent 28rem), var(--canop-background);
   color: var(--canop-text);
   font-family: var(--canop-font-body);
@@ -139,7 +140,7 @@ body { font-size: 1rem; line-height: 1.5; }
 
 .tc-doc-body {
   display: grid !important;
-  grid-template-columns: minmax(17rem, 17rem) minmax(0, 1fr) !important;
+  grid-template-columns: minmax(0, var(--tc-doc-nav-width, 17rem)) minmax(0, 1fr) !important;
   align-items: start;
   width: min(100%, 96rem);
   margin: 0 auto;
@@ -156,16 +157,47 @@ body { font-size: 1rem; line-height: 1.5; }
 .tc-doc-nav {
   position: sticky !important;
   z-index: 1;
-  inset-block-start: var(--doc-topbar-size) !important;
+  inset-block-start: var(--tc-doc-topbar-height, var(--doc-topbar-size)) !important;
   inset-inline-start: auto !important;
   width: auto !important;
-  height: calc(100dvh - var(--doc-topbar-size)) !important;
+  height: calc(100dvh - var(--tc-doc-topbar-height, var(--doc-topbar-size))) !important;
   max-height: none !important;
   min-width: 0;
   padding: 0 !important;
   border-inline-end: 1px solid var(--canop-divider);
   overflow: visible !important;
-  transition: width var(--canop-motion) var(--canop-ease), padding var(--canop-motion) var(--canop-ease);
+  transition: padding var(--canop-motion) var(--canop-ease);
+}
+.tc-doc-nav[data-resizing='true'] { transition: none !important; }
+.tc-doc-nav__resize {
+  position: absolute;
+  z-index: 4;
+  inset-block: 0;
+  inset-inline-end: -0.55rem;
+  display: none;
+  width: 1.1rem;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  cursor: col-resize;
+  outline: none;
+  touch-action: none;
+  user-select: none;
+}
+.tc-doc-nav__resize > span {
+  display: block;
+  width: 0.22rem;
+  height: 3.5rem;
+  border-radius: var(--canop-radius-pill);
+  background: var(--canop-primary);
+  opacity: 0.55;
+  transition: height 120ms var(--canop-ease), opacity 120ms var(--canop-ease);
+}
+.tc-doc-nav__resize:hover > span,
+.tc-doc-nav__resize:focus-visible > span,
+.tc-doc-nav__resize:active > span {
+  height: 5.25rem;
+  opacity: 1;
 }
 .tc-doc-nav[data-open='false'] { display: block !important; }
 .tc-doc-body:has(.tc-doc-nav[data-open='false']) { grid-template-columns: 4.75rem minmax(0, 1fr) !important; }
@@ -189,15 +221,15 @@ body { font-size: 1rem; line-height: 1.5; }
 .tc-doc-nav__scrollbar-grip { width: 0.7rem; height: 0.75rem; border-radius: var(--canop-radius-pill); background: linear-gradient(var(--canop-surface) 0 0) center 0.08rem / 100% 1px no-repeat, linear-gradient(var(--canop-surface) 0 0) center / 100% 1px no-repeat, linear-gradient(var(--canop-surface) 0 0) center calc(100% - 0.08rem) / 100% 1px no-repeat; opacity: 0.78; }
 .tc-doc-nav[data-open='false'] .tc-doc-nav__scroll { overflow: hidden; padding: 0.75rem; }
 .tc-doc-nav[data-open='false'] .tc-doc-nav__alltitle { margin-inline: auto; }
-.tc-doc-nav__grouptitle { margin: 0; padding: 0.85rem 0.55rem 0.5rem; color: var(--canop-text-secondary); cursor: pointer; font: 700 0.76rem/1.2 var(--canop-font-body); letter-spacing: 0.13em; list-style: none; text-transform: uppercase; }
+.tc-doc-nav__grouptitle { margin: 0; padding: 0.65rem 0.55rem 0.35rem; color: var(--canop-text-secondary); cursor: pointer; font: 700 0.72rem/1.2 var(--canop-font-body); letter-spacing: 0.13em; list-style: none; text-transform: uppercase; }
 .tc-doc-nav__grouptitle::-webkit-details-marker { display: none; }
 .tc-doc-nav__grouptitle::marker { display: none; }
 .tc-doc-nav__grouptitle::before { content: none !important; display: none !important; }
-.tc-doc-nav__group + .tc-doc-nav__group { margin-block-start: 1.15rem; }
-.tc-doc-nav__list { display: grid; gap: 0.22rem; margin: 0; padding: 0 0.15rem 0.25rem; list-style: none; }
-.tc-doc-nav__link { display: flex; min-height: 2.45rem; align-items: center; border: 0 !important; border-radius: var(--canop-radius-sm); padding: 0.55rem 0.7rem; color: var(--canop-text-secondary) !important; font-family: var(--canop-font-body) !important; font-size: 0.98rem; line-height: 1.35; text-decoration: none; }
+.tc-doc-nav__group + .tc-doc-nav__group { margin-block-start: 0.85rem; }
+.tc-doc-nav__list { display: grid; gap: 0.15rem; margin: 0; padding: 0 0.15rem 0.15rem; list-style: none; }
+.tc-doc-nav__link { display: flex; min-height: 2.25rem; align-items: center; border: 0 !important; border-radius: var(--canop-radius-sm); padding: 0.45rem 0.6rem; color: var(--canop-text-secondary) !important; font-family: var(--canop-font-body) !important; font-size: 0.92rem; line-height: 1.3; text-decoration: none; }
 .tc-doc-nav__link:hover,
-.tc-doc-nav__link[aria-current='page'] { background: color-mix(in srgb, var(--canop-primary) 12%, transparent); color: var(--canop-primary) !important; font-weight: 600; }
+.tc-doc-nav__link[aria-current='page'] { color: var(--canop-primary) !important; font-weight: 600; }
 .tc-doc-nav[data-open='false'] .tc-doc-nav__scrollbar { display: none; }
 
 .tc-doc-specimen,
@@ -220,7 +252,26 @@ body { font-size: 1rem; line-height: 1.5; }
 .tc-doc-release__source { color: var(--canop-primary) !important; }
 .tc-doc-grid { gap: var(--canop-space-lg) !important; }
 
-.tc-doc-canop-page { display: grid; gap: var(--canop-space-xl); }
+/* Les pages de documentation doivent montrer leur premier contenu plus tôt.
+   Le style historique plaçait 48 px entre le titre et le corps, puis cumulait
+   le margin du chapeau avec le gap de la page. Cela repoussait la pastille,
+   l'import et la première démo hors du premier écran. L'accueil conserve son
+   rythme éditorial ; les pages internes passent à une gouttière de 24 px. */
+.tc-doc-main:not(.tc-doc-main--home) > .tc-doc-page__title {
+  margin-block-end: 0.5rem !important;
+}
+
+.tc-doc-main:not(.tc-doc-main--home) {
+  padding-block-start: clamp(1.5rem, 3vw, 3rem) !important;
+}
+
+.tc-doc-main:not(.tc-doc-main--home) > .tc-doc-page__title + * {
+  margin-block-start: var(--canop-space-lg) !important;
+}
+
+.tc-doc-canop-page { display: grid; gap: var(--canop-space-lg); }
+.tc-doc-canop-page > .tc-doc-lede,
+.tc-doc-canop-page > .tc-doc-code { margin-block: 0; }
 .tc-doc-canop-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--canop-space-sm); color: var(--canop-text-secondary); font-size: 0.875rem; }
 .tc-doc-canop-preview { display: grid; gap: var(--canop-space-lg); }
 .tc-doc-canop-preview__row { display: flex; flex-wrap: wrap; gap: var(--canop-space-sm); align-items: center; }
@@ -241,6 +292,11 @@ body { font-size: 1rem; line-height: 1.5; }
 @media (min-width: 60rem) {
   .tc-doc-topbar__bar { min-height: var(--doc-topbar-size) !important; }
   .tc-doc-mobile-nav-toggle { display: grid !important; }
+  .tc-doc-nav__resize { display: grid; }
+}
+
+@media (max-width: 59.999rem) {
+  .tc-doc-nav__resize { display: grid; }
 }
 
 @media (max-width: 42rem) {
@@ -404,6 +460,34 @@ body { font-size: 1rem; line-height: 1.5; }
   padding-inline-end: 1.45rem !important;
 }
 
+/* Le lien actif garde la même zone de clic, mais son fond reste légèrement
+   en retrait : c'est la forme de bouton compacte utilisée par CanopUI. */
+.tc-doc-nav__link[aria-current='page'] {
+  position: relative;
+  isolation: isolate;
+  background: transparent !important;
+}
+
+.tc-doc-nav__link[aria-current='page']::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0.14rem 0.48rem 0.14rem 0.14rem;
+  border-radius: var(--canop-radius-sm);
+  background: color-mix(in srgb, var(--canop-primary) 12%, transparent);
+  content: '';
+  pointer-events: none;
+}
+
+/* Les contrôles visibles du showcase partagent le même rayon rectangulaire
+   modéré ; les cartes et menus restent sur le rayon de surface plus large. */
+.tc-doc :is(.tc-doc-search, .tc-doc-themetoggle, .tc-doc-topbar__menu-toggle, .tc-doc-topbar__tab, .tc-doc-home__action) {
+  border-radius: var(--tc-doc-control-radius) !important;
+}
+
+.tc-doc .canop-button {
+  border-radius: var(--canop-radius-sm) !important;
+}
+
 /* Le rail doit rester une piste opaque et simple, jamais une surface Glass. */
 .tc-doc-nav__scrollbar,
 .tc-doc-nav__scrollbar-thumb,
@@ -447,11 +531,11 @@ body { font-size: 1rem; line-height: 1.5; }
 
 /* Remplace l'anneau noir historique par un indicateur bleu cohérent avec
    opaleUI. Le champ garde son anneau sur l'enveloppe, jamais sur l'input. */
-.tc-doc :is(a, button, [role='button']):focus {
+.tc-doc :is(a, button, [role='button'], [role='slider']):focus {
   outline: none !important;
 }
 
-.tc-doc :is(a, button, [role='button']):focus-visible {
+.tc-doc :is(a, button, [role='button'], [role='slider']):focus-visible {
   outline: 2px solid var(--canop-primary) !important;
   outline-offset: 2px;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--canop-background) 82%, transparent) !important;
@@ -519,6 +603,28 @@ body { font-size: 1rem; line-height: 1.5; }
   }
 }
 
+/* Le menu hamburger remplace les onglets dès que nécessaire, mais la
+   recherche reste sur cette même ligne tant que la marque et les deux
+   contrôles latéraux tiennent encore avec une largeur confortable. */
+@media (min-width: 42.001rem) and (max-width: 89.999rem) {
+  :root {
+    --doc-topbar-size: 4.5rem;
+  }
+
+  .tc-doc-topbar .tc-doc-topbar__bar {
+    grid-template-areas: 'brand search menu actions' !important;
+    grid-template-columns: minmax(9.5rem, 1fr) minmax(12rem, 2fr) auto auto !important;
+    grid-template-rows: auto !important;
+    min-height: 4.5rem !important;
+    padding-block: 0.6rem !important;
+  }
+
+  .tc-doc-topbar__field {
+    width: 100%;
+    justify-self: stretch;
+  }
+}
+
 @media (max-width: 26rem) {
   .tc-doc-topbar .tc-doc-topbar__bar {
     column-gap: var(--canop-space-sm) !important;
@@ -552,14 +658,14 @@ body { font-size: 1rem; line-height: 1.5; }
    d'un title natif quand leur affichage est tronqué. */
 @media (max-width: 59.999rem) {
   .tc-doc-body {
-    grid-template-columns: 8.5rem minmax(0, 1fr) !important;
+    grid-template-columns: minmax(0, var(--tc-doc-nav-width, 8.5rem)) minmax(0, 1fr) !important;
   }
 
   .tc-doc-nav {
     position: sticky !important;
-    inset-block-start: var(--doc-topbar-size) !important;
+    inset-block-start: var(--tc-doc-topbar-height, var(--doc-topbar-size)) !important;
     width: auto !important;
-    height: calc(100dvh - var(--doc-topbar-size)) !important;
+    height: calc(100dvh - var(--tc-doc-topbar-height, var(--doc-topbar-size))) !important;
     max-height: none !important;
     border-inline-end: 1px solid var(--canop-divider);
     border-block-end: 0;
@@ -574,23 +680,25 @@ body { font-size: 1rem; line-height: 1.5; }
 
   .tc-doc-nav__scroll {
     max-height: none !important;
-    padding: 1rem 0.55rem 2rem;
+    padding: 0.85rem 0.55rem 1.5rem;
   }
 
   .tc-doc-nav__grouptitle {
     overflow: hidden;
+    padding-block: 0.55rem 0.25rem;
     padding-inline: 0.35rem;
-    font-size: 0.62rem;
+    font-size: 0.58rem;
     letter-spacing: 0.08em;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .tc-doc-nav__link {
-    min-height: 2.1rem;
+    min-height: 1.95rem;
     overflow: hidden;
-    padding-inline: 0.42rem;
-    font-size: 0.74rem;
+    padding-block: 0.38rem;
+    padding-inline: 0.38rem;
+    font-size: 0.7rem;
     text-overflow: ellipsis;
     white-space: nowrap;
   }

@@ -1,10 +1,19 @@
-import { useEffect, useRef } from 'react';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 import { Topbar } from '../magic';
 import type { DocPage } from './doc-model';
 import { HOME_SLUG, findPage, hrefFor } from './doc-model';
-import { DocNav } from './doc-nav';
+import {
+  DOC_NAV_WIDTH_DEFAULT,
+  DOC_NAV_WIDTH_MAX,
+  DOC_NAV_WIDTH_MOBILE_DEFAULT,
+  DOC_NAV_WIDTH_MOBILE_MAX,
+  DOC_NAV_WIDTH_MOBILE_MIN,
+  DOC_NAV_WIDTH_MIN,
+  DOC_NAV_WIDTH_STEP,
+  DocNav,
+} from './doc-nav';
 import { DocSearch } from './doc-search';
 import { PageBoundary } from './page-boundary';
 import { ThemeToggle } from './theme-toggle';
@@ -18,6 +27,11 @@ import { UI_VERSION } from './version';
 
 /** Le nom du paquet, affiché dans la barre du haut et dans `document.title`. */
 const SITE_NAME = 'opaleUI';
+const COMPACT_NAV_MEDIA_QUERY = '(max-width: 59.999rem)';
+
+function compactNavViewport() {
+  return typeof window !== 'undefined' && window.matchMedia?.(COMPACT_NAV_MEDIA_QUERY).matches;
+}
 
 /**
  * Le repli du repli : un registre sans page d'accueil.
@@ -120,6 +134,29 @@ function HeaderNav({ page, className, ariaLabel }: HeaderNavProps) {
 export function DocShell({ pages }: DocShellProps) {
   const slug = useRoute();
   const page = findPage(pages, slug) ?? findPage(pages, HOME_SLUG) ?? EMPTY_REGISTRY_PAGE;
+  const [compactNav, setCompactNav] = useState(compactNavViewport);
+  const [navWidth, setNavWidth] = useState(
+    compactNavViewport() ? DOC_NAV_WIDTH_MOBILE_DEFAULT : DOC_NAV_WIDTH_DEFAULT,
+  );
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia?.(COMPACT_NAV_MEDIA_QUERY);
+
+    if (!mediaQuery) return;
+
+    const updateCompactNav = () => setCompactNav(mediaQuery.matches);
+
+    updateCompactNav();
+    mediaQuery.addEventListener?.('change', updateCompactNav);
+
+    return () => mediaQuery.removeEventListener?.('change', updateCompactNav);
+  }, []);
+
+  const navWidthMin = compactNav ? DOC_NAV_WIDTH_MOBILE_MIN : DOC_NAV_WIDTH_MIN;
+  const navWidthMax = compactNav ? DOC_NAV_WIDTH_MOBILE_MAX : DOC_NAV_WIDTH_MAX;
+  const defaultNavWidth = compactNav ? DOC_NAV_WIDTH_MOBILE_DEFAULT : DOC_NAV_WIDTH_DEFAULT;
+  const effectiveNavWidth =
+    navWidth >= navWidthMin && navWidth <= navWidthMax ? navWidth : defaultNavWidth;
   /* LE TITRE, ET NON `<main>`, EST LA CIBLE DU FOCUS. Deux raisons mesurées :
      — `<main>` fait la hauteur entière de la page, donc l'anneau de
        `:focus-visible` devenait un rectangle de plusieurs milliers de pixels
@@ -130,7 +167,42 @@ export function DocShell({ pages }: DocShellProps) {
        et VoiceOver : le nom de la page, une fois, par le mécanisme le plus
        universel. C'est ce qui a permis de SUPPRIMER la région live qui doublait
        l'annonce. */
+  const docRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const topbarRef = useRef<HTMLDivElement>(null);
+
+  /* Le header a plusieurs hauteurs selon le breakpoint : sur petit écran les
+     onglets, la recherche et les actions peuvent occuper plusieurs lignes. La
+     variable historique `--doc-topbar-size` est un token, pas la hauteur
+     réellement peinte. Le rail mesure donc son voisin réel et partage cette
+     valeur avec le CSS afin que sa fin reste toujours dans la fenêtre. */
+  useEffect(() => {
+    const docElement = docRef.current;
+    const topbarElement = topbarRef.current;
+
+    if (!docElement || !topbarElement) return;
+
+    const updateTopbarHeight = () => {
+      const height = topbarElement.getBoundingClientRect().height;
+
+      if (height > 0) {
+        docElement.style.setProperty('--tc-doc-topbar-height', `${height}px`);
+      }
+    };
+
+    updateTopbarHeight();
+    window.addEventListener('resize', updateTopbarHeight);
+    const resizeObserver =
+      typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(updateTopbarHeight);
+    resizeObserver?.observe(topbarElement);
+
+    return () => {
+      window.removeEventListener('resize', updateTopbarHeight);
+      resizeObserver?.disconnect();
+      docElement.style.removeProperty('--tc-doc-topbar-height');
+    };
+  }, []);
 
   /* Synchronisation avec un système extérieur — le titre du document — donc un
      effet est ici l'outil juste. Le titre suit la page RENDUE, repli compris. */
@@ -171,8 +243,16 @@ export function DocShell({ pages }: DocShellProps) {
     scroller.scrollTop = 0;
   }, [page.slug]);
 
+  const previewNavWidth = (width: number) => {
+    bodyRef.current?.style.setProperty('--tc-doc-nav-width', `${width}px`);
+  };
+
+  const commitNavWidth = (width: number) => {
+    setNavWidth(width);
+  };
+
   return (
-    <div className="tc-doc">
+    <div className="tc-doc" ref={docRef}>
       {/* LE LIEN D'ÉVITEMENT NE DOIT PAS NAVIGUER, et sans ce gestionnaire il
           navigue. Le routage lit TOUT le fragment : laisser le navigateur poser
           `#contenu` dans l'adresse, c'est `parseSlug('#contenu') === 'contenu'`,
@@ -233,7 +313,7 @@ export function DocShell({ pages }: DocShellProps) {
           rognée par son propre parent et ne se voit pas. La demander serait
           annoncer une élévation que rien ne peint.
           ================================================================== */}
-      <div className="tc-doc-topbar">
+      <div className="tc-doc-topbar" ref={topbarRef}>
         <Topbar
           className="tc-doc-topbar__bar"
           rootClassName="tc-doc-topbar__glass"
@@ -311,10 +391,25 @@ export function DocShell({ pages }: DocShellProps) {
         </Topbar>
       </div>
 
-      <div className="tc-doc-body">
+      <div
+        className="tc-doc-body"
+        ref={bodyRef}
+        style={{ '--tc-doc-nav-width': `${effectiveNavWidth}px` } as CSSProperties}
+      >
         <DocNav
           pages={pages}
           currentSlug={page.slug}
+          resize={{
+            width: effectiveNavWidth,
+            min: navWidthMin,
+            max: navWidthMax,
+            step: DOC_NAV_WIDTH_STEP,
+            onPreview: previewNavWidth,
+            onChange: (width) =>
+              commitNavWidth(Math.max(navWidthMin, Math.min(navWidthMax, width))),
+            onCommit: (width) =>
+              commitNavWidth(Math.max(navWidthMin, Math.min(navWidthMax, width))),
+          }}
         />
 
         <div className="tc-doc-column">

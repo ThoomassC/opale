@@ -18,7 +18,33 @@ export interface DocNavProps {
    * est à l'écran, donc c'est l'accueil qui porte `aria-current`.
    */
   readonly currentSlug: string;
+  /**
+   * Contrôle optionnel de la largeur du rail. Il reste optionnel pour que
+   * `DocNav` puisse continuer à être utilisé seul dans les intégrations et
+   * dans ses tests ; la coquille complète active le redimensionnement.
+   */
+  readonly resize?: DocNavResize;
 }
+
+export interface DocNavResize {
+  readonly width: number;
+  readonly min: number;
+  readonly max: number;
+  readonly step: number;
+  /** Mise à jour visuelle pendant le glissement, sans imposer un rendu React. */
+  readonly onPreview?: (width: number) => void;
+  readonly onChange: (width: number) => void;
+  /** Validation de la dernière largeur quand le pointeur est relâché. */
+  readonly onCommit?: (width: number) => void;
+}
+
+export const DOC_NAV_WIDTH_MIN = 14 * 16;
+export const DOC_NAV_WIDTH_MAX = 30 * 16;
+export const DOC_NAV_WIDTH_DEFAULT = 17 * 16;
+export const DOC_NAV_WIDTH_MOBILE_MIN = 6 * 16;
+export const DOC_NAV_WIDTH_MOBILE_MAX = 14 * 16;
+export const DOC_NAV_WIDTH_MOBILE_DEFAULT = 8.5 * 16;
+export const DOC_NAV_WIDTH_STEP = 16;
 
 interface ScrollbarState {
   readonly size: number;
@@ -33,6 +59,13 @@ interface ScrollbarDrag {
   readonly startScrollTop: number;
   readonly maxScrollTop: number;
   readonly travel: number;
+}
+
+interface ResizeDrag {
+  readonly pointerId: number;
+  readonly startX: number;
+  readonly startWidth: number;
+  width: number;
 }
 
 const INITIAL_SCROLLBAR_STATE: ScrollbarState = {
@@ -77,11 +110,12 @@ const INITIAL_SCROLLBAR_STATE: ScrollbarState = {
  * reste clairement associée à sa famille sans introduire de titre hiérarchique.
  * ==========================================================================
  */
-export function DocNav({ pages, currentSlug }: DocNavProps) {
+export function DocNav({ pages, currentSlug, resize }: DocNavProps) {
   const sections = navSectionsForPages(pages);
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollbarRef = useRef<HTMLSpanElement>(null);
   const dragRef = useRef<ScrollbarDrag | null>(null);
+  const resizeDragRef = useRef<ResizeDrag | null>(null);
   const scrollbarStateRef = useRef<ScrollbarState>(INITIAL_SCROLLBAR_STATE);
 
   useEffect(() => {
@@ -245,6 +279,83 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
     scrollElement.scrollTop = Math.max(0, Math.min(scrollbarState.maxScrollTop, nextScrollTop));
   };
 
+  const clampResizeWidth = (width: number) => {
+    if (!resize) return width;
+
+    return Math.max(resize.min, Math.min(resize.max, width));
+  };
+
+  const handleResizePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (!resize) return;
+
+    resizeDragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startWidth: resize.width,
+      width: resize.width,
+    };
+    event.currentTarget.closest('.tc-doc-nav')?.setAttribute('data-resizing', 'true');
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+  };
+
+  const handleResizePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const drag = resizeDragRef.current;
+
+    if (!resize || !drag || event.pointerId !== drag.pointerId) return;
+
+    const nextWidth = clampResizeWidth(drag.startWidth + event.clientX - drag.startX);
+
+    drag.width = nextWidth;
+    event.currentTarget.setAttribute('aria-valuenow', String(nextWidth));
+
+    if (resize.onPreview) {
+      resize.onPreview(nextWidth);
+    } else {
+      resize.onChange(nextWidth);
+    }
+  };
+
+  const stopResizeDrag = (event: PointerEvent<HTMLDivElement>) => {
+    const drag = resizeDragRef.current;
+
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+    resize?.onCommit?.(drag.width);
+    event.currentTarget.closest('.tc-doc-nav')?.removeAttribute('data-resizing');
+    resizeDragRef.current = null;
+  };
+
+  const handleResizeKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!resize) return;
+
+    const step = event.shiftKey ? resize.step * 2 : resize.step;
+    let nextWidth: number | undefined;
+
+    switch (event.key) {
+      case 'ArrowLeft':
+      case 'ArrowDown':
+        nextWidth = resize.width - step;
+        break;
+      case 'ArrowRight':
+      case 'ArrowUp':
+        nextWidth = resize.width + step;
+        break;
+      case 'Home':
+        nextWidth = resize.min;
+        break;
+      case 'End':
+        nextWidth = resize.max;
+        break;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    resize.onChange(clampResizeWidth(nextWidth));
+  };
+
   return (
     /* L'ENVELOPPE EST À MOI, POUR LA MÊME RAISON QUE CELLE DE LA BARRE DU
        HAUT : `Sidebar` rend son `<aside>` dans un `Glass`, dont l'enveloppe
@@ -337,6 +448,26 @@ export function DocNav({ pages, currentSlug }: DocNavProps) {
           </span>
         </span>
       </Sidebar>
+
+      {resize ? (
+        <div
+          className="tc-doc-nav__resize"
+          role="slider"
+          aria-label="Largeur du sommaire"
+          aria-orientation="horizontal"
+          aria-valuemin={resize.min}
+          aria-valuemax={resize.max}
+          aria-valuenow={resize.width}
+          tabIndex={0}
+          onKeyDown={handleResizeKeyDown}
+          onPointerDown={handleResizePointerDown}
+          onPointerMove={handleResizePointerMove}
+          onPointerUp={stopResizeDrag}
+          onPointerCancel={stopResizeDrag}
+        >
+          <span aria-hidden="true" />
+        </div>
+      ) : null}
     </div>
   );
 }

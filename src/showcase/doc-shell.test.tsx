@@ -1,10 +1,16 @@
-import { act, cleanup, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DocNavEntry, DocPage } from './doc-model';
 import { GROUPS, HOME_SLUG, hrefFor, navEntriesForPages } from './doc-model';
 import { DocShell } from './doc-shell';
+import {
+  DOC_NAV_WIDTH_DEFAULT,
+  DOC_NAV_WIDTH_MAX,
+  DOC_NAV_WIDTH_MIN,
+  DOC_NAV_WIDTH_STEP,
+} from './doc-nav';
 import { PAGES } from './pages';
 import { UI_VERSION } from './version';
 
@@ -273,6 +279,64 @@ describe('DocShell — les onglets du header', () => {
     expect(menu).toBeInstanceOf(HTMLDetailsElement);
     expect(menu?.querySelector('summary')).toHaveAttribute('aria-label', 'Ouvrir le menu');
     expect(menu?.querySelectorAll('.tc-doc-topbar__menu-nav a')).toHaveLength(3);
+  });
+});
+
+describe('DocShell — la largeur du sommaire', () => {
+  it('devrait prévisualiser la largeur directement pendant un glissement', () => {
+    render(<DocShell pages={PAGES} />);
+
+    const resizeHandle = screen.getByRole('slider', { name: 'Largeur du sommaire' });
+    const body = document.querySelector('.tc-doc-body');
+
+    expect(body).not.toBeNull();
+
+    fireEvent.pointerDown(resizeHandle, { pointerId: 7, clientX: 100 });
+    fireEvent.pointerMove(resizeHandle, { pointerId: 7, clientX: 124 });
+
+    expect(body).toHaveStyle(`--tc-doc-nav-width: ${DOC_NAV_WIDTH_DEFAULT + 24}px`);
+    expect(resizeHandle).toHaveAttribute(
+      'aria-valuenow',
+      String(DOC_NAV_WIDTH_DEFAULT + 24),
+    );
+
+    fireEvent.pointerUp(resizeHandle, { pointerId: 7, clientX: 124 });
+
+    expect(body).toHaveStyle(`--tc-doc-nav-width: ${DOC_NAV_WIDTH_DEFAULT + 24}px`);
+    expect(resizeHandle.closest('.tc-doc-nav')).not.toHaveAttribute('data-resizing');
+  });
+
+  it('devrait pouvoir être ajustée au clavier dans des bornes accessibles', async () => {
+    const user = userEvent.setup();
+
+    render(<DocShell pages={PAGES} />);
+
+    const resizeHandle = screen.getByRole('slider', { name: 'Largeur du sommaire' });
+    const body = document.querySelector('.tc-doc-body');
+
+    expect(resizeHandle).toHaveAttribute('aria-valuemin', String(DOC_NAV_WIDTH_MIN));
+    expect(resizeHandle).toHaveAttribute('aria-valuemax', String(DOC_NAV_WIDTH_MAX));
+    expect(resizeHandle).toHaveAttribute('aria-valuenow', String(DOC_NAV_WIDTH_DEFAULT));
+    expect(body?.getAttribute('style')).toContain(
+      `--tc-doc-nav-width: ${DOC_NAV_WIDTH_DEFAULT}px`,
+    );
+
+    resizeHandle.focus();
+    await user.keyboard('{ArrowRight}');
+
+    expect(resizeHandle).toHaveAttribute(
+      'aria-valuenow',
+      String(DOC_NAV_WIDTH_DEFAULT + DOC_NAV_WIDTH_STEP),
+    );
+    expect(body?.getAttribute('style')).toContain(
+      `--tc-doc-nav-width: ${DOC_NAV_WIDTH_DEFAULT + DOC_NAV_WIDTH_STEP}px`,
+    );
+
+    await user.keyboard('{Home}');
+    expect(resizeHandle).toHaveAttribute('aria-valuenow', String(DOC_NAV_WIDTH_MIN));
+
+    await user.keyboard('{End}');
+    expect(resizeHandle).toHaveAttribute('aria-valuenow', String(DOC_NAV_WIDTH_MAX));
   });
 });
 
