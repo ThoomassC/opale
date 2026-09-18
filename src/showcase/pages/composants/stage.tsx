@@ -1,5 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 
+import { UI_VERSION } from '../../version';
+
 /* =============================================================================
    L'IMPORT DE `magic.scss` A ÉTÉ RETIRÉ D'ICI, ET IL FAUT DIRE POURQUOI.
 
@@ -156,7 +158,7 @@ export function MagicGroundNote() {
 export function MagicPreamble() {
   return (
     <p className="tc-doc-install">
-      <code>npm i &quot;@thomascaron/opale@github:ThoomassC/opale#v2.0.0&quot;</code>
+      <code>{`npm i "@thomascaron/opale@github:ThoomassC/opale#v${UI_VERSION}"`}</code>
     </p>
   );
 }

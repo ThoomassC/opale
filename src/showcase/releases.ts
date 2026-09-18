@@ -1,0 +1,134 @@
+/**
+ * L'historique de la vitrine et ses points d'entrée immuables.
+ *
+ * Les archives sous `/versions/` sont des builds statiques produits depuis les
+ * commits indiqués ici. Une version ne remplace donc jamais la précédente :
+ * son application, ses routes et son code restent consultables tels quels.
+ */
+export interface ReleaseNote {
+  readonly version: string;
+  readonly publishedAt: string;
+  readonly dateLabel: string;
+  readonly summary: string;
+  readonly changes: readonly string[];
+  readonly breaking?: boolean;
+  /** URL de l'application figée, ou fragment pour la version courante. */
+  readonly appHref: string;
+  /** Arbre Git immuable ayant produit l'archive. */
+  readonly sourceHref: string;
+}
+
+const REPOSITORY_URL = 'https://github.com/ThoomassC/opale';
+
+/**
+ * Du plus récent au plus ancien. L'ordre est celui de la page et de la
+ * recherche visuelle : la première entrée est toujours la version courante.
+ */
+export const RELEASES: readonly ReleaseNote[] = [
+  {
+    version: '2.1.0',
+    publishedAt: '2026-09-18',
+    dateLabel: '18 septembre 2026',
+    summary:
+      'La vitrine gagne un historique de versions et conserve chaque état publié sous une adresse indépendante.',
+    changes: [
+      'Ajout de la page « Notes de versions » dans la navigation.',
+      'Ajout de snapshots utilisables pour les versions 0.1.0 à 2.0.0.',
+      'La version courante reste à la racine : les anciennes versions ne sont jamais écrasées.',
+    ],
+    appHref: '#/',
+    sourceHref: `${REPOSITORY_URL}/tree/main`,
+  },
+  {
+    version: '2.0.0',
+    publishedAt: '2026-09-14',
+    dateLabel: '14 septembre 2026',
+    summary: 'Le paquet devient Opale et adopte les composants verre liquide vendorés.',
+    changes: [
+      'Quatorze composants verre liquide sont publiés à la racine.',
+      'La vitrine passe d’une charte unique à une documentation navigable.',
+      'Rupture majeure : les composants maison de la 1.x ne sont plus exportés.',
+    ],
+    breaking: true,
+    appHref: '/versions/v2.0.0/',
+    sourceHref: `${REPOSITORY_URL}/tree/5bdefcf66ed2c77111c7bda0f363a58438430add`,
+  },
+  {
+    version: '1.2.0',
+    publishedAt: '2026-09-10',
+    dateLabel: '10 septembre 2026',
+    summary: 'Un bouton bulle et sa lentille arrivent sans modifier les API existantes.',
+    changes: [
+      'Ajout de la variante `bubble` de `Button`.',
+      'Ajout de `GlassLens` et de la feuille optionnelle `lens.css`.',
+      'Les consommateurs qui n’emploient pas ces nouveautés restent inchangés.',
+    ],
+    appHref: '/versions/v1.2.0/',
+    sourceHref: `${REPOSITORY_URL}/tree/dec06e86dba0c0f4ab53b6563a57c6d8bf592355`,
+  },
+  {
+    version: '1.1.0',
+    publishedAt: '2026-09-09',
+    dateLabel: '9 septembre 2026',
+    summary: 'Le thème verre liquide devient une feuille optionnelle, sans déplacement de l’API.',
+    changes: [
+      'Ajout de `glass.css` et de l’axe de matériau optionnel.',
+      'Les jetons, rôles, composants et classes de la 1.0 restent compatibles.',
+      'La vitrine documente le coût et les replis du matériau.',
+    ],
+    appHref: '/versions/v1.1.0/',
+    sourceHref: `${REPOSITORY_URL}/tree/20887408adf78c6320a320c8f3dfb74617dc4e45`,
+  },
+  {
+    version: '1.0.0',
+    publishedAt: '2026-09-09',
+    dateLabel: '9 septembre 2026',
+    summary: 'L’API du socle est déclarée stable après l’arrivée des composants partagés.',
+    changes: [
+      'Le vocabulaire de la palette et des composants est stabilisé.',
+      'La vitrine devient une documentation par page.',
+      'Les consommateurs de la 0.3.0 disposent d’un contrat stable.',
+    ],
+    appHref: '/versions/v1.0.0/',
+    sourceHref: `${REPOSITORY_URL}/tree/e131e00cdc900a7a96588fe12a72889f8f2677cd`,
+  },
+  {
+    version: '0.3.0',
+    publishedAt: '2026-09-08',
+    dateLabel: '8 septembre 2026',
+    summary: 'Le socle accueille les composants portés du portfolio et la palette canonique.',
+    changes: [
+      'Ajout des composants partagés manquants.',
+      'Adoption de la palette du portfolio et de la couche de matériaux.',
+      'Le contrat exécutable mesure désormais le socle commun.',
+    ],
+    appHref: '/versions/v0.3.0/',
+    sourceHref: `${REPOSITORY_URL}/tree/f41041ba51ed8ef215ff38e33e925bb92f97834c`,
+  },
+  {
+    version: '0.2.0',
+    publishedAt: '2026-09-06',
+    dateLabel: '6 septembre 2026',
+    summary: 'Les fonds clairs passent du gris écran à une surface papier mesurée.',
+    changes: [
+      'Révision des fonds clairs de la palette.',
+      'Le contrat de couleur est recalibré sur ces nouvelles surfaces.',
+    ],
+    appHref: '/versions/v0.2.0/',
+    sourceHref: `${REPOSITORY_URL}/tree/28c1a9e5b599e62f4892f1d9e0da3a0dead3a1a1`,
+  },
+  {
+    version: '0.1.0',
+    publishedAt: '2026-09-05',
+    dateLabel: '5 septembre 2026',
+    summary: 'Première version du socle UI commun, de ses jetons et de son contrat de couleur.',
+    changes: [
+      'Première palette mesurée et premières échelles publiées.',
+      'Ajout du contrat exécutable et de la vitrine de référence.',
+    ],
+    appHref: '/versions/v0.1.0/',
+    sourceHref: `${REPOSITORY_URL}/tree/246ee0928d9f1cc3e7ceb26ab29b212097840822`,
+  },
+];
+
+export const CURRENT_RELEASE = RELEASES[0];

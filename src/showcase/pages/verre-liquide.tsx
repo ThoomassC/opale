@@ -1,6 +1,7 @@
 import { Button, Glass } from '../../magic';
 import type { CSSProperties } from 'react';
 import type { DocPage } from '../doc-model';
+import { UI_VERSION } from '../version';
 import { Specimen } from '../section';
 import { PageBody, UsageBlock } from './api';
 import { MagicCell, MagicStage } from './composants/stage';
@@ -50,7 +51,7 @@ function LiquidGlassFilter() {
   );
 }
 
-const USAGE = `npm i "@thomascaron/opale@github:ThoomassC/opale#v2.0.0"
+const USAGE = `npm i "@thomascaron/opale@github:ThoomassC/opale#v${UI_VERSION}"
 
 import { Button, Glass } from '@thomascaron/opale';
 import '@thomascaron/opale/opale.css';

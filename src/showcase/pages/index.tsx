@@ -2,6 +2,7 @@ import type { DocPage } from '../doc-model';
 
 import { introductionPage } from './introduction';
 import { verreLiquidePage } from './verre-liquide';
+import { notesVersionsPage } from './notes-de-versions';
 
 import { accessibilitePage } from './fondations/accessibilite';
 import { elevationPage } from './fondations/elevation';
@@ -64,6 +65,7 @@ export const PAGES: readonly DocPage[] = [
   /* Juste sous « Présentation », et dans le même groupe : c'est la page qui
      montre l'effet dont toute la 2.0 dépend, avant le catalogue. */
   verreLiquidePage,
+  notesVersionsPage,
 
   palettePage,
   typographiePage,

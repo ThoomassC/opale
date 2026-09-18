@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import { UI_VERSION } from '../../version';
+
 import {
   Button,
   Checkbox,
@@ -242,7 +244,7 @@ export function SidebarCollapsibleScene() {
           </Sidebar.Item>
         </Sidebar.Items>
 
-        <Sidebar.Footer>{collapsed ? '·' : 'v2.0.0'}</Sidebar.Footer>
+        <Sidebar.Footer>{collapsed ? '·' : `v${UI_VERSION}`}</Sidebar.Footer>
       </Sidebar>
 
       <p className="tc-doc-magicstage__label">

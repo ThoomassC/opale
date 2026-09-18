@@ -13,6 +13,10 @@ Le socle d'interface partagé par [`portfolio`](https://github.com/ThoomassC/por
 > couleur d'Opale**. La section « [Ce que la 2.0 ne garantit
 > pas](#ce-que-la-20-ne-garantit-pas) » est la plus importante de ce fichier.
 
+La vitrine est actuellement en **2.1.0**. Son historique est consultable dans l’onglet
+« Notes de versions » ; chaque état antérieur dispose aussi d’un snapshot utilisable sous
+`public/versions/`.
+
 Ce qui reste d'Opale, et qui est le cœur du dépôt : **la charte** — les jetons OKLab, les
 trois thèmes — et **le contrat de couleur exécutable** qui la garde.
 
@@ -78,14 +82,10 @@ Le paquet s'installe depuis git, et il n'est pas publié sur npm.
 npm i "@thomascaron/opale@github:ThoomassC/opale"
 ```
 
-> **Le tag `v2.0.0` n'existe pas encore, et une ligne qui le référence échoue aujourd'hui.**
-> Vérifié : `git tag --list` ne rend que `v0.1.0` et `v0.2.0`. Une commande de la forme
-> `…/opale#v2.0.0` renvoie donc une erreur de résolution git, pas une installation.
-> Deux choses restent à faire pour que la ligne ci-dessus livre bien la 2.0 : **fusionner la
-> branche dans `main`** (la forme sans fragment installe le HEAD de la branche par défaut,
-> qui porte encore la 1.x) et **poser puis pousser le tag `v2.0.0`**. Une fois le tag posé,
-> la forme à épingler est `"@thomascaron/opale@github:ThoomassC/opale#v2.0.0"` — et c'est
-> celle-là qu'il faut employer, un HEAD de branche n'étant pas une version.
+> **Les tags de publication restent la source de vérité du paquet.** La vitrine 2.1.0 et les
+> snapshots historiques sont conservés séparément pour permettre la comparaison visuelle ;
+> au moment de publier une version, poser et pousser le tag correspondant (`v2.1.0`, puis les
+> suivants) permet de l’installer sans dépendre d’un HEAD de branche.
 
 Le paquet se compile à l'installation (`prepare` → `build:lib`). **Quatre points d'entrée**,
 et les deux premiers suffisent :
@@ -447,8 +447,8 @@ dans le script, jamais en appauvrissant la source.
 
 Par coût de retour en arrière décroissant.
 
-1. **Le tag `v2.0.0`, et la fusion dans `main`.** Sans les deux, aucune ligne d'installation
-   de ce README ne livre la 2.0. C'est le seul point bloquant du fichier.
+1. **Le tag de publication `v2.1.0`.** Le code et la vitrine sont prêts ; le tag doit être posé
+   au moment de la publication pour rendre l’installation git immuable.
 2. **Le contraste des quatorze composants.** Le dépôt publie une charte mesurée et des
    composants qui ne le sont pas. Deux issues cohérentes, et aucune n'est prise : documenter
    la contrainte « fond sombre obligatoire » comme une condition d'emploi (l'état actuel), ou
