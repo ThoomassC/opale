@@ -244,6 +244,28 @@ describe('DocShell — la note de version', () => {
   });
 });
 
+describe('DocShell — les onglets du header', () => {
+  it('devrait rendre Accueil, Installation et Notes de versions dans cet ordre', () => {
+    render(<DocShell pages={PAGES} />);
+
+    const links = within(
+      screen.getByRole('navigation', { name: 'Navigation principale' }),
+    ).getAllByRole('link');
+
+    expect(links.map((link) => link.textContent)).toEqual([
+      'Accueil',
+      'Installation',
+      'Notes de versions',
+    ]);
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      hrefFor(''),
+      hrefFor('installation'),
+      hrefFor('notes-de-versions'),
+    ]);
+    expect(links[0]).toHaveAttribute('aria-current', 'page');
+  });
+});
+
 describe('DocShell — les entrées du sommaire', () => {
   /* LA promesse : « une entrée de nav par composant publié ». Elle est ici
      menée sur le VRAI registre, dont `registry.test.tsx` garantit par ailleurs
@@ -501,19 +523,19 @@ describe('DocShell — la bascule de la barre du haut', () => {
     });
     const navigationDetails = document.querySelector<HTMLDetailsElement>('#tc-doc-nav-content');
 
-    expect(navigationToggle).toHaveAttribute('aria-expanded', 'false');
-    expect(navigationToggle).toHaveAttribute('aria-controls', 'tc-doc-nav-content');
-    expect(navigationDetails?.open).toBe(false);
-
-    await user.click(navigationToggle);
-
     expect(navigationToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(navigationToggle).toHaveAttribute('aria-controls', 'tc-doc-nav-content');
     expect(navigationDetails?.open).toBe(true);
 
     await user.click(navigationToggle);
 
     expect(navigationToggle).toHaveAttribute('aria-expanded', 'false');
     expect(navigationDetails?.open).toBe(false);
+
+    await user.click(navigationToggle);
+
+    expect(navigationToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(navigationDetails?.open).toBe(true);
   });
 });
 

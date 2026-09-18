@@ -1,6 +1,7 @@
 import type { DocPage } from '../doc-model';
 
 import { introductionPage } from './introduction';
+import { installationPage } from './installation';
 import { verreLiquidePage } from './verre-liquide';
 import { notesVersionsPage } from './notes-de-versions';
 
@@ -63,6 +64,7 @@ import { canopComponentPages } from './canop-components';
    ========================================================================== */
 export const PAGES: readonly DocPage[] = [
   introductionPage,
+  installationPage,
   /* Juste sous « Présentation », et dans le même groupe : c'est la page qui
      montre l'effet dont toute la 2.0 dépend, avant le catalogue. */
   verreLiquidePage,

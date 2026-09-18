@@ -163,11 +163,12 @@ export function CanopCheckbox({ label, description, className, ...props }: Canop
 
 export interface CanopToggleProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
   label?: ReactNode;
+  liquidGlass?: boolean;
 }
 
-export function CanopToggle({ label, className, ...props }: CanopToggleProps) {
+export function CanopToggle({ label, liquidGlass = false, className, ...props }: CanopToggleProps) {
   return (
-    <label className={cx('canop-toggle-row', className)}>
+    <label className={cx('canop-toggle-row', liquidGlass && 'canop-liquid', className)}>
       <input type="checkbox" className="canop-toggle" {...props} />
       <span className="canop-toggle-track" aria-hidden="true"><span className="canop-toggle-thumb" /></span>
       {label && <span>{label}</span>}
@@ -401,7 +402,7 @@ export const CANOP_CATALOG: readonly CanopCatalogEntry[] = [
   ['CanopForm', 'Inputs', 'Formulaire orchestré par les primitives contrôlées.'],
   ['CanopLanguageSelector', 'Inputs', "Sélecteur de langue branché sur l'i18n."],
   ['CanopSegmentedControl', 'Inputs', 'Sélecteur segmenté animé pour choisir une option.'],
-  ['CanopThemeToggle', 'Inputs', 'Bascule de thème clair, sombre ou liquid glass.'],
+  ['CanopThemeToggle', 'Inputs', 'Bascule de thème clair ou sombre, avec matériau local.'],
   ['CanopAddButton', 'Boutons spécialisés', "Bouton d'ajout avec icône plus intégrée."],
   ['CanopSaveButton', 'Boutons spécialisés', "Bouton d'enregistrement unique, avec confirmation."],
   ['CanopApproveButton', 'Boutons spécialisés', 'Bouton de validation avec icône check.'],

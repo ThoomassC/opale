@@ -6,8 +6,8 @@ Le socle d'interface partagé par [`portfolio`](https://github.com/ThoomassC/por
 > **La 3.0 adopte le langage visuel de CanopUI.** Les quatorze composants verre liquide
 > historiques restent publiés et utilisables ; le catalogue V3 ajoute les primitives,
 > composants de données, feedback, navigation, layout et modules compatibles avec CanopUI.
-> Le matériau Liquid Glass est opt-in composant par composant et les trois thèmes de la
-> vitrine sont `light`, `dark` et `liquid-glass`.
+> Le matériau Liquid Glass est opt-in composant par composant ; la vitrine propose les thèmes
+> globaux `light` et `dark`.
 
 La vitrine est actuellement en **3.0.0**. Son historique est consultable dans l’onglet
 « Notes de versions » ; chaque état antérieur dispose aussi d’un snapshot utilisable sous
@@ -139,7 +139,7 @@ démonstration par composant sont générées depuis `CANOP_CATALOG` dans
 `src/magic/canop.tsx`. Le namespace `CanopUI` expose aussi ces briques sous les noms de la
 librairie de référence (`CanopUI.Button`, `CanopUI.Card`, etc.), sans écraser les exports
 historiques `Button`, `Card`, `Input` et leurs pairs. Les composants qui portent `liquidGlass`
-activent le matériau composant par composant lorsque le thème Liquid Glass est choisi.
+activent le matériau composant par composant via le contrôle local de chaque fiche.
 
 `Glass` est la primitive de matériau, et **douze des treize autres la montent**. La seule
 exception, vérifiée dans le code, est **`Slider`** : il n'importe pas `Glass` du tout et

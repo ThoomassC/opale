@@ -7,18 +7,20 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
  *
  * ET IL N'Y A PAS D'ENTRÉE `./client` : ce hook n'est pas publiable, parce
  * qu'il n'y a pas UNE bascule à publier mais trois mécaniques incompatibles.
- * Celle-ci gère les trois états de la vitrine et écrit toujours `data-theme` ; celle qu'il
+ * Celle-ci gère les deux thèmes de la vitrine et écrit toujours `data-theme` ; celle qu'il
  * faudrait à un site prérendu veut un script en `<head>` ou un cookie, pas un
  * `localStorage` lu dans un initialiseur de `useState` — qui produit un flash.
- * Publier l'une reviendrait à publier la mauvaise deux fois.
+ * Publier l'une reviendrait à publier la mauvaise deux fois. Le matériau Liquid
+ * Glass reste volontairement hors de cet état global : chaque page de composant
+ * le porte avec son propre contrôle.
  */
-export type Theme = 'light' | 'dark' | 'liquid-glass';
+export type Theme = 'light' | 'dark';
 
 const STORAGE_KEY = 'tc-theme';
 const DARK_SCHEME_QUERY = '(prefers-color-scheme: dark)';
 
 function isTheme(value: string | null): value is Theme {
-  return value === 'light' || value === 'dark' || value === 'liquid-glass';
+  return value === 'light' || value === 'dark';
 }
 
 /**
@@ -120,8 +122,6 @@ export interface ThemeControl {
   /** Le thème réellement appliqué : le choix mémorisé, sinon celui de l'OS. */
   readonly theme: Theme;
   readonly isDarkTheme: boolean;
-  readonly isLiquidGlass: boolean;
-  readonly setTheme: (theme: Theme) => void;
   readonly toggleTheme: () => void;
 }
 
@@ -135,7 +135,8 @@ export interface ThemeControl {
  * système est un magasin extérieur, pas un état dérivé, l'abonnement se nettoie
  * tout seul et le hook a un instantané serveur. Le seul `useEffect` ici
  * synchronise deux systèmes extérieurs — l'attribut `data-theme` du document et
- * la balise `theme-color` — ce pour quoi il est fait.
+ * la balise `theme-color` — ce pour quoi il est fait. Le matériau des composants
+ * ne passe jamais par cet effet.
  *
  * `localStorage` N'EST ÉCRIT QU'AU CLIC, jamais au montage, et cette fois la
  * garantie est structurelle plutôt que gardée : l'écriture ne vit que dans
@@ -168,12 +169,6 @@ export function useTheme(): ThemeControl {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
 
-    if (theme === 'liquid-glass') {
-      document.documentElement.dataset.material = 'glass';
-    } else {
-      document.documentElement.removeAttribute('data-material');
-    }
-
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     if (meta === null) return;
 
@@ -201,8 +196,6 @@ export function useTheme(): ThemeControl {
   return {
     theme,
     isDarkTheme: theme === 'dark',
-    isLiquidGlass: theme === 'liquid-glass',
-    setTheme,
     toggleTheme,
   };
 }

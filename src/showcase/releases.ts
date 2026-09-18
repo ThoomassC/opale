@@ -32,7 +32,7 @@ export const RELEASES: readonly ReleaseNote[] = [
     summary: 'Opale adopte le langage visuel CanopUI et étend son catalogue sans retirer les composants historiques.',
     changes: [
       'Ajout des tokens, layouts et primitives visuelles compatibles avec CanopUI.',
-      'Ajout de trois thèmes : clair, sombre et Liquid Glass activable composant par composant.',
+      'Ajout des thèmes clair et sombre, avec Liquid Glass activable composant par composant.',
       'Ajout du catalogue CanopUI à Opale en conservant les exports existants.',
     ],
     breaking: true,

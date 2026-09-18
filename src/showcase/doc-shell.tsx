@@ -12,10 +12,9 @@ import { useRoute } from './use-route';
 import { UI_VERSION } from './version';
 
 /* La coquille conserve les composants historiques de navigation, mais son
-   habillage V3 suit désormais les tokens CanopUI. Le choix de matériau n'est
-   plus un contrôle séparé : `ThemeToggle` écrit `data-theme="liquid-glass"` et
-   `data-material="glass"`, tandis que les composants Canop activent leur
-   surface Liquid Glass avec le prop `liquidGlass`. */
+   habillage V3 suit désormais les tokens CanopUI. Le thème global est limité au
+   clair/sombre ; les composants Canop activent leur surface Liquid Glass avec
+   leur contrôle local et le prop `liquidGlass`. */
 
 /** Le nom du paquet, affiché dans la barre du haut et dans `document.title`. */
 const SITE_NAME = '@thomascaron/opale';
@@ -78,7 +77,7 @@ function PageContent({ page }: { page: DocPage }): ReactNode {
 export function DocShell({ pages }: DocShellProps) {
   const slug = useRoute();
   const page = findPage(pages, slug) ?? findPage(pages, HOME_SLUG) ?? EMPTY_REGISTRY_PAGE;
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(true);
 
   /* LE TITRE, ET NON `<main>`, EST LA CIBLE DU FOCUS. Deux raisons mesurées :
      — `<main>` fait la hauteur entière de la page, donc l'anneau de
@@ -225,6 +224,20 @@ export function DocShell({ pages }: DocShellProps) {
               <span className="tc-doc-topbar__version">v{UI_VERSION}</span>
             </a>
           </Topbar.Brand>
+
+          <Topbar.Section className="tc-doc-topbar__tabs" gap="tight">
+            <nav className="tc-doc-topbar__tabs-nav" aria-label="Navigation principale">
+              <a className="tc-doc-topbar__tab" href={hrefFor(HOME_SLUG)} aria-current={page.slug === HOME_SLUG ? 'page' : undefined}>
+                Accueil
+              </a>
+              <a className="tc-doc-topbar__tab" href={hrefFor('installation')} aria-current={page.slug === 'installation' ? 'page' : undefined}>
+                Installation
+              </a>
+              <a className="tc-doc-topbar__tab" href={hrefFor('notes-de-versions')} aria-current={page.slug === 'notes-de-versions' ? 'page' : undefined}>
+                Notes de versions
+              </a>
+            </nav>
+          </Topbar.Section>
 
           {/* LA RECHERCHE EST LA SECTION ÉLASTIQUE, et `grow` est exactement ce
               que `doc.css` écrivait à la main : `flex: 1 1 auto` avec un

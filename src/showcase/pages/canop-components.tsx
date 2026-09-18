@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import {
   CANOP_CATALOG,
@@ -24,37 +24,57 @@ function kebabCase(value: string): string {
   return value.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
-function Preview({ name }: { name: string }): ReactNode {
+function Preview({ name, liquidGlass }: { name: string; liquidGlass: boolean }): ReactNode {
+  let preview: ReactNode;
+
   switch (name) {
     case 'CanopButton':
-      return <div className="tc-doc-canop-preview__row"><CanopButton>Primaire</CanopButton><CanopButton variant="secondary">Secondaire</CanopButton><CanopButton variant="accent">Accent</CanopButton><CanopButton variant="ghost">Ghost</CanopButton><CanopButton liquidGlass variant="tonal">Liquid Glass</CanopButton></div>;
+      preview = <div className="tc-doc-canop-preview__row"><CanopButton liquidGlass={liquidGlass}>Primaire</CanopButton><CanopButton liquidGlass={liquidGlass} variant="secondary">Secondaire</CanopButton><CanopButton liquidGlass={liquidGlass} variant="accent">Accent</CanopButton><CanopButton liquidGlass={liquidGlass} variant="ghost">Ghost</CanopButton></div>;
+      break;
     case 'CanopInput':
-      return <CanopInput label="Email" placeholder="martin@qvl-studio.com" helperText="Une adresse valide est requise." />;
+      preview = <CanopInput liquidGlass={liquidGlass} label="Email" placeholder="martin@qvl-studio.com" helperText="Une adresse valide est requise." />;
+      break;
     case 'CanopCheckbox':
-      return <CanopCheckbox label="Recevoir les notifications" description="Les nouveautés du design system." defaultChecked />;
+      preview = <CanopCheckbox label="Recevoir les notifications" description="Les nouveautés du design system." defaultChecked />;
+      break;
     case 'CanopToggle':
-      return <CanopToggle label="Activées" defaultChecked />;
+      preview = <CanopToggle liquidGlass={liquidGlass} label="Activées" defaultChecked />;
+      break;
     case 'CanopSlider':
-      return <CanopSlider label="Volume" defaultValue={64} min={0} max={100} />;
+      preview = <CanopSlider label="Volume" defaultValue={64} min={0} max={100} />;
+      break;
     case 'CanopSegmentedControl':
-      return <CanopSegmentedControl options={[{ value: 'all', label: 'Tout' }, { value: 'active', label: 'Actifs' }, { value: 'archived', label: 'Archivés' }]} value="all" />;
+      preview = <CanopSegmentedControl options={[{ value: 'all', label: 'Tout' }, { value: 'active', label: 'Actifs' }, { value: 'archived', label: 'Archivés' }]} value="all" />;
+      break;
     case 'CanopCard':
-      return <CanopCard liquidGlass title="Une surface CanopUI" subtitle="Carte, actions et élévation." actions={<CanopBadge>Stable</CanopBadge>}><p className="tc-doc-prose">Une surface claire, lisible et responsive.</p></CanopCard>;
+      preview = <CanopCard liquidGlass={liquidGlass} title="Une surface CanopUI" subtitle="Carte, actions et élévation." actions={<CanopBadge>Stable</CanopBadge>}><p className="tc-doc-prose">Une surface claire, lisible et responsive.</p></CanopCard>;
+      break;
     case 'CanopCardGrid':
-      return <CanopCardGrid><CanopStatCard label="Composants" value="77" delta="+12 cette version" /><CanopStatCard label="Thèmes" value="3" /></CanopCardGrid>;
+      preview = <CanopCardGrid><CanopStatCard liquidGlass={liquidGlass} label="Composants" value="77" delta="+12 cette version" /><CanopStatCard liquidGlass={liquidGlass} label="Thèmes" value="2 globaux + 1 matériau" /></CanopCardGrid>;
+      break;
     case 'CanopDataTable':
-      return <CanopDataTable columns={[{ key: 'name', label: 'Nom' }, { key: 'status', label: 'Statut' }]} rows={[{ name: 'Button', status: 'Stable' }, { name: 'DataTable', status: 'Nouveau' }]} />;
+      preview = <CanopDataTable columns={[{ key: 'name', label: 'Nom' }, { key: 'status', label: 'Statut' }]} rows={[{ name: 'Button', status: 'Stable' }, { name: 'DataTable', status: 'Nouveau' }]} />;
+      break;
     case 'CanopFeedback':
-      return <CanopFeedback severity="success" title="En production">La dernière version est disponible.</CanopFeedback>;
+      preview = <CanopFeedback severity="success" title="En production">La dernière version est disponible.</CanopFeedback>;
+      break;
     case 'CanopProgressBar':
-      return <CanopProgressBar label="Progression" value={72} />;
+      preview = <CanopProgressBar label="Progression" value={72} />;
+      break;
     default:
-      return <CanopCard title={name} subtitle="Démo interactive CanopUI"><CanopButton variant="tonal">Explorer</CanopButton></CanopCard>;
+      preview = <CanopCard liquidGlass={liquidGlass} title={name} subtitle="Démo interactive CanopUI"><CanopButton liquidGlass={liquidGlass} variant="tonal">Explorer</CanopButton></CanopCard>;
   }
+
+  return (
+    <div className={`tc-doc-canop-preview__material${liquidGlass ? ' canop-liquid' : ''}`} data-liquid-glass={liquidGlass ? 'true' : undefined}>
+      {preview}
+    </div>
+  );
 }
 
 function CanopComponentPage({ entry }: { entry: CanopCatalogEntry }) {
   const displayName = entry.name.replace(/^Canop/, '');
+  const [liquidGlass, setLiquidGlass] = useState(false);
 
   return (
     <div className="tc-doc-canop-page">
@@ -74,13 +94,24 @@ function CanopComponentPage({ entry }: { entry: CanopCatalogEntry }) {
           </div>
           <CanopBadge tone="accent">V3</CanopBadge>
         </div>
+        <div className="tc-doc-canop-material-toggle">
+          <div className="tc-doc-canop-material-toggle__text">
+            <strong>Rendu Liquid Glass</strong>
+            <span>Appliquer le matériau uniquement à ce composant.</span>
+          </div>
+          <CanopToggle
+            label={`Liquid Glass pour ${displayName}`}
+            checked={liquidGlass}
+            onChange={(event) => setLiquidGlass(event.currentTarget.checked)}
+          />
+        </div>
         <div className="tc-doc-canop-preview">
-          <Preview name={entry.name} />
+          <Preview name={entry.name} liquidGlass={liquidGlass} />
         </div>
       </section>
       <section className="tc-doc-canop-api">
         <CanopHeading level={2}>API</CanopHeading>
-        <p className="tc-doc-prose">Cette brique reprend les tokens, états et règles de composition de CanopUI. Le prop <code>liquidGlass</code> active le matériau composant par composant lorsque le thème Liquid Glass est sélectionné.</p>
+        <p className="tc-doc-prose">Cette brique reprend les tokens, états et règles de composition de CanopUI. Le contrôle local active le prop <code>liquidGlass</code> uniquement sur ce spécimen, sans modifier les autres composants de la page.</p>
       </section>
     </div>
   );

@@ -10,18 +10,18 @@
   --canop-surface-sunken: #efebe4;
   --canop-text: #14100b;
   --canop-text-secondary: #5c574d;
-  --canop-primary: #1e6244;
-  --canop-primary-dark: #154731;
-  --canop-primary-light: #2c8a61;
-  --canop-secondary: #788363;
-  --canop-secondary-dark: #687255;
+  --canop-primary: #087487;
+  --canop-primary-dark: #005d6f;
+  --canop-primary-light: #208093;
+  --canop-secondary: #59696d;
+  --canop-secondary-dark: #3e5359;
   --canop-accent: #f4ad15;
   --canop-danger: #b3261e;
   --canop-info: #1a4f8b;
   --canop-success: #2e7d32;
   --canop-warning: #b26a00;
   --canop-divider: #e6e1d8;
-  --canop-focus: #f4ad15;
+  --canop-focus: #208093;
   --canop-radius-sm: 1rem;
   --canop-radius-md: 1.375rem;
   --canop-radius-lg: 2.25rem;
@@ -46,7 +46,7 @@
   --canop-ease: cubic-bezier(0.4, 0, 0.2, 1);
   --canop-glass-surface: rgba(255, 255, 255, 0.58);
   --canop-glass-border: rgba(255, 255, 255, 0.72);
-  --canop-glass-shadow: 0 1.25rem 3rem rgba(20, 30, 24, 0.16);
+  --canop-glass-shadow: 0 1.25rem 3rem rgba(7, 64, 76, 0.16);
   --canop-glass-blur: 18px;
 }
 
@@ -57,13 +57,13 @@
   --canop-surface-sunken: #121713;
   --canop-text: #f3f1ec;
   --canop-text-secondary: #b8b3a7;
-  --canop-primary: #62a886;
-  --canop-primary-dark: #3b7d5f;
-  --canop-primary-light: #8fc8a9;
-  --canop-secondary: #a9b48c;
-  --canop-secondary-dark: #8d9973;
+  --canop-primary: #087487;
+  --canop-primary-dark: #005d6f;
+  --canop-primary-light: #78bbca;
+  --canop-secondary: #859599;
+  --canop-secondary-dark: #59696d;
   --canop-divider: #2c322d;
-  --canop-focus: #f4ad15;
+  --canop-focus: #78bbca;
   --canop-shadow-1: 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.25),
     0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.35);
   --canop-shadow-2: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.3),
@@ -71,27 +71,8 @@
   --canop-shadow-3: 0 0.375rem 1rem rgba(0, 0, 0, 0.4);
   --canop-shadow-4: 0 0.75rem 1.75rem rgba(0, 0, 0, 0.48);
   --canop-glass-surface: rgba(38, 44, 39, 0.7);
-  --canop-glass-border: rgba(143, 200, 169, 0.28);
+  --canop-glass-border: rgba(120, 187, 202, 0.28);
   --canop-glass-shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.34);
-}
-
-:root[data-theme='liquid-glass'] {
-  --canop-background: #e9eeec;
-  --canop-surface: rgba(255, 255, 255, 0.5);
-  --canop-surface-base: rgba(255, 255, 255, 0.38);
-  --canop-surface-sunken: rgba(214, 225, 220, 0.72);
-  --canop-text: #17221c;
-  --canop-text-secondary: #4c5d53;
-  --canop-primary: #286d4e;
-  --canop-primary-dark: #1d5039;
-  --canop-primary-light: #5fa680;
-  --canop-secondary: #7d8d79;
-  --canop-secondary-dark: #637362;
-  --canop-divider: rgba(48, 86, 67, 0.2);
-  --canop-glass-surface: rgba(255, 255, 255, 0.42);
-  --canop-glass-border: rgba(255, 255, 255, 0.78);
-  --canop-glass-shadow: 0 1.25rem 3rem rgba(27, 65, 48, 0.2);
-  --canop-glass-blur: 24px;
 }
 
 .canop-surface,
@@ -114,7 +95,7 @@
 .canop-liquid {
   background:
     radial-gradient(110% 140% at 0% 0%, rgba(255, 255, 255, 0.7), transparent 52%),
-    radial-gradient(100% 130% at 100% 100%, rgba(41, 102, 75, 0.14), transparent 62%),
+    radial-gradient(100% 130% at 100% 100%, rgba(8, 116, 135, 0.14), transparent 62%),
     var(--canop-glass-surface);
   border-color: var(--canop-glass-border);
   box-shadow: var(--canop-glass-shadow), inset 1px 1px 0 rgba(255, 255, 255, 0.54);
