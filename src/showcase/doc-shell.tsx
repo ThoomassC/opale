@@ -17,7 +17,7 @@ import { UI_VERSION } from './version';
    leur contrôle local et le prop `liquidGlass`. */
 
 /** Le nom du paquet, affiché dans la barre du haut et dans `document.title`. */
-const SITE_NAME = '@thomascaron/opale';
+const SITE_NAME = 'opaleUI';
 
 /**
  * Le repli du repli : un registre sans page d'accueil.
@@ -220,7 +220,10 @@ export function DocShell({ pages }: DocShellProps) {
                 <span />
                 <span />
               </span>
-              {SITE_NAME}
+              <span className="tc-doc-topbar__brand-name" aria-label={SITE_NAME}>
+                <span>opale</span>
+                <span className="tc-doc-topbar__brand-name--accent">UI</span>
+              </span>
               <span className="tc-doc-topbar__version">v{UI_VERSION}</span>
             </a>
           </Topbar.Brand>
