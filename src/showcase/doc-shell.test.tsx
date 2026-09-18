@@ -2,8 +2,8 @@ import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DocPage } from './doc-model';
-import { GROUPS, HOME_SLUG, hrefFor } from './doc-model';
+import type { DocNavEntry, DocPage } from './doc-model';
+import { GROUPS, HOME_SLUG, hrefFor, navEntriesForPages } from './doc-model';
 import { DocShell } from './doc-shell';
 import { PAGES } from './pages';
 import { UI_VERSION } from './version';
@@ -135,8 +135,8 @@ const SCRAMBLED_PAGES: readonly DocPage[] = [
 ];
 
 /** L'ordre attendu dans la barre : les groupes de `GROUPS`, puis la déclaration. */
-function navOrderOf(pages: readonly DocPage[]): readonly DocPage[] {
-  return GROUPS.flatMap((group) => pages.filter((page) => page.group === group.id));
+function navOrderOf(pages: readonly DocPage[]): readonly DocNavEntry[] {
+  return navEntriesForPages(pages);
 }
 
 function sommaire(): HTMLElement {
@@ -281,7 +281,7 @@ describe('DocShell — les entrées du sommaire', () => {
       `le sommaire rend ${navLinks().length} entrées pour ${PAGES.length} pages ` +
         `du registre — une page sans entrée est une page qu'on ne peut atteindre ` +
         `qu'en tapant son adresse`,
-    ).toEqual(expected.map((page) => page.label));
+    ).toEqual(expected.map((entry) => entry.label));
   });
 
   it('devrait donner à chaque entrée l’adresse canonique de sa page', () => {
@@ -290,7 +290,7 @@ describe('DocShell — les entrées du sommaire', () => {
     expect(
       hrefsOf(navLinks()),
       `des entrées du sommaire ne pointent pas sur hrefFor(page.slug)`,
-    ).toEqual(navOrderOf(PAGES).map((page) => hrefFor(page.slug)));
+    ).toEqual(navOrderOf(PAGES).map((entry) => hrefFor(entry.page.slug)));
   });
 
   it('devrait ordonner les entrées par groupe de GROUPS puis par déclaration', () => {

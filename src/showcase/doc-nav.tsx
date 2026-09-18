@@ -1,6 +1,8 @@
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
+
 import { Sidebar } from '../magic';
 import type { DocPage } from './doc-model';
-import { GROUPS, hrefFor } from './doc-model';
+import { hrefFor, navSectionsForPages } from './doc-model';
 import { UI_VERSION } from './version';
 
 export interface DocNavProps {
@@ -32,7 +34,7 @@ export interface DocNavProps {
  *
  * `Sidebar.Item` N'EST PAS EMPLOYÉ, ET C'EST LA SEULE PIÈCE NON ADOPTÉE.
  * Il est câblé sur `<button>` — `ComponentPropsWithoutRef<"button">`,
- * `forwardRef<HTMLButtonElement>`, aucune prop `as`. Les vingt et une entrées
+ * `forwardRef<HTMLButtonElement>`, aucune prop `as`. Les entrées
  * du sommaire sont des ADRESSES : les rendre en boutons retirerait le clic
  * milieu, le « copier le lien », l'ouverture dans un onglet, et ferait annoncer
  * « bouton » là où un lecteur d'écran doit dire « lien ». `Sidebar.Items` est un
@@ -41,14 +43,15 @@ export interface DocNavProps {
  * vendoré, ce qui n'est pas une décision de ce fichier.
  *
  * AUCUN TITRE DE SECTION ICI, ET C'EST DÉLIBÉRÉ. La nav précède le contenu
- * dans le DOM ; un `<h2>` par groupe placerait quatre titres de niveau 2 avant
+ * dans le DOM ; un `<h2>` par groupe placerait plusieurs titres de niveau 2 avant
  * le `<h1>` de la page, c'est-à-dire un plan de document inversé pour qui
  * navigue par titres. Les titres de groupe sont donc des `<summary>` visibles —
  * ni `<h2>` ni `<h3>` —, et chaque liste est nommée par `aria-label` : elle
  * s'annonce « Fondations, liste, 5 éléments » sans rien ajouter au plan.
  *
  * PLIABLE PAR GROUPE, EN `<details>`/`<summary>` NATIFS. Aucun composant de la
- * librairie n'offre un groupe pliable, donc les quatre `<details>` restent :
+ * librairie n'offre un groupe pliable, donc les familles restent en
+ * `<details>` natifs :
  * ils sont focusables, ils s'actionnent à `Entrée` comme à `Espace`, et ils
  * s'annoncent « Composants, groupe réduit » chez NVDA, JAWS et VoiceOver, ce
  * qu'un `<div>` plus `aria-expanded` n'obtiendrait qu'en réimplémentant les
@@ -70,12 +73,66 @@ export interface DocNavProps {
  * CSS n'entre pas dans son nom accessible.
  * ==========================================================================
  */
-export function DocNav({
-  pages,
-  currentSlug,
-  mobileNavOpen,
-  onMobileNavOpenChange,
-}: DocNavProps) {
+export function DocNav({ pages, currentSlug, mobileNavOpen, onMobileNavOpenChange }: DocNavProps) {
+  const sections = navSectionsForPages(pages);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollbar, setScrollbar] = useState({ size: 0.28, offset: 0 });
+
+  useEffect(() => {
+    const scrollElement = scrollRef.current;
+
+    if (!scrollElement) return;
+
+    const updateScrollbar = () => {
+      const viewport = scrollElement.clientHeight;
+      const content = scrollElement.scrollHeight;
+
+      if (!viewport || content <= viewport) {
+        setScrollbar({ size: 1, offset: 0 });
+        return;
+      }
+
+      const size = Math.max(0.14, Math.min(1, viewport / content));
+      const travel = Math.max(0, content - viewport);
+      const offset = (scrollElement.scrollTop / travel) * (1 - size);
+
+      setScrollbar({ size, offset });
+    };
+
+    updateScrollbar();
+    scrollElement.addEventListener('scroll', updateScrollbar, { passive: true });
+    window.addEventListener('resize', updateScrollbar);
+    const resizeObserver =
+      typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(updateScrollbar);
+    const mutationObserver =
+      resizeObserver && typeof MutationObserver !== 'undefined'
+        ? new MutationObserver(updateScrollbar)
+        : undefined;
+
+    /* Les dimensions d'un conteneur Glass peuvent être nulles au premier
+       effet, avant sa mise en page finale. Le recalcul différé n'est utile que
+       dans un vrai navigateur : jsdom n'a ni layout ni ResizeObserver, et le
+       programmer dans les tests créerait des mises à jour hors `act()`. */
+    const frame = resizeObserver ? window.requestAnimationFrame(updateScrollbar) : undefined;
+    const timeout = resizeObserver ? window.setTimeout(updateScrollbar, 0) : undefined;
+    resizeObserver?.observe(scrollElement);
+    mutationObserver?.observe(scrollElement, {
+      attributes: true,
+      attributeFilter: ['open'],
+      childList: true,
+      subtree: true,
+    });
+
+    return () => {
+      scrollElement.removeEventListener('scroll', updateScrollbar);
+      window.removeEventListener('resize', updateScrollbar);
+      if (frame !== undefined) window.cancelAnimationFrame(frame);
+      if (timeout !== undefined) window.clearTimeout(timeout);
+      resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
+    };
+  }, [mobileNavOpen, pages.length]);
+
   const handleNavToggle = (event: { currentTarget: HTMLDetailsElement }) => {
     onMobileNavOpenChange?.(event.currentTarget.open);
   };
@@ -92,7 +149,10 @@ export function DocNav({
        collant, la piste de grille et le sol opaque vivent donc dehors. Elle
        porte la surface visible, tandis que le `<details>` natif ci-dessous
        porte l'état du sommaire global. */
-    <div className="tc-doc-nav" data-open={mobileNavOpen === undefined ? 'true' : String(mobileNavOpen)}>
+    <div
+      className="tc-doc-nav"
+      data-open={mobileNavOpen === undefined ? 'true' : String(mobileNavOpen)}
+    >
       <Sidebar
         className="tc-doc-nav__panel"
         /* L'ENVELOPPE A BESOIN DE SON PROPRE CROCHET, et pas seulement le
@@ -101,87 +161,78 @@ export function DocNav({
            `rootClassName` va sur l'enveloppe, qui est la surface visible. */
         rootClassName="tc-doc-nav__glass"
       >
-        {/* L'EN-TÊTE PORTE L'IDENTITÉ DE LA DOCUMENTATION. La version reste
-            dans la nav, juste au-dessus du pli global, afin de rester visible
-            quand le sommaire est fermé. */}
-        <Sidebar.Header className="tc-doc-nav__head">
-          <div className="tc-doc-nav__heading">
-            <span className="tc-doc-nav__eyebrow">Opale UI</span>
-            <span className="tc-doc-nav__title">Documentation</span>
-          </div>
-        </Sidebar.Header>
+        <div className="tc-doc-nav__scroll" ref={scrollRef}>
+          {/* L'EN-TÊTE RESTE DANS LA COLONNE DÉFILANTE. Il est masqué visuellement
+              par la couche V3 pour laisser le plan CanopUI commencer dès le
+              premier groupe, mais sa structure est conservée pour les lecteurs
+              et pour les intégrations qui réutilisent ce composant. */}
+          <Sidebar.Header className="tc-doc-nav__head">
+            <div className="tc-doc-nav__heading">
+              <span className="tc-doc-nav__eyebrow">Opale UI</span>
+              <span className="tc-doc-nav__title">Documentation</span>
+            </div>
+          </Sidebar.Header>
 
-        {/* `Sidebar.Items` EST LE POINT DE REPÈRE DE NAVIGATION. C'est un
-            `<nav>` nu : le nommer « Sommaire » est ce qui le fait annoncer
-            « Sommaire, navigation », et c'est par ce nom que toute la suite de
-            tests le trouve. L'`<aside>` du `Sidebar` reste, lui, un
-            `complementary` sans nom — un point de repère de plus, vrai et non
-            redondant : le nommer aussi ferait dire « Sommaire » deux fois. */}
-        <Sidebar.Items className="tc-doc-nav__items" aria-label="Sommaire">
-          {/* La version reste le premier élément de la navigation : elle donne
-              immédiatement le contexte de la documentation, sans dépendre
-              d'un groupe ou de la liste des pages. */}
-          <p className="tc-doc-nav__version">
-            <span className="tc-doc-nav__versionnumber">v{UI_VERSION}</span>
-            <span className="tc-doc-nav__versionnote">
-              stable <span aria-hidden="true">·</span> React ≥ 19
-            </span>
-          </p>
+          {/* `Sidebar.Items` EST LE POINT DE REPÈRE DE NAVIGATION. C'est un
+              `<nav>` nu : le nommer « Sommaire » est ce qui le fait annoncer
+              « Sommaire, navigation », et les vrais liens restent des `<a>`. */}
+          <Sidebar.Items className="tc-doc-nav__items" aria-label="Sommaire">
+            <p className="tc-doc-nav__version">
+              <span className="tc-doc-nav__versionnumber">v{UI_VERSION}</span>
+              <span className="tc-doc-nav__versionnote">
+                stable <span aria-hidden="true">·</span> React ≥ 19
+              </span>
+            </p>
 
-          {/* LE SOMMAIRE ENTIER SE PLIE. Le contrôle reste volontairement réduit
-              à une flèche : la région est déjà nommée par `Sidebar.Items`,
-              tandis que le `<summary>` natif annonce l'état ouvert/fermé. */}
-          <details id="tc-doc-nav-content" className="tc-doc-nav__all" {...detailsStateProps}>
-            <summary
-              className="tc-doc-nav__alltitle"
-              aria-label="Afficher ou masquer le sommaire"
-              title="Afficher ou masquer le sommaire"
-            >
-              <span aria-hidden="true" />
-            </summary>
+            {/* LE SOMMAIRE ENTIER SE PLIE. Le bouton reste natif et pilotable
+                depuis le header, tandis que les familles gardent leur état
+                individuel pour les longues listes de composants. */}
+            <details id="tc-doc-nav-content" className="tc-doc-nav__all" {...detailsStateProps}>
+              <summary
+                className="tc-doc-nav__alltitle"
+                aria-label="Afficher ou masquer le sommaire"
+                title="Afficher ou masquer le sommaire"
+              >
+                <span aria-hidden="true" />
+              </summary>
 
-            {GROUPS.map((group) => {
-              const groupPages = pages.filter((page) => page.group === group.id);
-
-              /* Un groupe vide ne rend NI son titre ni sa liste : un titre suivi
-             de rien s'annonce comme une section vide, et un `<ul>` sans `<li>`
-             est une liste de zéro élément que le lecteur d'écran énonce quand
-             même. */
-              if (groupPages.length === 0) return null;
-
-              return (
-                <details className="tc-doc-nav__group" key={group.id} open>
-                  {/* Le chevron est peint par la feuille sur `::before` du
-                  `<summary>` et non écrit ici : c'est `[open]` qui le tourne,
-                  donc l'indice d'état suit l'élément qui porte l'état. Le
-                  marqueur natif est retiré côté CSS — il n'est pas stylable de
-                  la même façon dans les trois moteurs. */}
-                  {/* `aria-label` protège le nom accessible du chevron peint par
-                  CSS. Le libellé reste le contenu visible du contrôle. */}
-                  <summary className="tc-doc-nav__grouptitle" aria-label={group.label}>
-                    {group.label}
+              {sections.map((section) => (
+                <details className="tc-doc-nav__group" key={section.id} open>
+                  <summary className="tc-doc-nav__grouptitle" aria-label={section.label}>
+                    {section.label}
                   </summary>
-                  <ul className="tc-doc-nav__list" aria-label={group.label}>
-                    {groupPages.map((page) => (
+                  <ul className="tc-doc-nav__list" aria-label={section.label}>
+                    {section.entries.map(({ page, label }) => (
                       <li key={page.slug}>
                         <a
                           className="tc-doc-nav__link"
                           href={hrefFor(page.slug)}
-                          /* `undefined` et non `'false'` : `aria-current="false"`
-                         est une valeur valide que certains lecteurs annoncent,
-                         et l'attribut ne doit désigner qu'UN lien. */
                           aria-current={page.slug === currentSlug ? 'page' : undefined}
                         >
-                          {page.label}
+                          {label}
                         </a>
                       </li>
                     ))}
                   </ul>
                 </details>
-              );
-            })}
-          </details>
-        </Sidebar.Items>
+              ))}
+            </details>
+          </Sidebar.Items>
+        </div>
+
+        <span className="tc-doc-nav__scrollbar" aria-hidden="true">
+          <span
+            className="tc-doc-nav__scrollbar-thumb"
+            style={
+              {
+                '--tc-doc-nav-thumb-size': `${scrollbar.size * 100}%`,
+                '--tc-doc-nav-thumb-offset': `${scrollbar.offset * 100}%`,
+              } as CSSProperties
+            }
+          >
+            <span className="tc-doc-nav__scrollbar-grip" />
+          </span>
+        </span>
       </Sidebar>
     </div>
   );

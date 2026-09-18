@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { DocNav } from './doc-nav';
-import { GROUPS, HOME_SLUG } from './doc-model';
+import { HOME_SLUG, navSectionsForPages } from './doc-model';
 import { PAGES } from './pages';
 import { UI_VERSION } from './version';
 
@@ -32,6 +32,8 @@ afterEach(cleanup);
 function renderNav(currentSlug: string = HOME_SLUG) {
   return render(<DocNav pages={PAGES} currentSlug={currentSlug} />);
 }
+
+const NAV_SECTIONS = navSectionsForPages(PAGES);
 
 /** Le `<details>` du sommaire entier. */
 function pli(): HTMLDetailsElement {
@@ -64,7 +66,7 @@ describe('DocNav — le pli du sommaire entier', () => {
        DANS le pli, replier le sommaire ne replierait rien. Le test regarde
        donc la relation d'ancêtre et pas seulement la présence des deux. */
     renderNav();
-    expect(groupes()).toHaveLength(GROUPS.length);
+    expect(groupes()).toHaveLength(NAV_SECTIONS.length);
   });
 
   it('devrait garder le sommaire réduit aux libellés de groupe', () => {
@@ -206,7 +208,7 @@ describe('DocNav — le pli du sommaire entier', () => {
 describe('DocNav — le pli par groupe', () => {
   it('devrait ouvrir tous les groupes au premier rendu', () => {
     renderNav();
-    expect(groupes().map((groupe) => groupe.open)).toEqual(GROUPS.map(() => true));
+    expect(groupes().map((groupe) => groupe.open)).toEqual(NAV_SECTIONS.map(() => true));
   });
 
   it('ne devrait replier QUE le groupe actionné', async () => {
@@ -277,11 +279,11 @@ describe('DocNav — le pli par groupe', () => {
        libellé nu. */
     renderNav();
 
-    for (const group of GROUPS) {
-      const resume = pli().querySelector(`summary[aria-label="${group.label}"]`);
+    for (const section of NAV_SECTIONS) {
+      const resume = pli().querySelector(`summary[aria-label="${section.label}"]`);
       expect(
         resume,
-        `aucun <summary> nommé « ${group.label} » : le chevron du ::before peut être revenu dans le nom.`,
+        `aucun <summary> nommé « ${section.label} » : le chevron du ::before peut être revenu dans le nom.`,
       ).not.toBeNull();
     }
   });
