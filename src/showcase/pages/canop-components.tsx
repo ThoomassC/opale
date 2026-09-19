@@ -19,13 +19,73 @@ import {
 } from '../../magic';
 import { catalogComponentLabel, catalogComponentSlug } from '../doc-model';
 import type { DocPage } from '../doc-model';
+import { UsageBlock } from './api';
+
+function exampleCode(name: string): string {
+  const displayName = catalogComponentLabel(name);
+
+  switch (name) {
+    case 'CanopButton':
+      return `<Opale.Button variant="primary">Primaire</Opale.Button>
+<Opale.Button variant="secondary">Secondaire</Opale.Button>
+<Opale.Button variant="accent">Accent</Opale.Button>
+<Opale.Button variant="danger">Danger</Opale.Button>`;
+    case 'CanopInput':
+      return `<Opale.Input
+  label="Email"
+  placeholder="martin@qvl-studio.com"
+  helperText="Une adresse valide est requise."
+/>`;
+    case 'CanopCheckbox':
+      return `<Opale.Checkbox
+  label="Recevoir les notifications"
+  description="Les nouveautés du design system."
+  defaultChecked
+/>`;
+    case 'CanopToggle':
+      return '<Opale.Toggle label="Activées" defaultChecked />';
+    case 'CanopSlider':
+      return '<Opale.Slider label="Volume" defaultValue={64} min={0} max={100} />';
+    case 'CanopSegmentedControl':
+      return `<Opale.SegmentedControl
+  value="all"
+  options={[
+    { value: 'all', label: 'Tout' },
+    { value: 'active', label: 'Actifs' },
+    { value: 'archived', label: 'Archivés' },
+  ]}
+/>`;
+    case 'CanopCard':
+      return `<Opale.Card title="Une surface Opale" subtitle="Carte, actions et élévation.">
+  <p>Une surface claire, lisible et responsive.</p>
+</Opale.Card>`;
+    case 'CanopCardGrid':
+      return `<Opale.CardGrid>
+  <Opale.StatCard label="Composants" value="77" delta="+12 cette version" />
+  <Opale.StatCard label="Thèmes" value="2 globaux + 1 matériau" />
+</Opale.CardGrid>`;
+    case 'CanopDataTable':
+      return `<Opale.DataTable
+  columns={[{ key: 'name', label: 'Nom' }, { key: 'status', label: 'Statut' }]}
+  rows={[{ name: 'Button', status: 'Stable' }, { name: 'DataTable', status: 'Nouveau' }]}
+/>`;
+    case 'CanopFeedback':
+      return `<Opale.Feedback severity="success" title="En production">
+  La dernière version est disponible.
+</Opale.Feedback>`;
+    case 'CanopProgressBar':
+      return '<Opale.ProgressBar label="Progression" value={72} />';
+    default:
+      return `<Opale.${displayName} />`;
+  }
+}
 
 function Preview({ name, liquidGlass }: { name: string; liquidGlass: boolean }): ReactNode {
   let preview: ReactNode;
 
   switch (name) {
     case 'CanopButton':
-      preview = <div className="tc-doc-canop-preview__row"><CanopButton liquidGlass={liquidGlass}>Primaire</CanopButton><CanopButton liquidGlass={liquidGlass} variant="secondary">Secondaire</CanopButton><CanopButton liquidGlass={liquidGlass} variant="accent">Accent</CanopButton><CanopButton liquidGlass={liquidGlass} variant="ghost">Ghost</CanopButton></div>;
+      preview = <div className="tc-doc-canop-preview__row"><CanopButton liquidGlass={liquidGlass}>Primaire</CanopButton><CanopButton liquidGlass={liquidGlass} variant="secondary">Secondaire</CanopButton><CanopButton liquidGlass={liquidGlass} variant="accent">Accent</CanopButton><CanopButton liquidGlass={liquidGlass} variant="danger">Danger</CanopButton></div>;
       break;
     case 'CanopInput':
       preview = <CanopInput liquidGlass={liquidGlass} label="Email" placeholder="martin@qvl-studio.com" helperText="Une adresse valide est requise." />;
@@ -71,6 +131,7 @@ function Preview({ name, liquidGlass }: { name: string; liquidGlass: boolean }):
 function CanopComponentPage({ entry }: { entry: CanopCatalogEntry }) {
   const displayName = catalogComponentLabel(entry.name);
   const [liquidGlass, setLiquidGlass] = useState(false);
+  const code = exampleCode(entry.name);
 
   return (
     <div className="tc-doc-canop-page">
@@ -104,6 +165,7 @@ function CanopComponentPage({ entry }: { entry: CanopCatalogEntry }) {
         <div className="tc-doc-canop-preview">
           <Preview name={entry.name} liquidGlass={liquidGlass} />
         </div>
+        <UsageBlock label={`Exemple ${displayName}`} code={code} />
       </section>
     </div>
   );

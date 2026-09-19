@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Chivo:wght@400;500;600;700&family=Titan+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Chivo:wght@400;500;600;700&display=swap');
 
 /* CanopUI-compatible design tokens. The names intentionally mirror the
    reference library so an Opale consumer can move between both systems
@@ -10,22 +10,77 @@
   --canop-surface-sunken: #efebe4;
   --canop-text: #14100b;
   --canop-text-secondary: #5c574d;
-  --canop-primary: #087487;
-  --canop-primary-dark: #005d6f;
-  --canop-primary-light: #208093;
-  --canop-secondary: #59696d;
-  --canop-secondary-dark: #3e5359;
+  --canop-primary: #315c9e;
+  --canop-primary-dark: #23457a;
+  --canop-primary-light: #5f87c4;
+  --canop-secondary: #8f9a74;
+  --canop-secondary-dark: #6a7455;
   --canop-accent: #f4ad15;
   --canop-danger: #b3261e;
   --canop-info: #1a4f8b;
   --canop-success: #2e7d32;
   --canop-warning: #b26a00;
   --canop-divider: #e6e1d8;
-  --canop-focus: #208093;
+  --canop-focus: #315c9e;
   --canop-radius-sm: 0.75rem;
   --canop-radius-md: 1.375rem;
   --canop-radius-lg: 2.25rem;
   --canop-radius-pill: 999rem;
+  --canop-squircle-radius: min(var(--canop-radius-md), 50%);
+  --canop-squircle-clip: polygon(
+    0% var(--canop-squircle-radius),
+    calc(var(--canop-squircle-radius) * 0.0057) calc(var(--canop-squircle-radius) * 0.7427),
+    calc(var(--canop-squircle-radius) * 0.0228) calc(var(--canop-squircle-radius) * 0.5939),
+    calc(var(--canop-squircle-radius) * 0.0514) calc(var(--canop-squircle-radius) * 0.4729),
+    calc(var(--canop-squircle-radius) * 0.0914) calc(var(--canop-squircle-radius) * 0.37),
+    calc(var(--canop-squircle-radius) * 0.143) calc(var(--canop-squircle-radius) * 0.2817),
+    calc(var(--canop-squircle-radius) * 0.2063) calc(var(--canop-squircle-radius) * 0.2063),
+    calc(var(--canop-squircle-radius) * 0.2817) calc(var(--canop-squircle-radius) * 0.143),
+    calc(var(--canop-squircle-radius) * 0.37) calc(var(--canop-squircle-radius) * 0.0914),
+    calc(var(--canop-squircle-radius) * 0.4729) calc(var(--canop-squircle-radius) * 0.0514),
+    calc(var(--canop-squircle-radius) * 0.5939) calc(var(--canop-squircle-radius) * 0.0228),
+    calc(var(--canop-squircle-radius) * 0.7427) calc(var(--canop-squircle-radius) * 0.0057),
+    var(--canop-squircle-radius) 0%,
+    calc(100% - var(--canop-squircle-radius)) 0%,
+    calc(100% - var(--canop-squircle-radius) * 0.7427) calc(var(--canop-squircle-radius) * 0.0057),
+    calc(100% - var(--canop-squircle-radius) * 0.5939) calc(var(--canop-squircle-radius) * 0.0228),
+    calc(100% - var(--canop-squircle-radius) * 0.4729) calc(var(--canop-squircle-radius) * 0.0514),
+    calc(100% - var(--canop-squircle-radius) * 0.37) calc(var(--canop-squircle-radius) * 0.0914),
+    calc(100% - var(--canop-squircle-radius) * 0.2817) calc(var(--canop-squircle-radius) * 0.143),
+    calc(100% - var(--canop-squircle-radius) * 0.2063) calc(var(--canop-squircle-radius) * 0.2063),
+    calc(100% - var(--canop-squircle-radius) * 0.143) calc(var(--canop-squircle-radius) * 0.2817),
+    calc(100% - var(--canop-squircle-radius) * 0.0914) calc(var(--canop-squircle-radius) * 0.37),
+    calc(100% - var(--canop-squircle-radius) * 0.0514) calc(var(--canop-squircle-radius) * 0.4729),
+    calc(100% - var(--canop-squircle-radius) * 0.0228) calc(var(--canop-squircle-radius) * 0.5939),
+    calc(100% - var(--canop-squircle-radius) * 0.0057) calc(var(--canop-squircle-radius) * 0.7427),
+    100% var(--canop-squircle-radius),
+    100% calc(100% - var(--canop-squircle-radius)),
+    calc(100% - var(--canop-squircle-radius) * 0.0057) calc(100% - var(--canop-squircle-radius) * 0.7427),
+    calc(100% - var(--canop-squircle-radius) * 0.0228) calc(100% - var(--canop-squircle-radius) * 0.5939),
+    calc(100% - var(--canop-squircle-radius) * 0.0514) calc(100% - var(--canop-squircle-radius) * 0.4729),
+    calc(100% - var(--canop-squircle-radius) * 0.0914) calc(100% - var(--canop-squircle-radius) * 0.37),
+    calc(100% - var(--canop-squircle-radius) * 0.143) calc(100% - var(--canop-squircle-radius) * 0.2817),
+    calc(100% - var(--canop-squircle-radius) * 0.2063) calc(100% - var(--canop-squircle-radius) * 0.2063),
+    calc(100% - var(--canop-squircle-radius) * 0.2817) calc(100% - var(--canop-squircle-radius) * 0.143),
+    calc(100% - var(--canop-squircle-radius) * 0.37) calc(100% - var(--canop-squircle-radius) * 0.0914),
+    calc(100% - var(--canop-squircle-radius) * 0.4729) calc(100% - var(--canop-squircle-radius) * 0.0514),
+    calc(100% - var(--canop-squircle-radius) * 0.5939) calc(100% - var(--canop-squircle-radius) * 0.0228),
+    calc(100% - var(--canop-squircle-radius) * 0.7427) calc(100% - var(--canop-squircle-radius) * 0.0057),
+    calc(100% - var(--canop-squircle-radius)) 100%,
+    var(--canop-squircle-radius) 100%,
+    calc(var(--canop-squircle-radius) * 0.7427) calc(100% - var(--canop-squircle-radius) * 0.0057),
+    calc(var(--canop-squircle-radius) * 0.5939) calc(100% - var(--canop-squircle-radius) * 0.0228),
+    calc(var(--canop-squircle-radius) * 0.4729) calc(100% - var(--canop-squircle-radius) * 0.0514),
+    calc(var(--canop-squircle-radius) * 0.37) calc(100% - var(--canop-squircle-radius) * 0.0914),
+    calc(var(--canop-squircle-radius) * 0.2817) calc(100% - var(--canop-squircle-radius) * 0.143),
+    calc(var(--canop-squircle-radius) * 0.2063) calc(100% - var(--canop-squircle-radius) * 0.2063),
+    calc(var(--canop-squircle-radius) * 0.143) calc(100% - var(--canop-squircle-radius) * 0.2817),
+    calc(var(--canop-squircle-radius) * 0.0914) calc(100% - var(--canop-squircle-radius) * 0.37),
+    calc(var(--canop-squircle-radius) * 0.0514) calc(100% - var(--canop-squircle-radius) * 0.4729),
+    calc(var(--canop-squircle-radius) * 0.0228) calc(100% - var(--canop-squircle-radius) * 0.5939),
+    calc(var(--canop-squircle-radius) * 0.0057) calc(100% - var(--canop-squircle-radius) * 0.7427),
+    0% calc(100% - var(--canop-squircle-radius))
+  );
   --canop-space-2xs: 0.25rem;
   --canop-space-xs: 0.5rem;
   --canop-space-sm: 0.75rem;
@@ -40,13 +95,18 @@
   --canop-shadow-3: 0 0.375rem 1rem rgba(20, 30, 24, 0.12);
   --canop-shadow-4: 0 0.75rem 1.75rem rgba(20, 30, 24, 0.16);
   --canop-font-body: 'Chivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --canop-font-display: 'Titan One', 'Chivo', system-ui, sans-serif;
-  --canop-font-mono: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
-  --canop-motion: 320ms;
+  --canop-font-display: 'Chivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --canop-font-mono: 'Hack', ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  --canop-motion-fast: 140ms;
+  --canop-motion: 220ms;
   --canop-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --canop-drop-shadow-1: drop-shadow(0 0.0625rem 0.0625rem rgba(20, 30, 24, 0.06))
+    drop-shadow(0 0.0625rem 0.125rem rgba(20, 30, 24, 0.08));
+  --canop-drop-shadow-2: drop-shadow(0 0.0625rem 0.125rem rgba(20, 30, 24, 0.07))
+    drop-shadow(0 0.1875rem 0.375rem rgba(20, 30, 24, 0.11));
   --canop-glass-surface: rgba(255, 255, 255, 0.58);
   --canop-glass-border: rgba(255, 255, 255, 0.72);
-  --canop-glass-shadow: 0 1.25rem 3rem rgba(7, 64, 76, 0.16);
+  --canop-glass-shadow: 0 1.25rem 3rem rgba(35, 69, 122, 0.16);
   --canop-glass-blur: 18px;
 }
 
@@ -57,13 +117,14 @@
   --canop-surface-sunken: #121713;
   --canop-text: #f3f1ec;
   --canop-text-secondary: #b8b3a7;
-  --canop-primary: #087487;
-  --canop-primary-dark: #005d6f;
-  --canop-primary-light: #78bbca;
-  --canop-secondary: #859599;
-  --canop-secondary-dark: #59696d;
+  --canop-primary: #5d87cb;
+  --canop-primary-dark: #739cda;
+  --canop-primary-light: #a9c7f4;
+  --canop-secondary: #a9b48c;
+  --canop-secondary-dark: #7f8a63;
+  --canop-danger: #e2726b;
   --canop-divider: #2c322d;
-  --canop-focus: #78bbca;
+  --canop-focus: #a9c7f4;
   --canop-shadow-1: 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.25),
     0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.35);
   --canop-shadow-2: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.3),
@@ -71,7 +132,7 @@
   --canop-shadow-3: 0 0.375rem 1rem rgba(0, 0, 0, 0.4);
   --canop-shadow-4: 0 0.75rem 1.75rem rgba(0, 0, 0, 0.48);
   --canop-glass-surface: rgba(38, 44, 39, 0.7);
-  --canop-glass-border: rgba(120, 187, 202, 0.28);
+  --canop-glass-border: rgba(169, 199, 244, 0.28);
   --canop-glass-shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.34);
 }
 
@@ -95,7 +156,7 @@
 .canop-liquid {
   background:
     radial-gradient(110% 140% at 0% 0%, rgba(255, 255, 255, 0.7), transparent 52%),
-    radial-gradient(100% 130% at 100% 100%, rgba(8, 116, 135, 0.14), transparent 62%),
+    radial-gradient(100% 130% at 100% 100%, color-mix(in srgb, var(--canop-primary) 14%, transparent), transparent 62%),
     var(--canop-glass-surface);
   border-color: var(--canop-glass-border);
   box-shadow: var(--canop-glass-shadow), inset 1px 1px 0 rgba(255, 255, 255, 0.54);
@@ -114,32 +175,62 @@
 }
 
 .canop-button {
+  --canop-button-background: var(--canop-primary);
+  --canop-button-hover-background: var(--canop-primary-dark);
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
-  min-height: 3.09375rem;
+  min-width: 4rem;
+  min-height: 2.75rem;
   align-items: center;
   justify-content: center;
   gap: var(--canop-space-xs);
   border: 0;
-  border-radius: var(--canop-radius-sm);
+  border-radius: 0;
   padding: 0.375rem 1.25rem;
+  background: transparent;
   color: #fbfaf9;
   cursor: pointer;
-  font: 600 0.984375rem/1.75 var(--canop-font-body);
+  font: 600 0.875rem/1.75 var(--canop-font-body);
+  text-transform: none;
   transition:
-    background var(--canop-motion) var(--canop-ease),
-    color var(--canop-motion) var(--canop-ease),
-    box-shadow var(--canop-motion) var(--canop-ease),
-    transform var(--canop-motion) var(--canop-ease);
+    transform var(--canop-motion-fast) var(--canop-ease),
+    filter var(--canop-motion) var(--canop-ease),
+    color var(--canop-motion) var(--canop-ease);
+}
+
+.canop-button::before,
+.canop-button::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  pointer-events: none;
+}
+
+.canop-button::before {
+  z-index: -2;
+  background: var(--canop-button-background);
+  clip-path: var(--canop-squircle-clip);
+  transition: background var(--canop-motion) var(--canop-ease);
+}
+
+.canop-button::after {
+  z-index: -1;
+  display: none;
 }
 
 .canop-button:hover:not(:disabled) {
+  filter: var(--canop-drop-shadow-2);
   transform: translateY(-1px);
-  box-shadow: var(--canop-shadow-2);
+}
+
+.canop-button:hover:not(:disabled)::before {
+  background: var(--canop-button-hover-background);
 }
 
 .canop-button:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: var(--canop-shadow-1);
+  filter: var(--canop-drop-shadow-1);
+  transform: scale(0.97);
 }
 
 .canop-button:disabled {
@@ -147,19 +238,95 @@
   opacity: 0.52;
 }
 
-.canop-button--primary { background: var(--canop-primary); }
-.canop-button--secondary { background: var(--canop-secondary); }
-.canop-button--accent { background: var(--canop-accent); color: #241a03; }
-.canop-button--danger { background: var(--canop-danger); }
-.canop-button--tonal { background: color-mix(in srgb, var(--canop-primary) 15%, transparent); color: var(--canop-primary); }
-.canop-button--ghost { background: transparent; border: 1px solid var(--canop-primary); color: var(--canop-primary); }
-.canop-button--text { background: transparent; color: var(--canop-primary); }
-.canop-button--small { min-height: 2.5rem; padding-inline: 1rem; font-size: 0.875rem; }
-.canop-button--large { min-height: 3.5rem; padding-inline: 1.75rem; font-size: 1.125rem; }
+.canop-button--primary {
+  --canop-button-background: var(--canop-primary);
+  --canop-button-hover-background: var(--canop-primary-dark);
+}
+
+:root[data-theme='dark'] .canop-button--primary,
+:root[data-theme='dark'] .canop-checkbox:checked + .canop-checkbox-mark {
+  color: #0c0f0d;
+}
+
+.canop-button--secondary {
+  --canop-button-background: var(--canop-secondary-dark);
+  --canop-button-hover-background: color-mix(in srgb, var(--canop-secondary-dark) 86%, #14100b);
+}
+
+.canop-button--accent {
+  --canop-button-background: var(--canop-accent);
+  --canop-button-hover-background: color-mix(in srgb, var(--canop-accent) 86%, #14100b);
+  color: #241a03;
+}
+
+.canop-button--danger {
+  --canop-button-background: var(--canop-danger);
+  --canop-button-hover-background: color-mix(in srgb, var(--canop-danger) 86%, #14100b);
+}
+
+.canop-button--tonal {
+  --canop-button-background: color-mix(in srgb, var(--canop-primary-light) 26%, var(--canop-surface));
+  --canop-button-hover-background: color-mix(in srgb, var(--canop-primary-light) 40%, var(--canop-surface));
+  color: var(--canop-primary);
+}
+
+.canop-button--ghost {
+  --canop-button-background: transparent;
+  --canop-button-hover-background: color-mix(in srgb, var(--canop-primary) 8%, transparent);
+  color: var(--canop-primary);
+}
+
+.canop-button--ghost::after {
+  display: block;
+  box-sizing: border-box;
+  padding: 1px;
+  background: var(--canop-primary);
+  clip-path: var(--canop-squircle-clip);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.canop-button--text {
+  --canop-button-background: transparent;
+  --canop-button-hover-background: color-mix(in srgb, var(--canop-primary) 8%, transparent);
+  color: var(--canop-primary);
+}
+
+.canop-button--small {
+  min-height: 2.25rem;
+  padding: 0.25rem 0.875rem;
+  font-size: 0.8125rem;
+}
+
+.canop-button--large {
+  min-height: 3rem;
+  padding: 0.5rem 1.625rem;
+  font-size: 1rem;
+}
+
 .canop-button--full { width: 100%; }
 
-.canop-button.canop-liquid { color: var(--canop-text); }
+.canop-button.canop-liquid {
+  --canop-button-background:
+    radial-gradient(110% 140% at 0% 0%, rgba(255, 255, 255, 0.7), transparent 52%),
+    radial-gradient(100% 130% at 100% 100%, color-mix(in srgb, var(--canop-primary) 14%, transparent), transparent 62%),
+    var(--canop-glass-surface);
+  --canop-button-hover-background:
+    radial-gradient(110% 140% at 0% 0%, rgba(255, 255, 255, 0.78), transparent 52%),
+    radial-gradient(100% 130% at 100% 100%, color-mix(in srgb, var(--canop-primary) 20%, transparent), transparent 62%),
+    var(--canop-glass-surface);
+  color: var(--canop-text);
+}
 .canop-button.canop-liquid.canop-button--primary { color: var(--canop-text); }
+
+@media (max-width: 37.499rem) {
+  .canop-button { min-height: 3rem; }
+  .canop-button--small { min-height: 2.5rem; }
+  .canop-button--large { min-height: 3.25rem; }
+}
 
 .canop-card {
   display: flex;

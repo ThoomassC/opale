@@ -140,6 +140,8 @@ function kebabCase(label: string): string {
 }
 
 const COMPONENT_PAGES: readonly DocPage[] = PAGES.filter((page) => page.group === 'composants');
+const COMPONENT_PAGE_CASES: readonly (readonly [slug: string, page: DocPage])[] =
+  COMPONENT_PAGES.map((page) => [page.slug, page]);
 
 /**
  * Une page par cas, le slug d'abord.
@@ -363,6 +365,27 @@ describe('Le registre des pages', () => {
         `la page « ${page.slug} » a écrit dans console.error :\n${errors.join('\n')}`,
       ).toEqual([]);
     });
+
+    it.each(COMPONENT_PAGE_CASES)(
+      'la page composant « %s » devrait proposer afficher et copier son code',
+      (_slug, page) => {
+        const { container } = render(<>{page.render()}</>);
+        const labels = [...container.querySelectorAll<HTMLButtonElement>('button')].map((button) =>
+          button.textContent?.trim(),
+        );
+
+        expect(labels.filter((label) => label === 'Afficher le code')).toHaveLength(1);
+        expect(labels.filter((label) => label === 'Copier')).toHaveLength(1);
+
+        const toggle = container.querySelector<HTMLButtonElement>(
+          'button[aria-expanded="false"][aria-controls]',
+        );
+        const controlled = toggle?.getAttribute('aria-controls');
+
+        expect(controlled).toBeTruthy();
+        expect(controlled ? document.getElementById(controlled) : null).not.toBeNull();
+      },
+    );
 
     /* La coquille rend le `<h1>` — le `title` de la page. Une page qui en rend
        un second donne deux titres de premier niveau au document, donc deux

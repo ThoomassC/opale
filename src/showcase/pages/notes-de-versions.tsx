@@ -66,14 +66,14 @@ export const notesVersionsPage: DocPage = {
 
               <div className="tc-doc-release__actions">
                 <a
-                  className="tc-doc-release__action"
+                  className="canop-button canop-button--primary tc-doc-release__action"
                   href={release.appHref}
                   aria-label={`Ouvrir l’application en version ${release.version}`}
                 >
                   {isCurrent ? 'Ouvrir la version courante' : 'Ouvrir cette version'}
                 </a>
                 <a
-                  className="tc-doc-release__source tc-doc-link"
+                  className="canop-button canop-button--tonal tc-doc-release__source"
                   href={release.sourceHref}
                   target="_blank"
                   rel="noreferrer noopener"

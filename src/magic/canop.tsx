@@ -57,6 +57,7 @@ export const CanopButton = forwardRef<HTMLButtonElement, CanopButtonProps>(
       className,
       children,
       disabled,
+      type = 'button',
       ...props
     },
     ref,
@@ -73,6 +74,7 @@ export const CanopButton = forwardRef<HTMLButtonElement, CanopButtonProps>(
       )}
       data-liquid-glass={liquidGlass ? 'true' : undefined}
       disabled={disabled || loading}
+      type={type}
       {...props}
     >
       {loading ? <span className="canop-spinner" aria-hidden="true" /> : startIcon}
