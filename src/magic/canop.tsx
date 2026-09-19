@@ -263,8 +263,8 @@ export function CanopForm({ className, ...props }: FormHTMLAttributes<HTMLFormEl
   return <form className={cx('canop-stack', 'canop-stack--column', className)} {...props} />;
 }
 
-export function CanopLanguageSelector({ value = 'FR', onChange, className }: { value?: string; onChange?: SelectHTMLAttributes<HTMLSelectElement>['onChange']; className?: string }) {
-  return <CanopSelect className={className} aria-label="Langue" value={value} onChange={onChange} options={[{ value: 'FR', label: 'FR' }, { value: 'EN', label: 'EN' }]} />;
+export function CanopLanguageSelector({ value = 'FR', onChange, className, ariaLabel = 'Langue' }: { value?: string; onChange?: SelectHTMLAttributes<HTMLSelectElement>['onChange']; className?: string; ariaLabel?: string }) {
+  return <CanopSelect className={className} aria-label={ariaLabel} value={value} onChange={onChange} options={[{ value: 'FR', label: 'Français' }, { value: 'EN', label: 'English' }, { value: 'ES', label: 'Español' }]} />;
 }
 
 export function CanopThemeToggle({ dark = false, onChange, className }: { dark?: boolean; onChange?: (dark: boolean) => void; className?: string }) {

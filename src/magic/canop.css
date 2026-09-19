@@ -358,10 +358,21 @@
   letter-spacing: -0.035em;
 }
 
-.canop-card__title { font-size: 1.333rem; }
+.canop-card__title { font-size: 1.2rem; }
 .canop-card__subtitle { margin: 0; color: var(--canop-text-secondary); }
 .canop-card__body { display: grid; gap: var(--canop-space-sm); }
 .canop-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--canop-space-lg); }
+.canop-empty-state { text-align: center; }
+.canop-empty-state .canop-card__header { justify-content: center; }
+.canop-empty-state .canop-card__body { justify-items: center; }
+
+.canop-text { margin: 0; color: var(--canop-text); }
+.canop-text--label { font-size: 0.875rem; font-weight: 600; }
+.canop-text--caption { color: var(--canop-text-secondary); font-size: 0.8125rem; }
+.canop-text--metric { font-family: var(--canop-font-display); font-size: 2rem; font-weight: 400; line-height: 1.05; }
+.canop-icon { display: inline-grid; min-width: 2.5rem; min-height: 2.5rem; place-items: center; color: var(--canop-primary); font-size: 1.5rem; }
+.canop-link { color: var(--canop-primary); font-weight: 600; text-underline-offset: 0.2em; }
+.canop-link:hover { color: var(--canop-primary-dark); }
 
 .canop-field { display: grid; gap: var(--canop-space-xs); }
 .canop-field__label { color: var(--canop-text); font-size: 0.875rem; font-weight: 600; }
@@ -431,6 +442,7 @@
 .canop-shape-background { position: relative; overflow: hidden; background: var(--canop-background); }
 .canop-shape-background::after { position: absolute; right: -12rem; bottom: -14rem; width: 32rem; height: 32rem; border-radius: 42% 58% 65% 35%; content: ''; background: color-mix(in srgb, var(--canop-secondary) 18%, transparent); transform: rotate(18deg); }
 .canop-sliding-indicator { position: relative; display: inline-flex; gap: var(--canop-space-xs); padding: 0.25rem; border-radius: var(--canop-radius-pill); background: var(--canop-surface-sunken); }
+.canop-scrollbar { overflow: auto; scrollbar-color: var(--canop-primary) var(--canop-surface-sunken); scrollbar-width: thin; }
 
 .canop-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: var(--canop-space-md); }
 .canop-stat-card { display: grid; gap: 0.35rem; padding: var(--canop-space-lg); }

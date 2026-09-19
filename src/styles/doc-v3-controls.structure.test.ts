@@ -41,10 +41,14 @@ describe('la forme interactive CanopUI', () => {
     const homeTitle = ruleBody(docSource, '.tc-doc-main--home .tc-doc-page__title') ?? '';
 
     expect(canopSource).not.toContain('family=Titan+One');
-    expect(pageTitle).toMatch(/font:\s*400\s+clamp\(2rem,\s*3\.6vw,\s*3\.25rem\)/);
-    expect(pageTitle).toMatch(/letter-spacing:\s*-0\.035em/);
-    expect(homeTitle).toMatch(/font-size:\s*clamp\(2rem,\s*3\.6vw,\s*3\.25rem\)/);
+    expect(pageTitle).toMatch(/font:\s*400\s+clamp\(1\.8rem,\s*3vw,\s*2\.75rem\)/);
+    expect(pageTitle).toMatch(/letter-spacing:\s*-0\.03em/);
+    expect(homeTitle).toMatch(/font-size:\s*clamp\(1\.8rem,\s*3vw,\s*2\.75rem\)/);
     expect(homeTitle).toMatch(/font-weight:\s*400/);
+    expect(ruleBody(docSource, '.tc-doc-home__stats dt') ?? '').toMatch(
+      /font:\s*400\s+clamp\(1\.4rem,\s*2\.5vw,\s*2rem\)/,
+    );
+    expect(ruleBody(canopSource, '.canop-text--metric') ?? '').toMatch(/font-size:\s*2rem/);
   });
 
   it('dessine Button avec le polygone sur un calque qui ne rogne pas le focus', () => {
@@ -106,13 +110,13 @@ describe('la forme interactive CanopUI', () => {
     );
     expect(searchFocus).toMatch(/box-shadow:\s*none\s*!important/);
     expect(docSource).toMatch(
-      /\.tc-doc-nav__link\[aria-current='page'\]\s*\{\s*font-weight:\s*700/,
+      /\.tc-doc-nav__link\[aria-current='page'\]\s*\{\s*font-weight:\s*600/,
     );
     expect(docSource).toMatch(
-      /\.tc-doc-topbar__tab\[aria-current='page'\]\s*\{\s*font-weight:\s*700/,
+      /\.tc-doc-topbar__tab\[aria-current='page'\]\s*\{\s*font-weight:\s*600/,
     );
     expect(docSource).toMatch(
-      /\.tc-doc-search__option\[aria-selected='true'\]\s+\.tc-doc-search__label\s*\{\s*font-weight:\s*700/,
+      /\.tc-doc-search__option\[aria-selected='true'\]\s+\.tc-doc-search__label\s*\{\s*font-weight:\s*600/,
     );
   });
 });

@@ -1,17 +1,14 @@
-import {
-  useEffect,
-  useRef,
-  type KeyboardEvent,
-  type PointerEvent,
-} from 'react';
+import { useEffect, useRef, type KeyboardEvent, type PointerEvent } from 'react';
 
 import { Sidebar } from '../magic';
 import type { DocPage } from './doc-model';
 import { hrefFor, navSectionsForPages } from './doc-model';
+import { copyFor, pageLabelFor, sectionLabelFor, type Language } from './localization';
 import { UI_VERSION } from './version';
 
 export interface DocNavProps {
   readonly pages: readonly DocPage[];
+  readonly language?: Language;
   /**
    * Le slug de la page RÉELLEMENT rendue, repli compris. La coquille passe
    * `page.slug` et non le fragment brut : sur `#/inconnu`, c'est l'accueil qui
@@ -110,8 +107,9 @@ const INITIAL_SCROLLBAR_STATE: ScrollbarState = {
  * reste clairement associée à sa famille sans introduire de titre hiérarchique.
  * ==========================================================================
  */
-export function DocNav({ pages, currentSlug, resize }: DocNavProps) {
+export function DocNav({ pages, currentSlug, resize, language = 'FR' }: DocNavProps) {
   const sections = navSectionsForPages(pages);
+  const copy = copyFor(language);
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollbarRef = useRef<HTMLSpanElement>(null);
   const dragRef = useRef<ScrollbarDrag | null>(null);
@@ -146,7 +144,7 @@ export function DocNav({ pages, currentSlug, resize }: DocNavProps) {
       scrollbarElement.setAttribute(
         'aria-valuetext',
         next.maxScrollTop === 0
-          ? 'Début du sommaire'
+          ? copy.contentsStart
           : `${Math.round((next.scrollTop / next.maxScrollTop) * 100)} %`,
       );
     };
@@ -199,7 +197,7 @@ export function DocNav({ pages, currentSlug, resize }: DocNavProps) {
       resizeObserver?.disconnect();
       mutationObserver?.disconnect();
     };
-  }, [pages.length]);
+  }, [copy.contentsStart, pages.length]);
 
   const handleScrollbarPointerDown = (event: PointerEvent<HTMLSpanElement>) => {
     const scrollElement = scrollRef.current;
@@ -229,8 +227,8 @@ export function DocNav({ pages, currentSlug, resize }: DocNavProps) {
 
     if (!scrollElement || !drag || event.pointerId !== drag.pointerId) return;
 
-    const nextScrollTop = drag.startScrollTop +
-      ((event.clientY - drag.startY) / drag.travel) * drag.maxScrollTop;
+    const nextScrollTop =
+      drag.startScrollTop + ((event.clientY - drag.startY) / drag.travel) * drag.maxScrollTop;
 
     scrollElement.scrollTop = Math.max(0, Math.min(drag.maxScrollTop, nextScrollTop));
   };
@@ -380,46 +378,54 @@ export function DocNav({ pages, currentSlug, resize }: DocNavProps) {
           <Sidebar.Header className="tc-doc-nav__head">
             <div className="tc-doc-nav__heading">
               <span className="tc-doc-nav__eyebrow">Opale UI</span>
-              <span className="tc-doc-nav__title">Documentation</span>
+              <span className="tc-doc-nav__title">{copy.documentation}</span>
             </div>
           </Sidebar.Header>
 
           {/* `Sidebar.Items` EST LE POINT DE REPÈRE DE NAVIGATION. C'est un
               `<nav>` nu : le nommer « Sommaire » est ce qui le fait annoncer
               « Sommaire, navigation », et les vrais liens restent des `<a>`. */}
-          <Sidebar.Items className="tc-doc-nav__items" aria-label="Sommaire">
+          <Sidebar.Items className="tc-doc-nav__items" aria-label={copy.contents}>
             <p className="tc-doc-nav__version">
               <span className="tc-doc-nav__versionnumber">v{UI_VERSION}</span>
               <span className="tc-doc-nav__versionnote">
-                stable <span aria-hidden="true">·</span> React ≥ 19
+                {copy.stable} <span aria-hidden="true">·</span> React ≥ 19
               </span>
             </p>
 
-            {sections.map((section) => (
-              <section
-                className="tc-doc-nav__group"
-                key={section.id}
-                aria-labelledby={'tc-doc-nav-section-' + section.id}
-              >
-                <div className="tc-doc-nav__grouptitle" id={'tc-doc-nav-section-' + section.id}>
-                  {section.label}
-                </div>
-                <ul className="tc-doc-nav__list" aria-label={section.label}>
-                  {section.entries.map(({ page, label }) => (
-                    <li key={page.slug}>
-                      <a
-                        className="tc-doc-nav__link"
-                        href={hrefFor(page.slug)}
-                        aria-current={page.slug === currentSlug ? 'page' : undefined}
-                        title={label}
-                      >
-                        {label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
+            {sections.map((section) => {
+              const sectionLabel = sectionLabelFor(section.id, section.label, language);
+
+              return (
+                <section
+                  className="tc-doc-nav__group"
+                  key={section.id}
+                  aria-labelledby={'tc-doc-nav-section-' + section.id}
+                >
+                  <div className="tc-doc-nav__grouptitle" id={'tc-doc-nav-section-' + section.id}>
+                    {sectionLabel}
+                  </div>
+                  <ul className="tc-doc-nav__list" aria-label={sectionLabel}>
+                    {section.entries.map(({ page, label }) => {
+                      const localizedLabel = pageLabelFor(page, language, label);
+
+                      return (
+                        <li key={page.slug}>
+                          <a
+                            className="tc-doc-nav__link"
+                            href={hrefFor(page.slug)}
+                            aria-current={page.slug === currentSlug ? 'page' : undefined}
+                            title={localizedLabel}
+                          >
+                            {localizedLabel}
+                          </a>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              );
+            })}
           </Sidebar.Items>
         </div>
 
@@ -427,13 +433,13 @@ export function DocNav({ pages, currentSlug, resize }: DocNavProps) {
           className="tc-doc-nav__scrollbar"
           ref={scrollbarRef}
           role="scrollbar"
-          aria-label="Défilement du sommaire"
+          aria-label={copy.contentsScroll}
           aria-controls="tc-doc-nav-scroll"
           aria-orientation="vertical"
           aria-valuemin={0}
           aria-valuemax={0}
           aria-valuenow={0}
-          aria-valuetext="Début du sommaire"
+          aria-valuetext={copy.contentsStart}
           tabIndex={0}
           onKeyDown={handleScrollbarKeyDown}
         >
@@ -453,7 +459,7 @@ export function DocNav({ pages, currentSlug, resize }: DocNavProps) {
         <div
           className="tc-doc-nav__resize"
           role="slider"
-          aria-label="Largeur du sommaire"
+          aria-label={copy.contentsWidth}
           aria-orientation="horizontal"
           aria-valuemin={resize.min}
           aria-valuemax={resize.max}

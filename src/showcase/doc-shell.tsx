@@ -15,8 +15,11 @@ import {
   DocNav,
 } from './doc-nav';
 import { DocSearch } from './doc-search';
+import { LanguageSelector } from './language-selector';
+import { copyFor, pageTitleFor, type InterfaceCopy } from './localization';
 import { PageBoundary } from './page-boundary';
 import { ThemeToggle } from './theme-toggle';
+import { useLanguage } from './use-language';
 import { useRoute } from './use-route';
 import { UI_VERSION } from './version';
 
@@ -77,9 +80,10 @@ interface HeaderNavProps {
   readonly page: DocPage;
   readonly className: string;
   readonly ariaLabel: string;
+  readonly copy: InterfaceCopy;
 }
 
-function HeaderNav({ page, className, ariaLabel }: HeaderNavProps) {
+function HeaderNav({ page, className, ariaLabel, copy }: HeaderNavProps) {
   return (
     <nav className={className} aria-label={ariaLabel}>
       <a
@@ -90,7 +94,7 @@ function HeaderNav({ page, className, ariaLabel }: HeaderNavProps) {
           event.currentTarget.closest('details')?.removeAttribute('open');
         }}
       >
-        Accueil
+        {copy.home}
       </a>
       <a
         className="tc-doc-topbar__tab"
@@ -100,7 +104,7 @@ function HeaderNav({ page, className, ariaLabel }: HeaderNavProps) {
           event.currentTarget.closest('details')?.removeAttribute('open');
         }}
       >
-        Installation
+        {copy.installation}
       </a>
       <a
         className="tc-doc-topbar__tab"
@@ -110,7 +114,7 @@ function HeaderNav({ page, className, ariaLabel }: HeaderNavProps) {
           event.currentTarget.closest('details')?.removeAttribute('open');
         }}
       >
-        Notes de versions
+        {copy.releaseNotes}
       </a>
     </nav>
   );
@@ -134,6 +138,9 @@ function HeaderNav({ page, className, ariaLabel }: HeaderNavProps) {
 export function DocShell({ pages }: DocShellProps) {
   const slug = useRoute();
   const page = findPage(pages, slug) ?? findPage(pages, HOME_SLUG) ?? EMPTY_REGISTRY_PAGE;
+  const { language, setLanguage } = useLanguage();
+  const copy = copyFor(language);
+  const pageTitle = pageTitleFor(page, language);
   const [compactNav, setCompactNav] = useState(compactNavViewport);
   const [navWidth, setNavWidth] = useState(
     compactNavViewport() ? DOC_NAV_WIDTH_MOBILE_DEFAULT : DOC_NAV_WIDTH_DEFAULT,
@@ -207,8 +214,8 @@ export function DocShell({ pages }: DocShellProps) {
   /* Synchronisation avec un système extérieur — le titre du document — donc un
      effet est ici l'outil juste. Le titre suit la page RENDUE, repli compris. */
   useEffect(() => {
-    document.title = `${page.title} — ${SITE_NAME}`;
-  }, [page.title]);
+    document.title = `${pageTitle} — ${SITE_NAME}`;
+  }, [pageTitle]);
 
   /* La page rendue lors du dernier passage de cet effet. UNE CHAÎNE ET NON UN
      BOOLÉEN « déjà monté », et c'est ce qui rend le mode strict inoffensif :
@@ -276,7 +283,7 @@ export function DocShell({ pages }: DocShellProps) {
           titleRef.current?.focus();
         }}
       >
-        Aller au contenu
+        {copy.skipToContent}
       </a>
 
       {/* =====================================================================
@@ -353,16 +360,18 @@ export function DocShell({ pages }: DocShellProps) {
             <HeaderNav
               page={page}
               className="tc-doc-topbar__tabs-nav"
-              ariaLabel="Navigation principale"
+              ariaLabel={copy.primaryNavigation}
+              copy={copy}
             />
             <details className="tc-doc-topbar__menu">
-              <summary className="tc-doc-topbar__menu-toggle" aria-label="Ouvrir le menu">
+              <summary className="tc-doc-topbar__menu-toggle" aria-label={copy.openMenu}>
                 <span aria-hidden="true" />
               </summary>
               <HeaderNav
                 page={page}
                 className="tc-doc-topbar__menu-nav"
-                ariaLabel="Menu principal"
+                ariaLabel={copy.primaryMenu}
+                copy={copy}
               />
             </details>
           </Topbar.Section>
@@ -374,7 +383,7 @@ export function DocShell({ pages }: DocShellProps) {
               ayant une largeur fixe. Le combobox lui-même n'a pas changé d'une
               ligne : il est déplacé, pas réécrit. */}
           <Topbar.Section className="tc-doc-topbar__field" grow align="center">
-            <DocSearch pages={pages} />
+            <DocSearch pages={pages} language={language} />
           </Topbar.Section>
 
           {/* LE SÉPARATEUR EST DANS LES ACTIONS ET NON ENTRE ELLES ET LE CHAMP,
@@ -385,9 +394,9 @@ export function DocShell({ pages }: DocShellProps) {
               gouttière — 17 px mesurés — d'un seul côté, et le champ cesserait
               d'être centré. */}
           <Topbar.Actions className="tc-doc-topbar__side tc-doc-topbar__actions">
-            <ThemeToggle />
+            <ThemeToggle label={copy.darkTheme} />
+            <LanguageSelector language={language} label={copy.language} onChange={setLanguage} />
           </Topbar.Actions>
-
         </Topbar>
       </div>
 
@@ -399,6 +408,7 @@ export function DocShell({ pages }: DocShellProps) {
         <DocNav
           pages={pages}
           currentSlug={page.slug}
+          language={language}
           resize={{
             width: effectiveNavWidth,
             min: navWidthMin,
@@ -423,7 +433,7 @@ export function DocShell({ pages }: DocShellProps) {
             tabIndex={-1}
           >
             <h1 className="tc-doc-page__title" ref={titleRef} tabIndex={-1}>
-              {page.title}
+              {pageTitle}
             </h1>
             {/* La frontière n'entoure QUE le contenu de la page : le titre, le
                 sommaire et les deux bascules restent rendus quoi qu'il

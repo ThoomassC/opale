@@ -4,7 +4,7 @@ import { useTheme } from './use-theme';
  * Contrôle de thème global de la vitrine. Il ne bascule que le fond clair ou
  * sombre ; le matériau Liquid Glass appartient aux pages de composants.
  */
-export function ThemeToggle() {
+export function ThemeToggle({ label = 'Thème sombre' }: { readonly label?: string }) {
   const { isDarkTheme, toggleTheme } = useTheme();
 
   return (
@@ -20,7 +20,7 @@ export function ThemeToggle() {
       >
         {isDarkTheme ? '☀' : '☾'}
       </span>
-      <span className="tc-visually-hidden">Thème sombre</span>
+      <span className="tc-visually-hidden">{label}</span>
     </button>
   );
 }

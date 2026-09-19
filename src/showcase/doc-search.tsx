@@ -3,6 +3,13 @@ import type { KeyboardEvent } from 'react';
 
 import type { DocPage } from './doc-model';
 import { hrefFor } from './doc-model';
+import {
+  copyFor,
+  groupLabelFor,
+  localizedPages,
+  searchCountMessage,
+  type Language,
+} from './localization';
 import { MAX_SUGGESTIONS, searchPages } from './search-model';
 
 /* =============================================================================
@@ -44,18 +51,14 @@ import { MAX_SUGGESTIONS, searchPages } from './search-model';
  * tronquée ; annoncer « 8 résultats » là où il y en a douze laisserait croire
  * qu'affiner ne sert à rien.
  */
-function countMessage(query: string, total: number): string {
+function countMessage(query: string, total: number, language: Language): string {
   if (query.trim().length === 0) return '';
-  if (total === 0) return 'Aucune page ne correspond.';
-  if (total === 1) return '1 page trouvée.';
-  if (total > MAX_SUGGESTIONS) {
-    return `${total} pages trouvées, les ${MAX_SUGGESTIONS} premières sont proposées.`;
-  }
-  return `${total} pages trouvées.`;
+  return searchCountMessage(language, total, MAX_SUGGESTIONS);
 }
 
 export interface DocSearchProps {
   readonly pages: readonly DocPage[];
+  readonly language?: Language;
 }
 
 /**
@@ -65,7 +68,7 @@ export interface DocSearchProps {
  * c'est la coquille qui rend la page ET déplace le focus sur son titre. Rien
  * n'est à faire ici pour le focus — le tenter le disputerait à la coquille.
  */
-export function DocSearch({ pages }: DocSearchProps) {
+export function DocSearch({ pages, language = 'FR' }: DocSearchProps) {
   const [query, setQuery] = useState('');
   const [isOpen, setOpen] = useState(false);
   /* L'index de l'option courante, ou `-1` quand il n'y en a pas. Un nombre et
@@ -86,7 +89,12 @@ export function DocSearch({ pages }: DocSearchProps) {
 
   const listRef = useRef<HTMLUListElement>(null);
 
-  const { suggestions, total } = useMemo(() => searchPages(pages, query), [pages, query]);
+  const copy = copyFor(language);
+  const searchablePages = useMemo(() => localizedPages(pages, language), [language, pages]);
+  const { suggestions, total } = useMemo(
+    () => searchPages(searchablePages, query),
+    [query, searchablePages],
+  );
 
   /* TROIS ÉTATS ET NON DEUX, ET LA DISTINCTION EST ARRIVÉE PAR UN TEST ROUGE.
 
@@ -156,7 +164,7 @@ export function DocSearch({ pages }: DocSearchProps) {
      reste immédiat : ce qu'on voit ne doit pas attendre. C'est la seule
      temporisation du composant, et elle n'est pas là pour la performance. */
   const [announced, setAnnounced] = useState('');
-  const message = countMessage(query, total);
+  const message = countMessage(query, total, language);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setAnnounced(message), 400);
@@ -295,7 +303,7 @@ export function DocSearch({ pages }: DocSearchProps) {
           accessible : c'est ce que demande 2.5.3 pour qui pilote à la voix. Il
           disait « Rechercher… », dont l'ellipse cassait la containment. */}
       <label className="tc-visually-hidden" htmlFor={inputId}>
-        Rechercher une page
+        {copy.searchLabel}
       </label>
 
       <span className="tc-doc-search__glyph" aria-hidden="true">
@@ -323,7 +331,7 @@ export function DocSearch({ pages }: DocSearchProps) {
         autoComplete="off"
         autoCorrect="off"
         spellCheck={false}
-        placeholder="Rechercher"
+        placeholder={copy.searchPlaceholder}
         value={query}
         onChange={(event) => {
           setQuery(event.target.value);
@@ -346,7 +354,7 @@ export function DocSearch({ pages }: DocSearchProps) {
         className="tc-doc-search__list"
         id={listId}
         role="listbox"
-        aria-label="Suggestions"
+        aria-label={copy.suggestions}
         ref={listRef}
         hidden={!isListShown}
       >
@@ -378,7 +386,9 @@ export function DocSearch({ pages }: DocSearchProps) {
             onMouseEnter={() => setActiveIndex(index)}
           >
             <span className="tc-doc-search__label">{suggestion.page.label}</span>
-            <span className="tc-doc-search__group">{suggestion.groupLabel}</span>
+            <span className="tc-doc-search__group">
+              {groupLabelFor(suggestion.page.group, suggestion.groupLabel, language)}
+            </span>
           </li>
         ))}
       </ul>
@@ -396,7 +406,7 @@ export function DocSearch({ pages }: DocSearchProps) {
           ce qu'une rangée statique ne fait pas. */}
       {isPanelOpen && suggestions.length === 0 ? (
         <p className="tc-doc-search__empty" aria-hidden="true">
-          Aucune page ne correspond.
+          {copy.noSearchResult}
         </p>
       ) : null}
 

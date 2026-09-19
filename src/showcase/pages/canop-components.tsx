@@ -1,25 +1,10 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 
-import {
-  CANOP_CATALOG,
-  type CanopCatalogEntry,
-  CanopBadge,
-  CanopButton,
-  CanopCard,
-  CanopCardGrid,
-  CanopCheckbox,
-  CanopDataTable,
-  CanopFeedback,
-  CanopInput,
-  CanopProgressBar,
-  CanopSegmentedControl,
-  CanopSlider,
-  CanopStatCard,
-  CanopToggle,
-} from '../../magic';
+import { CANOP_CATALOG, type CanopCatalogEntry, Opale } from '../../magic';
 import { catalogComponentLabel, catalogComponentSlug } from '../doc-model';
 import type { DocPage } from '../doc-model';
 import { UsageBlock } from './api';
+import { CatalogPreview } from './catalog-preview';
 
 function exampleCode(name: string): string {
   const displayName = catalogComponentLabel(name);
@@ -64,6 +49,14 @@ function exampleCode(name: string): string {
   <Opale.StatCard label="Composants" value="77" delta="+12 cette version" />
   <Opale.StatCard label="Thèmes" value="2 globaux + 1 matériau" />
 </Opale.CardGrid>`;
+    case 'CanopBadge':
+      return '<Opale.Badge tone="accent">Nouveau</Opale.Badge>';
+    case 'CanopStatCard':
+      return '<Opale.StatCard label="Disponibilité" value="99,9 %" delta="+0,4 %" />';
+    case 'CanopHeading':
+      return '<Opale.Heading level={2}>Titre de section</Opale.Heading>';
+    case 'CanopText':
+      return '<Opale.Text variant="caption">Légende secondaire</Opale.Text>';
     case 'CanopDataTable':
       return `<Opale.DataTable
   columns={[{ key: 'name', label: 'Nom' }, { key: 'status', label: 'Statut' }]}
@@ -73,59 +66,19 @@ function exampleCode(name: string): string {
       return `<Opale.Feedback severity="success" title="En production">
   La dernière version est disponible.
 </Opale.Feedback>`;
+    case 'CanopToast':
+      return '<Opale.Toast message="Modifications enregistrées" />';
     case 'CanopProgressBar':
       return '<Opale.ProgressBar label="Progression" value={72} />';
+    case 'CanopLink':
+      return '<Opale.Link href="/installation">Lire le guide</Opale.Link>';
+    case 'CanopFileCard':
+      return '<Opale.FileCard name="design-system.fig" size="2,4 Mo" />';
+    case 'CanopClipboard':
+      return '<Opale.Clipboard value="npm install @thomascaron/opale" />';
     default:
       return `<Opale.${displayName} />`;
   }
-}
-
-function Preview({ name, liquidGlass }: { name: string; liquidGlass: boolean }): ReactNode {
-  let preview: ReactNode;
-
-  switch (name) {
-    case 'CanopButton':
-      preview = <div className="tc-doc-canop-preview__row"><CanopButton liquidGlass={liquidGlass}>Primaire</CanopButton><CanopButton liquidGlass={liquidGlass} variant="secondary">Secondaire</CanopButton><CanopButton liquidGlass={liquidGlass} variant="accent">Accent</CanopButton><CanopButton liquidGlass={liquidGlass} variant="danger">Danger</CanopButton></div>;
-      break;
-    case 'CanopInput':
-      preview = <CanopInput liquidGlass={liquidGlass} label="Email" placeholder="martin@qvl-studio.com" helperText="Une adresse valide est requise." />;
-      break;
-    case 'CanopCheckbox':
-      preview = <CanopCheckbox label="Recevoir les notifications" description="Les nouveautés du design system." defaultChecked />;
-      break;
-    case 'CanopToggle':
-      preview = <CanopToggle liquidGlass={liquidGlass} label="Activées" defaultChecked />;
-      break;
-    case 'CanopSlider':
-      preview = <CanopSlider label="Volume" defaultValue={64} min={0} max={100} />;
-      break;
-    case 'CanopSegmentedControl':
-      preview = <CanopSegmentedControl options={[{ value: 'all', label: 'Tout' }, { value: 'active', label: 'Actifs' }, { value: 'archived', label: 'Archivés' }]} value="all" />;
-      break;
-    case 'CanopCard':
-      preview = <CanopCard liquidGlass={liquidGlass} title="Une surface Opale" subtitle="Carte, actions et élévation." actions={<CanopBadge>Stable</CanopBadge>}><p className="tc-doc-prose">Une surface claire, lisible et responsive.</p></CanopCard>;
-      break;
-    case 'CanopCardGrid':
-      preview = <CanopCardGrid><CanopStatCard liquidGlass={liquidGlass} label="Composants" value="77" delta="+12 cette version" /><CanopStatCard liquidGlass={liquidGlass} label="Thèmes" value="2 globaux + 1 matériau" /></CanopCardGrid>;
-      break;
-    case 'CanopDataTable':
-      preview = <CanopDataTable columns={[{ key: 'name', label: 'Nom' }, { key: 'status', label: 'Statut' }]} rows={[{ name: 'Button', status: 'Stable' }, { name: 'DataTable', status: 'Nouveau' }]} />;
-      break;
-    case 'CanopFeedback':
-      preview = <CanopFeedback severity="success" title="En production">La dernière version est disponible.</CanopFeedback>;
-      break;
-    case 'CanopProgressBar':
-      preview = <CanopProgressBar label="Progression" value={72} />;
-      break;
-    default:
-      preview = <CanopCard liquidGlass={liquidGlass} title={catalogComponentLabel(name)} subtitle="Démonstration interactive Opale"><p className="tc-doc-prose">Ce composant conserve ses états et ses variantes dans la bibliothèque Opale.</p></CanopCard>;
-  }
-
-  return (
-    <div className={`tc-doc-canop-preview__material${liquidGlass ? ' canop-liquid' : ''}`} data-liquid-glass={liquidGlass ? 'true' : undefined}>
-      {preview}
-    </div>
-  );
 }
 
 function CanopComponentPage({ entry }: { entry: CanopCatalogEntry }) {
@@ -137,33 +90,36 @@ function CanopComponentPage({ entry }: { entry: CanopCatalogEntry }) {
     <div className="tc-doc-canop-page">
       <p className="tc-doc-lede">{entry.description}</p>
       <div className="tc-doc-canop-meta">
-        <CanopBadge>{entry.category}</CanopBadge>
+        <Opale.Badge>{entry.category}</Opale.Badge>
         <span>Composant Opale · TypeScript strict</span>
       </div>
       <div className="tc-doc-code tc-doc-code--canop">
-        <code>{`import { Opale } from '@thomascaron/opale';\n\n<Opale.${displayName} />`}</code>
+        <code>{`import { Opale } from '@thomascaron/opale';\n\n${code}`}</code>
       </div>
-      <section className="tc-doc-specimen tc-doc-specimen--canop" aria-label={`Démonstration ${displayName}`}>
+      <section
+        className="tc-doc-specimen tc-doc-specimen--canop"
+        aria-label={`Démonstration ${displayName}`}
+      >
         <div className="tc-doc-specimen__header">
           <div>
             <span className="tc-doc-specimen__eyebrow">DÉMO INTERACTIVE</span>
             <h2>{displayName}</h2>
           </div>
-          <CanopBadge tone="accent">V3</CanopBadge>
+          <Opale.Badge tone="accent">V3</Opale.Badge>
         </div>
         <div className="tc-doc-canop-material-toggle">
           <div className="tc-doc-canop-material-toggle__text">
             <strong>Rendu Liquid Glass</strong>
             <span>Appliquer le matériau uniquement à ce composant.</span>
           </div>
-          <CanopToggle
+          <Opale.Toggle
             label={`Liquid Glass pour ${displayName}`}
             checked={liquidGlass}
             onChange={(event) => setLiquidGlass(event.currentTarget.checked)}
           />
         </div>
         <div className="tc-doc-canop-preview">
-          <Preview name={entry.name} liquidGlass={liquidGlass} />
+          <CatalogPreview name={entry.name} liquidGlass={liquidGlass} />
         </div>
         <UsageBlock label={`Exemple ${displayName}`} code={code} />
       </section>
