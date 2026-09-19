@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Chivo:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Chivo:wght@400;500;600;700&display=swap');
 
 /* CanopUI-compatible design tokens. The names intentionally mirror the
    reference library so an Opale consumer can move between both systems
@@ -96,6 +96,14 @@
   --canop-shadow-4: 0 0.75rem 1.75rem rgba(20, 30, 24, 0.16);
   --canop-font-body: 'Chivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --canop-font-display: 'Chivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* LE TITRE A SON PROPRE JETON, DISTINCT DE `--canop-font-display`, ET LA
+     DISTINCTION EST CE QUI BORNE LE CHANGEMENT. `--canop-font-display` habille
+     aussi le titre du rail, les titres de plaques, `.canop-text--metric`, le
+     donut et le compte à rebours : le repeindre aurait touché six familles de
+     pièces pour une demande qui en visait deux. Bricolage Grotesque ne sert
+     donc qu'aux titres de pages et aux chiffres de l'accueil, et le reste de
+     la vitrine garde son Chivo. */
+  --canop-font-title: 'Bricolage Grotesque', 'Chivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --canop-font-mono: 'Hack', ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
   --canop-motion-fast: 140ms;
   --canop-motion: 220ms;

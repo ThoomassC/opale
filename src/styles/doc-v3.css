@@ -461,7 +461,28 @@ body { font-size: 1rem; line-height: 1.5; }
 }
 .tc-doc-column { min-width: 0; }
 .tc-doc-main { max-width: 78rem; margin-inline: auto; padding: clamp(2rem, 5vw, 4.5rem) clamp(1rem, 5vw, 3rem) 6rem !important; }
-.tc-doc-page__title { margin: 0 0 1rem !important; color: var(--canop-text) !important; font: 400 clamp(1.8rem, 3vw, 2.75rem)/1.14 var(--canop-font-display) !important; letter-spacing: -0.03em !important; }
+/* =============================================================================
+   LES TITRES ET LES CHIFFRES PARLENT BRICOLAGE GROTESQUE.
+
+   `--canop-font-title` ET NON `--canop-font-display` : le second habille aussi
+   le titre du rail, les titres de plaques, `.canop-text--metric`, le donut et
+   le compte à rebours. Le jeton dédié borne le changement aux deux pièces
+   visées — le titre de page et les chiffres de l'accueil.
+
+   GRAISSE 600 ET NON 400. La feuille tenait ses titres en 400 depuis la V3,
+   et cette valeur était réglée POUR CHIVO, dont le 400 porte déjà à grande
+   taille. Le 400 de Bricolage est nettement plus léger : au même chiffre, le
+   titre maigrissait au lieu de changer de voix. 600 rend la présence que le
+   400 de Chivo avait — c'est la même intention, pas son abandon.
+
+   `opsz 72` EST UN RÉGLAGE ET NON UNE TAILLE. L'axe de taille optique de
+   Bricolage resserre les contreformes et coupe les terminaisons en biais à
+   mesure qu'il monte ; laissé à sa valeur automatique, il suit la taille en
+   pixels du texte, donc le plancher du `clamp` sur petit écran redonnait au
+   titre un dessin de texte courant. Épinglé à 72, le titre garde son dessin
+   d'affichage à toutes les largeurs.
+   ========================================================================== */
+.tc-doc-page__title { margin: 0 0 1rem !important; color: var(--canop-text) !important; font: 600 clamp(1.8rem, 3vw, 2.75rem)/1.14 var(--canop-font-title) !important; font-variation-settings: 'opsz' 72 !important; letter-spacing: -0.03em !important; }
 .tc-doc-lede { max-width: 52rem; margin: 0 0 2rem; color: var(--canop-text-secondary); font-size: clamp(1.05rem, 2vw, 1.25rem); line-height: 1.55; }
 .tc-doc-prose { color: var(--canop-text-secondary) !important; font-family: var(--canop-font-body) !important; font-size: 1rem !important; line-height: 1.6 !important; }
 .tc-doc-prose strong { color: var(--canop-text); }
@@ -1204,7 +1225,10 @@ body { font-size: 1rem; line-height: 1.5; }
   margin-block-end: 0 !important;
   color: var(--canop-text) !important;
   font-size: clamp(1.8rem, 3vw, 2.75rem) !important;
-  font-weight: 400 !important;
+  /* La graisse est REDÉCLARÉE ici, et l'oublier aurait annulé le changement
+     sur la seule page où le titre est le sujet : cette règle recouvre celle de
+     `.tc-doc-page__title` pour l'accueil. */
+  font-weight: 600 !important;
   letter-spacing: -0.04em !important;
   line-height: 1.06 !important;
 }
@@ -1313,7 +1337,8 @@ body { font-size: 1rem; line-height: 1.5; }
 
 .tc-doc-home__stats dt {
   color: var(--canop-primary);
-  font: 400 clamp(1.4rem, 2.5vw, 2rem)/1.08 var(--canop-font-display);
+  font: 600 clamp(1.4rem, 2.5vw, 2rem)/1.08 var(--canop-font-title);
+  font-variation-settings: 'opsz' 72;
   letter-spacing: -0.03em;
 }
 

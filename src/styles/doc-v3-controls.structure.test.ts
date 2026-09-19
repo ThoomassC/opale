@@ -36,19 +36,46 @@ describe('la forme interactive CanopUI', () => {
     expect(large).toMatch(/min-height:\s*3rem/);
   });
 
-  it('allège et réduit la typographie d’affichage', () => {
+  /* CE GARDE A CHANGÉ D'INTENTION, ET C'EST DÉLIBÉRÉ. Il épinglait une graisse
+     de 400 sur les titres — une valeur réglée POUR CHIVO, dont le 400 porte
+     déjà à grande taille. Les titres et les chiffres passent à Bricolage
+     Grotesque, dont le 400 est nettement plus léger : garder le chiffre aurait
+     gardé la lettre de la décision en perdant ce qu'elle cherchait. Ce qui est
+     gardé, c'est l'ÉCHELLE — les deux `clamp` n'ont pas bougé d'un pixel — et
+     le fait que les titres restent plus légers que le gras plein. */
+  it('tient l’échelle d’affichage et la police de titre', () => {
     const pageTitle = ruleBody(docSource, '.tc-doc-page__title') ?? '';
     const homeTitle = ruleBody(docSource, '.tc-doc-main--home .tc-doc-page__title') ?? '';
+    const stats = ruleBody(docSource, '.tc-doc-home__stats dt') ?? '';
 
     expect(canopSource).not.toContain('family=Titan+One');
-    expect(pageTitle).toMatch(/font:\s*400\s+clamp\(1\.8rem,\s*3vw,\s*2\.75rem\)/);
+    expect(pageTitle).toMatch(/font:\s*600\s+clamp\(1\.8rem,\s*3vw,\s*2\.75rem\)/);
     expect(pageTitle).toMatch(/letter-spacing:\s*-0\.03em/);
     expect(homeTitle).toMatch(/font-size:\s*clamp\(1\.8rem,\s*3vw,\s*2\.75rem\)/);
-    expect(homeTitle).toMatch(/font-weight:\s*400/);
-    expect(ruleBody(docSource, '.tc-doc-home__stats dt') ?? '').toMatch(
-      /font:\s*400\s+clamp\(1\.4rem,\s*2\.5vw,\s*2rem\)/,
-    );
+    /* La règle de l'accueil REDÉCLARE la graisse : sans ce garde, la ramener à
+       400 annulerait le changement sur la seule page où le titre est le
+       sujet, et aucun autre test ne le verrait. */
+    expect(homeTitle).toMatch(/font-weight:\s*600/);
+    expect(stats).toMatch(/font:\s*600\s+clamp\(1\.4rem,\s*2\.5vw,\s*2rem\)/);
     expect(ruleBody(canopSource, '.canop-text--metric') ?? '').toMatch(/font-size:\s*2rem/);
+  });
+
+  /* LA POLICE DE TITRE EST SERVIE PAR LA MÊME REQUÊTE QUE CHIVO, et c'est la
+     seule chose qui sépare un second jeton d'un second aller-retour réseau
+     bloquant au premier rendu. Un `@import` supplémentaire aurait fonctionné à
+     l'écran et coûté une requête de plus, sans que rien ne le signale. */
+  it('borne la police de titre et la sert sans requête supplémentaire', () => {
+    const imports = canopSource.match(/@import url\([^)]*\);/g) ?? [];
+    const root = canopSource.match(/:root\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
+
+    expect(imports).toHaveLength(1);
+    expect(imports[0]).toContain('family=Bricolage+Grotesque');
+    expect(imports[0]).toContain('family=Chivo');
+    expect(root).toMatch(/--canop-font-title:\s*'Bricolage Grotesque'/);
+    /* `--canop-font-display` NE BOUGE PAS : il habille le titre du rail, les
+       titres de plaques, la métrique, le donut et le compte à rebours, qui
+       gardent Chivo. Le jeton dédié est ce qui borne le changement. */
+    expect(root).toMatch(/--canop-font-display:\s*'Chivo'/);
   });
 
   it('dessine Button avec le polygone sur un calque qui ne rogne pas le focus', () => {
