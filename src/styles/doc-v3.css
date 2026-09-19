@@ -93,6 +93,34 @@ body { font-size: 1rem; line-height: 1.5; }
 .tc-doc-topbar__actions { display: flex; grid-area: actions; align-items: center; gap: var(--canop-space-xs); color: var(--canop-text) !important; }
 .tc-doc-topbar__tabs { grid-area: tabs; min-width: 0; justify-content: flex-end !important; overflow-x: auto; }
 .tc-doc-topbar__tabs-nav { display: flex; min-width: max-content; align-items: center; gap: 0.25rem; }
+/* =============================================================================
+   LES ONGLETS EMPRUNTENT LA TYPOGRAPHIE DU SOMMAIRE, dans leur état NON
+   SÉLECTIONNÉ — celui d'« Installation » et de « Notes de versions ».
+
+   DEUX ÉCARTS MESURÉS, ET LE SECOND N'ÉTAIT PAS CELUI QU'ON CROYAIT.
+   L'onglet rendait du NUNITO 14 px ; le lien du rail, du Chivo 14,72 px. La
+   graisse, elle, était DÉJÀ la même des deux côtés — 500, que `doc.css` pose
+   sur le rail par `--weight-medium` et que la barre déclarait à la main : la
+   ligne `font-weight` ci-dessous ne change donc rien, elle rend seulement
+   explicite ce qui l'était par accident. La taille se voyait ; la FAMILLE,
+   elle, se sentait sans se nommer — deux listes qui font le même travail,
+   aller d'une page à l'autre, et qui ne parlaient pas la même langue.
+
+   LA FAMILLE EST DÉCLARÉE ICI, ET ELLE NE PEUT PAS VENIR DE L'HÉRITAGE. Ni
+   l'onglet ni le lien du rail ne déclaraient de police : tous deux héritaient
+   du Nunito que les composants `Topbar` et `Sidebar` de la librairie posent
+   sur leur enveloppe de verre — et le rail le recouvrait déjà d'un
+   `font-family: var(--canop-font-body) !important`, c'est-à-dire du Chivo de
+   la vitrine. C'est CE Chivo qui gagne : la barre du haut est la seule pièce
+   de la page à parler encore la police des composants vendorés, et elle
+   s'aligne maintenant sur le reste du site plutôt que sur son enveloppe.
+
+   0,92 REM ET NON 0,875 : l'écart entre les deux échelles était trop petit
+   pour passer pour une hiérarchie et trop grand pour passer inaperçu. Comme
+   la hauteur de ligne, la valeur est celle du rail.
+
+   L'état courant garde sa graisse 600 des deux côtés.
+   ========================================================================== */
 .tc-doc-topbar__tab {
   --tc-doc-control-fill: transparent;
   position: relative;
@@ -104,8 +132,10 @@ body { font-size: 1rem; line-height: 1.5; }
   padding: 0.45rem 0.85rem;
   background: transparent !important;
   color: var(--canop-text-secondary) !important;
-  font-size: 0.875rem;
+  font-family: var(--canop-font-body);
+  font-size: 0.92rem;
   font-weight: 500;
+  line-height: 1.3;
   text-decoration: none;
   white-space: nowrap;
 }
@@ -263,44 +293,140 @@ body { font-size: 1rem; line-height: 1.5; }
 .tc-doc-themetoggle__glyph--moon { color: var(--canop-primary-light); }
 .tc-doc-themetoggle__glyph--sun { color: var(--canop-accent); }
 
+/* =============================================================================
+   LE SÉLECTEUR DE LANGUE — un bouton drapeau et son petit panneau.
+
+   L'ENVELOPPE NE PORTE PLUS NI LA SQUIRCLE NI `isolation`, et ce déplacement
+   est la condition du panneau. Les deux calques découpés étaient posés sur
+   elle avec des `z-index` négatifs ; y ajouter une liste flottante aurait
+   demandé de la faire vivre dans le MÊME contexte d'empilement que le contour
+   du bouton. L'enveloppe redevient un simple repère de position
+   (`position: relative`), le bouton porte son propre contour, et le panneau
+   est libre de recouvrir ce qui suit.
+
+   LE PANNEAU DÉBORDE LA BARRE, ET IL EN A LE DROIT : `.tc-doc-topbar__glass`
+   force `overflow: visible`, précisément pour que la liste de suggestions de
+   la recherche puisse sortir. Le sélecteur emprunte le même passage.
+   ========================================================================== */
 .tc-doc-language {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+.tc-doc-language__trigger {
   --tc-doc-control-border: var(--canop-divider);
   position: relative;
   isolation: isolate;
-  display: block;
-  width: 8.75rem;
-  min-width: 0;
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 0;
+  border-radius: 0;
+  padding-inline: 0.7rem;
+  background: transparent;
+  color: var(--canop-text);
+  cursor: pointer;
 }
-.tc-doc-language::before,
-.tc-doc-language::after {
+.tc-doc-language__trigger::before,
+.tc-doc-language__trigger::after {
   position: absolute;
   clip-path: var(--canop-squircle-clip);
   content: '';
   pointer-events: none;
 }
-.tc-doc-language::before { z-index: -2; inset: 0; background: var(--tc-doc-control-border); }
-.tc-doc-language::after { z-index: -1; inset: 1px; background: var(--canop-surface); }
-.tc-doc-language:hover,
-.tc-doc-language:focus-within { --tc-doc-control-border: var(--canop-primary); }
-.tc-doc-language .canop-input-shell {
-  min-height: 2.75rem;
-  border: 0;
-  border-radius: 0;
-  padding-inline: 0.8rem;
-  background: transparent;
-  box-shadow: none !important;
+.tc-doc-language__trigger::before { z-index: -2; inset: 0; background: var(--tc-doc-control-border); }
+.tc-doc-language__trigger::after { z-index: -1; inset: 1px; background: var(--canop-surface); }
+.tc-doc-language__trigger:hover,
+.tc-doc-language__trigger[aria-expanded='true'] { --tc-doc-control-border: var(--canop-primary); }
+
+/* LE LISERÉ DU DRAPEAU N'EST PAS UNE COQUETTERIE. La bande centrale du
+   drapeau français est blanche et la surface de la barre l'est presque : sans
+   ce contour, la vignette se lisait comme deux rectangles bleu et rouge
+   flottants. Il est tiré de l'encre du thème, donc il suit le mode sombre. */
+.tc-doc-language__flag {
+  display: block;
+  width: 1.4rem;
+  height: 0.95rem;
+  flex: none;
+  border-radius: 0.15rem;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--canop-text) 22%, transparent);
 }
-.tc-doc-language .canop-select {
-  min-height: 2.75rem;
-  padding: 0;
-  color: var(--canop-text);
+
+.tc-doc-language__caret {
+  width: 0.4rem;
+  height: 0.4rem;
+  flex: none;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  color: var(--canop-text-secondary);
+  transform: translateY(-0.1rem) rotate(45deg);
+  transition: transform var(--canop-motion) var(--canop-ease);
+}
+.tc-doc-language__trigger[aria-expanded='true'] .tc-doc-language__caret {
+  transform: translateY(0.1rem) rotate(-135deg);
+}
+.tc-doc-language__trigger:hover .tc-doc-language__caret { color: var(--canop-primary); }
+
+/* `[hidden]` EST REDÉCLARÉ PARCE QUE `display: grid` L'ÉCRASE. La feuille de
+   l'agent utilisateur pose `display: none` sur `[hidden]` avec le poids d'un
+   sélecteur d'attribut — n'importe quelle `display` d'auteur la bat, et le
+   panneau serait resté peint en permanence tout en étant retiré de l'arbre
+   d'accessibilité. C'est la panne la plus discrète du motif. */
+.tc-doc-language__list {
+  position: absolute;
+  z-index: 50;
+  display: grid;
+  min-width: 100%;
+  margin: 0;
+  padding: 0.35rem;
+  border: 1px solid var(--canop-divider);
+  border-radius: var(--canop-radius-md);
+  background: var(--canop-surface);
+  box-shadow: var(--canop-shadow-4);
+  gap: 0.15rem;
+  inset-block-start: calc(100% + 0.5rem);
+  inset-inline-end: 0;
+  list-style: none;
+}
+.tc-doc-language__list[hidden] { display: none; }
+
+.tc-doc-language__option {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 0.7rem;
   cursor: pointer;
-  font: 600 0.8125rem/1.2 var(--canop-font-body);
 }
-.tc-doc-language .canop-select:focus,
-.tc-doc-language .canop-select:focus-visible {
-  outline: none !important;
-  box-shadow: none !important;
+.tc-doc-language__option::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: transparent;
+  clip-path: var(--canop-squircle-clip);
+  content: '';
+  pointer-events: none;
+  transition: background var(--canop-motion) var(--canop-ease);
+}
+/* Trois états et non deux : DÉSIGNÉE (flèches ou survol) et CHOISIE sont des
+   choses différentes, et la langue courante reste choisie pendant qu'on en
+   survole une autre. L'ordre des règles est la hiérarchie : le teint léger de
+   la désignation, l'aplat plein du choix, et la teinte foncée quand les deux
+   tombent sur la même option — sinon parcourir la liste au clavier n'aurait
+   rien peint du tout en arrivant sur la langue déjà active. */
+.tc-doc-language__option[data-active='true']::before {
+  background: color-mix(in srgb, var(--canop-primary) 34%, transparent);
+}
+.tc-doc-language__option[aria-selected='true']::before { background: var(--canop-primary); }
+.tc-doc-language__option[aria-selected='true'][data-active='true']::before {
+  background: var(--canop-primary-dark);
+}
+.tc-doc-language__option[aria-selected='true'] .tc-doc-language__flag {
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 55%);
 }
 
 /* La feuille historique peignait le rectangle de la boîte du bouton derrière
@@ -816,7 +942,7 @@ body { font-size: 1rem; line-height: 1.5; }
 
 /* Les commandes gardent une boîte rectangulaire pour le focus et confient leur
    silhouette au même polygone de squircle que Button. */
-.tc-doc :is(.tc-doc-search, .tc-doc-themetoggle, .tc-doc-language, .tc-doc-topbar__menu-toggle, .tc-doc-topbar__tab, .tc-doc-home__action, .canop-button) {
+.tc-doc :is(.tc-doc-search, .tc-doc-themetoggle, .tc-doc-language__trigger, .tc-doc-topbar__menu-toggle, .tc-doc-topbar__tab, .tc-doc-home__action, .canop-button) {
   border-radius: 0 !important;
 }
 
@@ -983,16 +1109,14 @@ body { font-size: 1rem; line-height: 1.5; }
     font-size: 0.8rem;
   }
 
-  .tc-doc-language {
-    width: 5.25rem;
+  .tc-doc-language__trigger {
+    gap: 0.3rem;
+    padding-inline: 0.5rem;
   }
 
-  .tc-doc-language .canop-input-shell {
-    padding-inline: 0.55rem;
-  }
-
-  .tc-doc-language .canop-select {
-    font-size: 0.72rem;
+  .tc-doc-language__flag {
+    width: 1.2rem;
+    height: 0.8rem;
   }
 }
 
