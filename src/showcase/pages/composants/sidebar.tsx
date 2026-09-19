@@ -1,6 +1,7 @@
 import { Sidebar } from '../../../magic';
 import type { DocPage } from '../../doc-model';
 import { hrefFor } from '../../doc-model';
+import { UI_VERSION } from '../../version';
 import { Specimen } from '../../section';
 import { PageBody, PropsTable, UsageBlock } from '../api';
 import type { PropRow } from '../api';
@@ -22,7 +23,7 @@ import '@thomascaron/opale/opale.css';
     <Sidebar.Item itemId="carte" badge={<Badge>3</Badge>}>Carte</Sidebar.Item>
   </Sidebar.Items>
 
-  <Sidebar.Footer>v2.0.0</Sidebar.Footer>
+  <Sidebar.Footer>v${UI_VERSION}</Sidebar.Footer>
 </Sidebar>`;
 
 const PROPS: readonly PropRow[] = [

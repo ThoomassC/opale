@@ -1,7 +1,10 @@
 import type { DocPage } from '../doc-model';
 
 import { introductionPage } from './introduction';
+import { installationPage } from './installation';
+import { iconesPage, themingPage, utilisationPage } from './guide-pages';
 import { verreLiquidePage } from './verre-liquide';
+import { notesVersionsPage } from './notes-de-versions';
 
 import { accessibilitePage } from './fondations/accessibilite';
 import { elevationPage } from './fondations/elevation';
@@ -26,6 +29,7 @@ import { switchPage } from './composants/switch';
 import { tabsPage } from './composants/tabs';
 import { toastPage } from './composants/toast';
 import { topbarPage } from './composants/topbar';
+import { opaleComponentPages } from './canop-components';
 
 /* =============================================================================
    LE REGISTRE — l'unique liste des pages du site, et donc de sa navigation.
@@ -61,9 +65,14 @@ import { topbarPage } from './composants/topbar';
    ========================================================================== */
 export const PAGES: readonly DocPage[] = [
   introductionPage,
+  installationPage,
+  utilisationPage,
+  themingPage,
+  iconesPage,
   /* Juste sous « Présentation », et dans le même groupe : c'est la page qui
      montre l'effet dont toute la 2.0 dépend, avant le catalogue. */
   verreLiquidePage,
+  notesVersionsPage,
 
   palettePage,
   typographiePage,
@@ -94,4 +103,5 @@ export const PAGES: readonly DocPage[] = [
   tabsPage,
   toastPage,
   topbarPage,
+  ...opaleComponentPages,
 ];

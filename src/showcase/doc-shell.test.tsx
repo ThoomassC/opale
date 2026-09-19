@@ -1,10 +1,16 @@
-import { act, cleanup, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DocPage } from './doc-model';
-import { GROUPS, HOME_SLUG, hrefFor } from './doc-model';
+import type { DocNavEntry, DocPage } from './doc-model';
+import { GROUPS, HOME_SLUG, hrefFor, navEntriesForPages } from './doc-model';
 import { DocShell } from './doc-shell';
+import {
+  DOC_NAV_WIDTH_DEFAULT,
+  DOC_NAV_WIDTH_MAX,
+  DOC_NAV_WIDTH_MIN,
+  DOC_NAV_WIDTH_STEP,
+} from './doc-nav';
 import { PAGES } from './pages';
 import { UI_VERSION } from './version';
 
@@ -33,7 +39,7 @@ import { UI_VERSION } from './version';
  * pour un test élargirait la surface du module pour rien. Une dérive ici
  * rougit — c'est le titre affiché dans l'onglet.
  */
-const TITLE_SUFFIX = ' — @thomascaron/opale';
+const TITLE_SUFFIX = ' — opaleUI';
 
 /** L'identifiant de `<main>`, cible du lien d'évitement et du focus. */
 const MAIN_ID = 'contenu';
@@ -135,8 +141,8 @@ const SCRAMBLED_PAGES: readonly DocPage[] = [
 ];
 
 /** L'ordre attendu dans la barre : les groupes de `GROUPS`, puis la déclaration. */
-function navOrderOf(pages: readonly DocPage[]): readonly DocPage[] {
-  return GROUPS.flatMap((group) => pages.filter((page) => page.group === group.id));
+function navOrderOf(pages: readonly DocPage[]): readonly DocNavEntry[] {
+  return navEntriesForPages(pages);
 }
 
 function sommaire(): HTMLElement {
@@ -244,6 +250,96 @@ describe('DocShell — la note de version', () => {
   });
 });
 
+describe('DocShell — les onglets du header', () => {
+  it('devrait rendre Accueil, Installation et Notes de versions dans cet ordre', () => {
+    render(<DocShell pages={PAGES} />);
+
+    const links = within(
+      screen.getByRole('navigation', { name: 'Navigation principale' }),
+    ).getAllByRole('link');
+
+    expect(links.map((link) => link.textContent)).toEqual([
+      'Accueil',
+      'Installation',
+      'Notes de versions',
+    ]);
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      hrefFor(''),
+      hrefFor('installation'),
+      hrefFor('notes-de-versions'),
+    ]);
+    expect(links[0]).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('devrait préparer un menu compact pour les largeurs où les onglets ne tiennent plus', () => {
+    render(<DocShell pages={PAGES} />);
+
+    const menu = document.querySelector('.tc-doc-topbar__menu');
+
+    expect(menu).toBeInstanceOf(HTMLDetailsElement);
+    expect(menu?.querySelector('summary')).toHaveAttribute('aria-label', 'Ouvrir le menu');
+    expect(menu?.querySelectorAll('.tc-doc-topbar__menu-nav a')).toHaveLength(3);
+  });
+});
+
+describe('DocShell — la largeur du sommaire', () => {
+  it('devrait prévisualiser la largeur directement pendant un glissement', () => {
+    render(<DocShell pages={PAGES} />);
+
+    const resizeHandle = screen.getByRole('slider', { name: 'Largeur du sommaire' });
+    const body = document.querySelector('.tc-doc-body');
+
+    expect(body).not.toBeNull();
+
+    fireEvent.pointerDown(resizeHandle, { pointerId: 7, clientX: 100 });
+    fireEvent.pointerMove(resizeHandle, { pointerId: 7, clientX: 124 });
+
+    expect(body).toHaveStyle(`--tc-doc-nav-width: ${DOC_NAV_WIDTH_DEFAULT + 24}px`);
+    expect(resizeHandle).toHaveAttribute(
+      'aria-valuenow',
+      String(DOC_NAV_WIDTH_DEFAULT + 24),
+    );
+
+    fireEvent.pointerUp(resizeHandle, { pointerId: 7, clientX: 124 });
+
+    expect(body).toHaveStyle(`--tc-doc-nav-width: ${DOC_NAV_WIDTH_DEFAULT + 24}px`);
+    expect(resizeHandle.closest('.tc-doc-nav')).not.toHaveAttribute('data-resizing');
+  });
+
+  it('devrait pouvoir être ajustée au clavier dans des bornes accessibles', async () => {
+    const user = userEvent.setup();
+
+    render(<DocShell pages={PAGES} />);
+
+    const resizeHandle = screen.getByRole('slider', { name: 'Largeur du sommaire' });
+    const body = document.querySelector('.tc-doc-body');
+
+    expect(resizeHandle).toHaveAttribute('aria-valuemin', String(DOC_NAV_WIDTH_MIN));
+    expect(resizeHandle).toHaveAttribute('aria-valuemax', String(DOC_NAV_WIDTH_MAX));
+    expect(resizeHandle).toHaveAttribute('aria-valuenow', String(DOC_NAV_WIDTH_DEFAULT));
+    expect(body?.getAttribute('style')).toContain(
+      `--tc-doc-nav-width: ${DOC_NAV_WIDTH_DEFAULT}px`,
+    );
+
+    resizeHandle.focus();
+    await user.keyboard('{ArrowRight}');
+
+    expect(resizeHandle).toHaveAttribute(
+      'aria-valuenow',
+      String(DOC_NAV_WIDTH_DEFAULT + DOC_NAV_WIDTH_STEP),
+    );
+    expect(body?.getAttribute('style')).toContain(
+      `--tc-doc-nav-width: ${DOC_NAV_WIDTH_DEFAULT + DOC_NAV_WIDTH_STEP}px`,
+    );
+
+    await user.keyboard('{Home}');
+    expect(resizeHandle).toHaveAttribute('aria-valuenow', String(DOC_NAV_WIDTH_MIN));
+
+    await user.keyboard('{End}');
+    expect(resizeHandle).toHaveAttribute('aria-valuenow', String(DOC_NAV_WIDTH_MAX));
+  });
+});
+
 describe('DocShell — les entrées du sommaire', () => {
   /* LA promesse : « une entrée de nav par composant publié ». Elle est ici
      menée sur le VRAI registre, dont `registry.test.tsx` garantit par ailleurs
@@ -259,7 +355,7 @@ describe('DocShell — les entrées du sommaire', () => {
       `le sommaire rend ${navLinks().length} entrées pour ${PAGES.length} pages ` +
         `du registre — une page sans entrée est une page qu'on ne peut atteindre ` +
         `qu'en tapant son adresse`,
-    ).toEqual(expected.map((page) => page.label));
+    ).toEqual(expected.map((entry) => entry.label));
   });
 
   it('devrait donner à chaque entrée l’adresse canonique de sa page', () => {
@@ -268,7 +364,7 @@ describe('DocShell — les entrées du sommaire', () => {
     expect(
       hrefsOf(navLinks()),
       `des entrées du sommaire ne pointent pas sur hrefFor(page.slug)`,
-    ).toEqual(navOrderOf(PAGES).map((page) => hrefFor(page.slug)));
+    ).toEqual(navOrderOf(PAGES).map((entry) => hrefFor(entry.page.slug)));
   });
 
   it('devrait ordonner les entrées par groupe de GROUPS puis par déclaration', () => {
@@ -318,14 +414,11 @@ describe('DocShell — les entrées du sommaire', () => {
 
     const nav = sommaire();
 
-    /* CIBLÉ PAR LE `<summary>` ET SON `aria-label`, et non par le texte : le
-       libellé d'un groupe se retrouve aussi dans des libellés de page, si bien
-       qu'un `queryByText` en trouve plusieurs. C'est le même
-       idiome que `doc-nav.test.tsx`, et il est EXACT — l'`aria-label` vaut le
-       libellé nu, précisément parce que le chevron du `::before` entrerait
-       sinon dans le nom accessible. */
+    /* CIBLÉ PAR L'ID DU LIBELLÉ STATIQUE, et non par le texte : un libellé de
+       groupe peut aussi se retrouver dans une entrée de page, si bien qu'un
+       `queryByText` en trouverait plusieurs. */
     expect(
-      nav.querySelector('summary[aria-label="Fondations"]'),
+      nav.querySelector('#tc-doc-nav-section-fondations'),
       `le groupe « Fondations » n'a plus aucune page dans ce registre et ne doit ` +
         `pas apparaître dans la barre`,
     ).toBeNull();
@@ -336,7 +429,7 @@ describe('DocShell — les entrées du sommaire', () => {
   });
 
   /* Le pendant du précédent : avec les trois groupes peuplés, les trois sont
-     rendus. Sans lui, un `doc-nav.tsx` qui ne rendrait JAMAIS de groupe
+     rendus. Sans lui, un `doc-nav.tsx` qui ne rendrait jamais de groupe
      passerait le test ci-dessus. */
   it('devrait rendre une liste par groupe peuplé', () => {
     render(<DocShell pages={FIXTURE_PAGES} />);
@@ -349,9 +442,11 @@ describe('DocShell — les entrées du sommaire', () => {
     ).toHaveLength(3);
     for (const label of ['Introduction', 'Fondations', 'Composants']) {
       expect(
-        nav.querySelector(`summary[aria-label="${label}"]`),
+        [...nav.querySelectorAll('.tc-doc-nav__grouptitle')].some(
+          (title) => title.textContent?.trim() === label,
+        ),
         `le groupe « ${label} » a des pages dans ce registre et n'apparaît pas`,
-      ).not.toBeNull();
+      ).toBe(true);
     }
   });
 
@@ -492,28 +587,14 @@ describe('DocShell — la bascule de la barre du haut', () => {
     ).toEqual({ 'data-theme': 'dark', 'data-material': null });
   });
 
-  it('devrait piloter le sommaire depuis le header mobile', async () => {
+  it('ne devrait plus rendre de commande pour plier le sommaire', () => {
     render(<DocShell pages={FIXTURE_PAGES} />);
-    const user = userEvent.setup();
 
-    const navigationToggle = topbar().getByRole('button', {
-      name: 'Afficher ou masquer le sommaire',
-    });
-    const navigationDetails = document.querySelector<HTMLDetailsElement>('#tc-doc-nav-content');
-
-    expect(navigationToggle).toHaveAttribute('aria-expanded', 'true');
-    expect(navigationToggle).toHaveAttribute('aria-controls', 'tc-doc-nav-content');
-    expect(navigationDetails?.open).toBe(true);
-
-    await user.click(navigationToggle);
-
-    expect(navigationToggle).toHaveAttribute('aria-expanded', 'false');
-    expect(navigationDetails?.open).toBe(false);
-
-    await user.click(navigationToggle);
-
-    expect(navigationToggle).toHaveAttribute('aria-expanded', 'true');
-    expect(navigationDetails?.open).toBe(true);
+    expect(
+      topbar().queryByRole('button', { name: 'Afficher ou masquer le sommaire' }),
+    ).toBeNull();
+    expect(document.querySelector('#tc-doc-nav-content')).toBeNull();
+    expect(sommaire()).toBeInTheDocument();
   });
 });
 
@@ -540,6 +621,31 @@ describe('DocShell — le rendu de la page', () => {
       screen.getByRole('main').textContent,
       `le contenu principal ne se lit pas « titre, corps »`,
     ).toBe('Le soclecorps de l’accueil');
+  });
+
+  it('devrait rendre l’accueil Opale sans la carte Beta de la référence', () => {
+    render(<DocShell pages={PAGES} />);
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Le design system de l’écosystème Opale.',
+    );
+    expect(screen.getByRole('heading', { name: 'Opale UI 3.0.0' })).toBeInTheDocument();
+    expect(screen.getByText('91 composants')).toBeInTheDocument();
+    expect(screen.queryByText(/Rejoindre la bêta/i)).toBeNull();
+    expect(document.body).not.toHaveTextContent(/Canop/i);
+    expect(screen.queryByText(/Explorer/i)).toBeNull();
+  });
+
+  it('devrait présenter les composants comme Opale sans bloc API ni habillage de référence', () => {
+    render(<DocShell pages={PAGES} />);
+
+    navigate('#/composants/opale-button');
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Button');
+    expect(screen.getByText(/import \{ Opale \}/)).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'API' })).toBeNull();
+    expect(screen.queryByText(/Explorer/i)).toBeNull();
+    expect(document.body).not.toHaveTextContent(/Canop/i);
   });
 
   it('ne devrait rien insérer entre le titre et le corps quand la page n’a pas de chapeau', () => {
@@ -608,12 +714,13 @@ describe('DocShell — la navigation par fragment', () => {
   });
 
   /* Le vrai registre, avec l'adresse que `registry.test.tsx` garantit — le
-     kebab-case du libellé sous le préfixe `composants/`. */
-  it('devrait servir la page de Button du registre réel sur #/composants/button', () => {
-    const expected = PAGES.find((page) => page.slug === 'composants/button');
+     kebab-case du libellé sous le préfixe `composants/`, et `opale-` pour les
+     composants ajoutés au catalogue V3. */
+  it('devrait servir la page de Button du catalogue Opale sur #/composants/opale-button', () => {
+    const expected = PAGES.find((page) => page.slug === 'composants/opale-button');
 
     render(<DocShell pages={PAGES} />);
-    navigate('#/composants/button');
+    navigate('#/composants/opale-button');
 
     expect(
       screen.getByRole('heading', { level: 1 }).textContent,
@@ -940,7 +1047,7 @@ describe('DocShell — la frontière d’erreur du contenu', () => {
        bloqué dans le thème où il se trouvait. Il n'y en a plus qu'une — l'axe
        du matériau a été retiré avec la feuille qui le lisait. */
     expect(screen.getByRole('button', { name: /Thème sombre/ })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /@thomascaron\/opale/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /opaleUI/ })).toBeInTheDocument();
   });
 
   it('devrait rendre le message d’erreur à la place du contenu de la page', () => {

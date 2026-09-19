@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+
+import { CanopButton } from '../../magic';
 
 /* =============================================================================
    LES TROIS BRIQUES QUE TOUTE PAGE DE COMPOSANT RÉEMPLOIE.
@@ -137,18 +139,267 @@ export interface UsageBlockProps {
   /** Ce que le bloc montre, pour le nom accessible du conteneur défilant. */
   readonly label: string;
   readonly code: string;
+  /** Les commandes d'installation sont du shell ; les autres exemples sont du TSX. */
+  readonly language?: 'shell' | 'tsx';
+  /** Les pages didactiques peuvent montrer immédiatement une commande essentielle. */
+  readonly defaultOpen?: boolean;
 }
 
-/** Un bloc de code, atteignable au clavier parce qu'il défile. */
-export function UsageBlock({ label, code }: UsageBlockProps) {
+type CopyState = 'idle' | 'copied' | 'error';
+type CodeLanguage = NonNullable<UsageBlockProps['language']>;
+type CodeTokenKind =
+  | 'plain'
+  | 'comment'
+  | 'string'
+  | 'tag'
+  | 'keyword'
+  | 'number'
+  | 'attribute'
+  | 'punctuation'
+  | 'command'
+  | 'flag';
+
+interface CodeToken {
+  readonly kind: CodeTokenKind;
+  readonly value: string;
+}
+
+const TSX_TOKEN_PATTERN =
+  /(\/\*[\s\S]*?\*\/|\/\/[^\n]*)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|(<\/?[A-Za-z][\w.:-]*)|(\b(?:as|async|await|const|default|export|false|from|function|import|interface|let|null|return|true|type|undefined)\b)|(\b\d+(?:\.\d+)?\b)|(\b[A-Za-z][\w:-]*(?=\s*=))|([{}[\]();,.=<>/:+*-]+)/g;
+const TSX_TOKEN_KINDS: readonly CodeTokenKind[] = [
+  'comment',
+  'string',
+  'tag',
+  'keyword',
+  'number',
+  'attribute',
+  'punctuation',
+];
+
+const SHELL_TOKEN_PATTERN =
+  /(#[^\n]*)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(\b(?:bun|git|npm|npx|pnpm|yarn)\b)|(\b(?:add|exec|i|install|run)\b)|(--?[A-Za-z][\w-]*)|(@?[A-Za-z0-9][\w./:@#-]*)/g;
+const SHELL_TOKEN_KINDS: readonly CodeTokenKind[] = [
+  'comment',
+  'string',
+  'command',
+  'keyword',
+  'flag',
+  'string',
+];
+
+function tokenizeCode(code: string, language: CodeLanguage): readonly CodeToken[] {
+  const pattern = language === 'shell' ? SHELL_TOKEN_PATTERN : TSX_TOKEN_PATTERN;
+  const kinds = language === 'shell' ? SHELL_TOKEN_KINDS : TSX_TOKEN_KINDS;
+  const tokens: CodeToken[] = [];
+  let cursor = 0;
+
+  pattern.lastIndex = 0;
+
+  for (const match of code.matchAll(pattern)) {
+    const index = match.index ?? 0;
+
+    if (index > cursor) tokens.push({ kind: 'plain', value: code.slice(cursor, index) });
+
+    const groupIndex = match.slice(1).findIndex((group) => group !== undefined);
+    tokens.push({ kind: kinds[groupIndex] ?? 'plain', value: match[0] });
+    cursor = index + match[0].length;
+  }
+
+  if (cursor < code.length) tokens.push({ kind: 'plain', value: code.slice(cursor) });
+
+  return tokens;
+}
+
+function CodeSnippet({ code, language }: { code: string; language: CodeLanguage }) {
   return (
-    <pre
-      className="tc-doc-code"
-      tabIndex={0}
-      role="group"
-      aria-label={`${label}, défilement horizontal`}
+    <code data-language={language}>
+      {tokenizeCode(code, language).map((token, index) => (
+        <span
+          className={
+            token.kind === 'plain' ? undefined : `tc-doc-token tc-doc-token--${token.kind}`
+          }
+          key={`${index}-${token.kind}`}
+        >
+          {token.value}
+        </span>
+      ))}
+    </code>
+  );
+}
+
+function EyeIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      className="tc-doc-codeaction__icon"
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      aria-hidden="true"
+      focusable="false"
     >
-      <code>{code}</code>
-    </pre>
+      <path
+        d="M3 12s3.25-5.25 9-5.25S21 12 21 12s-3.25 5.25-9 5.25S3 12 3 12Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="12" r="2.35" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      {open ? (
+        <path
+          className="tc-doc-codeaction__icon-slash"
+          d="m5 5 14 14"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      ) : null}
+    </svg>
+  );
+}
+
+function CopyIcon({ copied }: { copied: boolean }) {
+  return (
+    <svg
+      className="tc-doc-codeaction__icon"
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {copied ? (
+        <path
+          className="tc-doc-codeaction__icon-check"
+          d="m5 12.5 4.25 4.25L19 7"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ) : (
+        <>
+          <rect
+            x="8"
+            y="8"
+            width="11"
+            height="11"
+            rx="2"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+          />
+          <path
+            d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+          />
+        </>
+      )}
+    </svg>
+  );
+}
+
+/**
+ * Un exemple de code repliable, copiable et atteignable au clavier.
+ *
+ * Le panneau reste monté pendant le repli afin que la transition CSS puisse
+ * s'achever. `aria-hidden` et `tabIndex=-1` le retirent toutefois du parcours
+ * tant qu'il n'est pas affiché.
+ */
+export function UsageBlock({
+  label,
+  code,
+  language = 'tsx',
+  defaultOpen = false,
+}: UsageBlockProps) {
+  const [open, setOpen] = useState(defaultOpen);
+  const [copyState, setCopyState] = useState<CopyState>('idle');
+  const resetTimer = useRef<number | undefined>(undefined);
+  const panelId = `${useId()}-code`;
+
+  useEffect(
+    () => () => {
+      if (resetTimer.current !== undefined) window.clearTimeout(resetTimer.current);
+    },
+    [],
+  );
+
+  async function copyCode(): Promise<void> {
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard API indisponible');
+      await navigator.clipboard.writeText(code);
+      setCopyState('copied');
+    } catch {
+      setCopyState('error');
+    }
+
+    if (resetTimer.current !== undefined) window.clearTimeout(resetTimer.current);
+    resetTimer.current = window.setTimeout(() => setCopyState('idle'), 1800);
+  }
+
+  const copyLabel =
+    copyState === 'copied' ? 'Copié !' : copyState === 'error' ? 'Réessayer' : 'Copier';
+
+  return (
+    <div className="tc-doc-codeexample">
+      <div
+        className="tc-doc-codeexample__actions"
+        role="group"
+        aria-label={`Actions pour ${label}`}
+      >
+        <CanopButton
+          className="tc-doc-codeaction"
+          variant="tonal"
+          size="small"
+          aria-controls={panelId}
+          aria-expanded={open}
+          startIcon={<EyeIcon open={open} />}
+          onClick={() => setOpen((current) => !current)}
+        >
+          {open ? 'Masquer le code' : 'Afficher le code'}
+        </CanopButton>
+        <CanopButton
+          className="tc-doc-codeaction"
+          variant="tonal"
+          size="small"
+          startIcon={<CopyIcon copied={copyState === 'copied'} />}
+          onClick={() => void copyCode()}
+        >
+          {copyLabel}
+        </CanopButton>
+      </div>
+
+      <div
+        className="tc-doc-codeexample__reveal"
+        data-open={open ? 'true' : 'false'}
+        aria-hidden={!open}
+      >
+        <div className="tc-doc-codeexample__reveal-inner">
+          <pre
+            id={panelId}
+            className="tc-doc-code"
+            tabIndex={open ? 0 : -1}
+            role="group"
+            aria-label={`${label}, défilement horizontal`}
+          >
+            <CodeSnippet code={code} language={language} />
+          </pre>
+        </div>
+      </div>
+
+      <span className="tc-visually-hidden" role="status" aria-live="polite">
+        {copyState === 'copied'
+          ? 'Code copié dans le presse-papier.'
+          : copyState === 'error'
+            ? 'La copie a échoué.'
+            : ''}
+      </span>
+    </div>
   );
 }

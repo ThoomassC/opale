@@ -20,7 +20,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as library from '../magic';
 
 import type { DocPage } from './doc-model';
-import { GROUPS, HOME_SLUG, parseSlug } from './doc-model';
+import { GROUPS, HOME_SLUG, catalogComponentLabel, parseSlug } from './doc-model';
 import { PAGES } from './pages';
 
 /* ============================================================================
@@ -123,14 +123,15 @@ const PUBLISHED_COMPONENTS: readonly string[] = Object.entries(library)
  * monte d'un — et il faut aussi lui écrire une page, ce que le test suivant
  * exige.
  *
- * DIX-HUIT EN 1.0, SEIZE EN 2.0. L'entrée racine publie les quatorze composants
+ * SEIZE COMPOSANTS HISTORIQUES, PLUS LE CATALOGUE OPALE DE LA V3. L'entrée
+ * racine publie les composants historiques et les nouvelles briques compatibles.
  * verre liquide historiques, ainsi que `SiteNav` et `SearchBar`.
  */
-const PUBLISHED_COMPONENT_COUNT = 16;
+const PUBLISHED_COMPONENT_COUNT = 93;
 
 /** Le libellé de la page attendue pour un composant. */
 function pageLabelFor(component: string): string {
-  return DOCUMENTED_WITH[component] ?? component;
+  return DOCUMENTED_WITH[component] ?? catalogComponentLabel(component);
 }
 
 /** `ChipList` → `chip-list`. Le slug d'une page de composant. */
@@ -139,6 +140,8 @@ function kebabCase(label: string): string {
 }
 
 const COMPONENT_PAGES: readonly DocPage[] = PAGES.filter((page) => page.group === 'composants');
+const COMPONENT_PAGE_CASES: readonly (readonly [slug: string, page: DocPage])[] =
+  COMPONENT_PAGES.map((page) => [page.slug, page]);
 
 /**
  * Une page par cas, le slug d'abord.
@@ -314,12 +317,16 @@ describe('Le registre des pages', () => {
     });
 
     it('devrait nommer chaque page de composant par le kebab-case de son libellé', () => {
-      const wrong = COMPONENT_PAGES.filter(
-        (page) => page.slug !== `${COMPONENT_PREFIX}${kebabCase(page.label)}`,
-      ).map(
-        (page) =>
-          `${page.label} : « ${page.slug} » au lieu de « ${COMPONENT_PREFIX}${kebabCase(page.label)} »`,
-      );
+      const wrong = COMPONENT_PAGES.filter((page) => {
+        const prefix = page.slug.startsWith(`${COMPONENT_PREFIX}opale-`) ? 'opale-' : '';
+
+        return page.slug !== `${COMPONENT_PREFIX}${prefix}${kebabCase(page.label)}`;
+      }).map((page) => {
+        const prefix = page.slug.startsWith(`${COMPONENT_PREFIX}opale-`) ? 'opale-' : '';
+        const expected = `${COMPONENT_PREFIX}${prefix}${kebabCase(page.label)}`;
+
+        return `${page.label} : « ${page.slug} » au lieu de « ${expected} »`;
+      });
 
       expect(
         wrong,
@@ -358,6 +365,27 @@ describe('Le registre des pages', () => {
         `la page « ${page.slug} » a écrit dans console.error :\n${errors.join('\n')}`,
       ).toEqual([]);
     });
+
+    it.each(COMPONENT_PAGE_CASES)(
+      'la page composant « %s » devrait proposer afficher et copier son code',
+      (_slug, page) => {
+        const { container } = render(<>{page.render()}</>);
+        const labels = [...container.querySelectorAll<HTMLButtonElement>('button')].map((button) =>
+          button.textContent?.trim(),
+        );
+
+        expect(labels.filter((label) => label === 'Afficher le code')).toHaveLength(1);
+        expect(labels.filter((label) => label === 'Copier')).toHaveLength(1);
+
+        const toggle = container.querySelector<HTMLButtonElement>(
+          'button[aria-expanded="false"][aria-controls]',
+        );
+        const controlled = toggle?.getAttribute('aria-controls');
+
+        expect(controlled).toBeTruthy();
+        expect(controlled ? document.getElementById(controlled) : null).not.toBeNull();
+      },
+    );
 
     /* La coquille rend le `<h1>` — le `title` de la page. Une page qui en rend
        un second donne deux titres de premier niveau au document, donc deux

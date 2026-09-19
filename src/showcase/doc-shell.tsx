@@ -1,40 +1,40 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 import { Topbar } from '../magic';
 import type { DocPage } from './doc-model';
 import { HOME_SLUG, findPage, hrefFor } from './doc-model';
-import { DocNav } from './doc-nav';
+import {
+  DOC_NAV_WIDTH_DEFAULT,
+  DOC_NAV_WIDTH_MAX,
+  DOC_NAV_WIDTH_MOBILE_DEFAULT,
+  DOC_NAV_WIDTH_MOBILE_MAX,
+  DOC_NAV_WIDTH_MOBILE_MIN,
+  DOC_NAV_WIDTH_MIN,
+  DOC_NAV_WIDTH_STEP,
+  DocNav,
+} from './doc-nav';
 import { DocSearch } from './doc-search';
+import { LanguageSelector } from './language-selector';
+import { copyFor, pageTitleFor, type InterfaceCopy } from './localization';
 import { PageBoundary } from './page-boundary';
 import { ThemeToggle } from './theme-toggle';
+import { useLanguage } from './use-language';
 import { useRoute } from './use-route';
+import { UI_VERSION } from './version';
 
-/* =============================================================================
-   DEUX ÉLÉMENTS ONT ÉTÉ RETIRÉS DE CETTE COQUILLE EN 2.0, ET AUCUN DES DEUX
-   N'ÉTAIT UN CHOIX D'APPARENCE.
-
-   `<GlassLens />` était monté ici, une fois pour tout le site, parce qu'il rend
-   un `<filter>` à `id` littéral et qu'un identifiant ne vaut qu'une fois par
-   document. Le composant n'est plus publié et `lens.css` n'existe plus : il n'y
-   a plus de bouton bulle à filtrer.
-
-   `<MaterialToggle />` était la bascule « Verre liquide » de la barre du haut.
-   Elle écrivait `data-material="glass"` sur `<html>`, et la SEULE feuille qui
-   lisait ce porteur était `src/styles/glass.css`, supprimée. Vérifié :
-   `data-material` n'apparaît plus dans `src/tokens/**`, dans `src/magic/**` ni
-   dans `doc.css` — zéro lecteur. Un bouton `aria-pressed` qui annonce un état
-   sans que rien ne change est pire qu'absent : il promet une commande à
-   quelqu'un qui ne peut pas vérifier qu'elle n'a pas marché. `material-toggle`
-   et `use-material` sont donc supprimés avec elle.
-
-   CE QUI N'EST PLUS OFFERT, DIT EN CLAIR : la vitrine n'a plus qu'UN axe de
-   présentation, le thème. Le matériau en était le second, et il ne reste de lui
-   que les jetons — voir la page « Verre », qui documente ce qui survit.
-   ========================================================================== */
+/* La coquille conserve les composants historiques de navigation, mais son
+   habillage V3 suit désormais les tokens Opale. Le thème global est limité au
+   clair/sombre ; les composants Opale activent leur surface Liquid Glass avec
+   leur contrôle local et le prop `liquidGlass`. */
 
 /** Le nom du paquet, affiché dans la barre du haut et dans `document.title`. */
-const SITE_NAME = '@thomascaron/opale';
+const SITE_NAME = 'opaleUI';
+const COMPACT_NAV_MEDIA_QUERY = '(max-width: 59.999rem)';
+
+function compactNavViewport() {
+  return typeof window !== 'undefined' && window.matchMedia?.(COMPACT_NAV_MEDIA_QUERY).matches;
+}
 
 /**
  * Le repli du repli : un registre sans page d'accueil.
@@ -76,6 +76,50 @@ function PageContent({ page }: { page: DocPage }): ReactNode {
   return page.render();
 }
 
+interface HeaderNavProps {
+  readonly page: DocPage;
+  readonly className: string;
+  readonly ariaLabel: string;
+  readonly copy: InterfaceCopy;
+}
+
+function HeaderNav({ page, className, ariaLabel, copy }: HeaderNavProps) {
+  return (
+    <nav className={className} aria-label={ariaLabel}>
+      <a
+        className="tc-doc-topbar__tab"
+        href={hrefFor(HOME_SLUG)}
+        aria-current={page.slug === HOME_SLUG ? 'page' : undefined}
+        onClick={(event) => {
+          event.currentTarget.closest('details')?.removeAttribute('open');
+        }}
+      >
+        {copy.home}
+      </a>
+      <a
+        className="tc-doc-topbar__tab"
+        href={hrefFor('installation')}
+        aria-current={page.slug === 'installation' ? 'page' : undefined}
+        onClick={(event) => {
+          event.currentTarget.closest('details')?.removeAttribute('open');
+        }}
+      >
+        {copy.installation}
+      </a>
+      <a
+        className="tc-doc-topbar__tab"
+        href={hrefFor('notes-de-versions')}
+        aria-current={page.slug === 'notes-de-versions' ? 'page' : undefined}
+        onClick={(event) => {
+          event.currentTarget.closest('details')?.removeAttribute('open');
+        }}
+      >
+        {copy.releaseNotes}
+      </a>
+    </nav>
+  );
+}
+
 /**
  * La coquille du site de documentation : barre du haut, barre de gauche,
  * contenu, pied de page.
@@ -94,8 +138,32 @@ function PageContent({ page }: { page: DocPage }): ReactNode {
 export function DocShell({ pages }: DocShellProps) {
   const slug = useRoute();
   const page = findPage(pages, slug) ?? findPage(pages, HOME_SLUG) ?? EMPTY_REGISTRY_PAGE;
-  const [mobileNavOpen, setMobileNavOpen] = useState(true);
+  const { language, setLanguage } = useLanguage();
+  const copy = copyFor(language);
+  const pageTitle = pageTitleFor(page, language);
+  const [compactNav, setCompactNav] = useState(compactNavViewport);
+  const [navWidth, setNavWidth] = useState(
+    compactNavViewport() ? DOC_NAV_WIDTH_MOBILE_DEFAULT : DOC_NAV_WIDTH_DEFAULT,
+  );
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia?.(COMPACT_NAV_MEDIA_QUERY);
+
+    if (!mediaQuery) return;
+
+    const updateCompactNav = () => setCompactNav(mediaQuery.matches);
+
+    updateCompactNav();
+    mediaQuery.addEventListener?.('change', updateCompactNav);
+
+    return () => mediaQuery.removeEventListener?.('change', updateCompactNav);
+  }, []);
+
+  const navWidthMin = compactNav ? DOC_NAV_WIDTH_MOBILE_MIN : DOC_NAV_WIDTH_MIN;
+  const navWidthMax = compactNav ? DOC_NAV_WIDTH_MOBILE_MAX : DOC_NAV_WIDTH_MAX;
+  const defaultNavWidth = compactNav ? DOC_NAV_WIDTH_MOBILE_DEFAULT : DOC_NAV_WIDTH_DEFAULT;
+  const effectiveNavWidth =
+    navWidth >= navWidthMin && navWidth <= navWidthMax ? navWidth : defaultNavWidth;
   /* LE TITRE, ET NON `<main>`, EST LA CIBLE DU FOCUS. Deux raisons mesurées :
      — `<main>` fait la hauteur entière de la page, donc l'anneau de
        `:focus-visible` devenait un rectangle de plusieurs milliers de pixels
@@ -106,13 +174,48 @@ export function DocShell({ pages }: DocShellProps) {
        et VoiceOver : le nom de la page, une fois, par le mécanisme le plus
        universel. C'est ce qui a permis de SUPPRIMER la région live qui doublait
        l'annonce. */
+  const docRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const topbarRef = useRef<HTMLDivElement>(null);
+
+  /* Le header a plusieurs hauteurs selon le breakpoint : sur petit écran les
+     onglets, la recherche et les actions peuvent occuper plusieurs lignes. La
+     variable historique `--doc-topbar-size` est un token, pas la hauteur
+     réellement peinte. Le rail mesure donc son voisin réel et partage cette
+     valeur avec le CSS afin que sa fin reste toujours dans la fenêtre. */
+  useEffect(() => {
+    const docElement = docRef.current;
+    const topbarElement = topbarRef.current;
+
+    if (!docElement || !topbarElement) return;
+
+    const updateTopbarHeight = () => {
+      const height = topbarElement.getBoundingClientRect().height;
+
+      if (height > 0) {
+        docElement.style.setProperty('--tc-doc-topbar-height', `${height}px`);
+      }
+    };
+
+    updateTopbarHeight();
+    window.addEventListener('resize', updateTopbarHeight);
+    const resizeObserver =
+      typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(updateTopbarHeight);
+    resizeObserver?.observe(topbarElement);
+
+    return () => {
+      window.removeEventListener('resize', updateTopbarHeight);
+      resizeObserver?.disconnect();
+      docElement.style.removeProperty('--tc-doc-topbar-height');
+    };
+  }, []);
 
   /* Synchronisation avec un système extérieur — le titre du document — donc un
      effet est ici l'outil juste. Le titre suit la page RENDUE, repli compris. */
   useEffect(() => {
-    document.title = `${page.title} — ${SITE_NAME}`;
-  }, [page.title]);
+    document.title = `${pageTitle} — ${SITE_NAME}`;
+  }, [pageTitle]);
 
   /* La page rendue lors du dernier passage de cet effet. UNE CHAÎNE ET NON UN
      BOOLÉEN « déjà monté », et c'est ce qui rend le mode strict inoffensif :
@@ -147,8 +250,16 @@ export function DocShell({ pages }: DocShellProps) {
     scroller.scrollTop = 0;
   }, [page.slug]);
 
+  const previewNavWidth = (width: number) => {
+    bodyRef.current?.style.setProperty('--tc-doc-nav-width', `${width}px`);
+  };
+
+  const commitNavWidth = (width: number) => {
+    setNavWidth(width);
+  };
+
   return (
-    <div className="tc-doc">
+    <div className="tc-doc" ref={docRef}>
       {/* LE LIEN D'ÉVITEMENT NE DOIT PAS NAVIGUER, et sans ce gestionnaire il
           navigue. Le routage lit TOUT le fragment : laisser le navigateur poser
           `#contenu` dans l'adresse, c'est `parseSlug('#contenu') === 'contenu'`,
@@ -172,7 +283,7 @@ export function DocShell({ pages }: DocShellProps) {
           titleRef.current?.focus();
         }}
       >
-        Aller au contenu
+        {copy.skipToContent}
       </a>
 
       {/* =====================================================================
@@ -209,7 +320,7 @@ export function DocShell({ pages }: DocShellProps) {
           rognée par son propre parent et ne se voit pas. La demander serait
           annoncer une élévation que rien ne peint.
           ================================================================== */}
-      <div className="tc-doc-topbar">
+      <div className="tc-doc-topbar" ref={topbarRef}>
         <Topbar
           className="tc-doc-topbar__bar"
           rootClassName="tc-doc-topbar__glass"
@@ -224,12 +335,46 @@ export function DocShell({ pages }: DocShellProps) {
               `<a>` est donc passé en enfants, avec l'icône du favicon dedans pour
               qu'il fasse partie de la cible ; le composant apporte la boîte
               (`min-w-0`, l'alignement, la gouttière). */}
-          <Topbar.Brand className="tc-doc-topbar__side">
+          <Topbar.Brand className="tc-doc-topbar__side tc-doc-topbar__brand-container">
             <a className="tc-doc-topbar__brand" href={hrefFor(HOME_SLUG)}>
-              <img className="tc-doc-topbar__glyph" src="/favicon.svg" alt="" aria-hidden="true" />
-              {SITE_NAME}
+              <span className="tc-doc-topbar__glyph" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+              </span>
+              <span className="tc-doc-topbar__brand-name" aria-label={SITE_NAME}>
+                <span>opale</span>
+                <span className="tc-doc-topbar__brand-name--accent">UI</span>
+              </span>
+              <span className="tc-doc-topbar__version">v{UI_VERSION}</span>
             </a>
           </Topbar.Brand>
+
+          <Topbar.Section className="tc-doc-topbar__tabs" gap="tight">
+            <HeaderNav
+              page={page}
+              className="tc-doc-topbar__tabs-nav"
+              ariaLabel={copy.primaryNavigation}
+              copy={copy}
+            />
+            <details className="tc-doc-topbar__menu">
+              <summary className="tc-doc-topbar__menu-toggle" aria-label={copy.openMenu}>
+                <span aria-hidden="true" />
+              </summary>
+              <HeaderNav
+                page={page}
+                className="tc-doc-topbar__menu-nav"
+                ariaLabel={copy.primaryMenu}
+                copy={copy}
+              />
+            </details>
+          </Topbar.Section>
 
           {/* LA RECHERCHE EST LA SECTION ÉLASTIQUE, et `grow` est exactement ce
               que `doc.css` écrivait à la main : `flex: 1 1 auto` avec un
@@ -238,7 +383,7 @@ export function DocShell({ pages }: DocShellProps) {
               ayant une largeur fixe. Le combobox lui-même n'a pas changé d'une
               ligne : il est déplacé, pas réécrit. */}
           <Topbar.Section className="tc-doc-topbar__field" grow align="center">
-            <DocSearch pages={pages} />
+            <DocSearch pages={pages} language={language} />
           </Topbar.Section>
 
           {/* LE SÉPARATEUR EST DANS LES ACTIONS ET NON ENTRE ELLES ET LE CHAMP,
@@ -249,31 +394,32 @@ export function DocShell({ pages }: DocShellProps) {
               gouttière — 17 px mesurés — d'un seul côté, et le champ cesserait
               d'être centré. */}
           <Topbar.Actions className="tc-doc-topbar__side tc-doc-topbar__actions">
-            <ThemeToggle />
+            <ThemeToggle label={copy.darkTheme} />
+            <LanguageSelector language={language} label={copy.language} onChange={setLanguage} />
           </Topbar.Actions>
-
-          {/* Sur mobile, le contrôle du sommaire vit dans cette même grille que
-              la recherche. Il garde donc exactement la même position quand le
-              panneau s'ouvre ou se ferme, au lieu de flotter avec sa hauteur. */}
-          <button
-            className="tc-doc-mobile-nav-toggle"
-            type="button"
-            aria-label="Afficher ou masquer le sommaire"
-            aria-expanded={mobileNavOpen}
-            aria-controls="tc-doc-nav-content"
-            onClick={() => setMobileNavOpen((open) => !open)}
-          >
-            <span aria-hidden="true" />
-          </button>
         </Topbar>
       </div>
 
-      <div className="tc-doc-body">
+      <div
+        className="tc-doc-body"
+        ref={bodyRef}
+        style={{ '--tc-doc-nav-width': `${effectiveNavWidth}px` } as CSSProperties}
+      >
         <DocNav
           pages={pages}
           currentSlug={page.slug}
-          mobileNavOpen={mobileNavOpen}
-          onMobileNavOpenChange={setMobileNavOpen}
+          language={language}
+          resize={{
+            width: effectiveNavWidth,
+            min: navWidthMin,
+            max: navWidthMax,
+            step: DOC_NAV_WIDTH_STEP,
+            onPreview: previewNavWidth,
+            onChange: (width) =>
+              commitNavWidth(Math.max(navWidthMin, Math.min(navWidthMax, width))),
+            onCommit: (width) =>
+              commitNavWidth(Math.max(navWidthMin, Math.min(navWidthMax, width))),
+          }}
         />
 
         <div className="tc-doc-column">
@@ -282,12 +428,12 @@ export function DocShell({ pages }: DocShellProps) {
               gestionnaire de clic n'a pas encore été attaché. Le focus visé
               par le code, lui, est le titre juste en dessous. */}
           <main
-            className={`tc-doc-main${page.group === 'composants' ? ' tc-doc-main--components' : ''}`}
+            className={`tc-doc-main${page.slug === HOME_SLUG ? ' tc-doc-main--home' : ''}${page.group === 'composants' ? ' tc-doc-main--components' : ''}`}
             id="contenu"
             tabIndex={-1}
           >
             <h1 className="tc-doc-page__title" ref={titleRef} tabIndex={-1}>
-              {page.title}
+              {pageTitle}
             </h1>
             {/* La frontière n'entoure QUE le contenu de la page : le titre, le
                 sommaire et les deux bascules restent rendus quoi qu'il

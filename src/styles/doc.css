@@ -2395,6 +2395,167 @@ body {
   font-size: var(--text-sm);
 }
 
+/* --- Notes de versions -----------------------------------------------------
+   La page garde deux registres visibles : le repère de la version courante,
+   puis une pile de versions. Les archives sont des applications autonomes,
+   pas de simples ancres vers du texte : le bouton principal reste donc une
+   vraie cible, tandis que le lien Git donne la provenance immuable.
+   -------------------------------------------------------------------------- */
+
+.tc-doc-release-callout {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-5);
+  border: 1px solid var(--accent-secondary);
+  border-inline-start-width: var(--space-1);
+  border-radius: var(--radius-md);
+  background: var(--panel-surface);
+}
+
+.tc-doc-release-callout__eyebrow {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tc-doc-release-callout__version {
+  margin: var(--space-1) 0 0;
+  color: var(--text-strong);
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.tc-doc-release-callout__text {
+  margin: 0;
+  max-inline-size: var(--measure);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+}
+
+.tc-doc-release-list {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.tc-doc-release {
+  padding: var(--space-5);
+  border: 1px solid var(--doc-card-edge);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.tc-doc-release--current {
+  border-color: var(--accent);
+}
+
+.tc-doc-release__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block-end: var(--space-3);
+  border-block-end: 1px solid var(--rule);
+}
+
+.tc-doc-release__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tc-doc-release__version {
+  padding-block: var(--space-1);
+  padding-inline: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--panel-surface);
+  color: var(--text-strong);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.tc-doc-release__status {
+  padding-block: var(--space-1);
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--accent-quiet);
+  color: var(--text-accent);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.tc-doc-release__status--breaking {
+  background: var(--panel-surface);
+  color: var(--text-muted);
+}
+
+.tc-doc-release__date {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.tc-doc-release__title {
+  margin: var(--space-4) 0 0;
+  max-inline-size: var(--measure);
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-heading);
+}
+
+.tc-doc-release__changes {
+  margin-block-start: var(--space-4);
+}
+
+.tc-doc-release__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  margin-block-start: var(--space-5);
+}
+
+.tc-doc-release__action {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target-min);
+  padding-block: var(--space-2);
+  padding-inline: var(--space-4);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+  transition:
+    background-color var(--motion-color) var(--motion-ease),
+    border-color var(--motion-color) var(--motion-ease);
+}
+
+.tc-doc-release__action:hover {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+}
+
+.tc-doc-release__source {
+  font-size: var(--text-sm);
+}
+
+.tc-doc-release-footnote {
+  margin: 0;
+}
+
 /* Les pages de composants vont droit à l'essentiel : installation, import et
    démonstration. Les détails d'API, les chapeaux et les commentaires restent
    dans le source, mais ne prennent plus de place dans la vitrine. */
@@ -3586,5 +3747,14 @@ body {
   .tc-doc-nav:has(.tc-doc-nav__all[open]) .tc-doc-nav__head {
     align-items: flex-start;
     padding-block-start: 0;
+  }
+
+  .tc-doc-release-callout {
+    grid-template-columns: 1fr;
+  }
+
+  .tc-doc-release__header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

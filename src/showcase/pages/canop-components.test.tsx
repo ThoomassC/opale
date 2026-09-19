@@ -1,0 +1,208 @@
+import { cleanup, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, describe, expect, it } from 'vitest';
+
+import { CANOP_CATALOG, Opale } from '../../magic';
+import { catalogComponentLabel } from '../doc-model';
+import { CatalogPreview } from './catalog-preview';
+import { opaleComponentPages } from './canop-components';
+
+afterEach(cleanup);
+
+function renderButtonPage() {
+  const page = opaleComponentPages.find((entry) => entry.label === 'Button');
+
+  if (!page) throw new Error('La page Button du catalogue Opale est introuvable.');
+
+  return render(<>{page.render()}</>);
+}
+
+describe('la page V3 de Button', () => {
+  it('montre les quatre variantes pleines dans le même ordre que CanopUI', () => {
+    const { container } = renderButtonPage();
+    const row = container.querySelector('.tc-doc-canop-preview__row');
+
+    expect(row).not.toBeNull();
+
+    const buttons = within(row as HTMLElement).getAllByRole('button');
+    expect(buttons.map((button) => button.textContent)).toEqual([
+      'Primaire',
+      'Secondaire',
+      'Accent',
+      'Danger',
+    ]);
+    expect(buttons[3]).toHaveClass('canop-button--danger');
+    expect(screen.queryByRole('button', { name: 'Ghost' })).not.toBeInTheDocument();
+  });
+
+  it('affiche le code exact de la rangée depuis sa commande', async () => {
+    const user = userEvent.setup();
+    renderButtonPage();
+
+    await user.click(screen.getByRole('button', { name: 'Afficher le code' }));
+
+    const code = screen.getByRole('group', {
+      name: 'Exemple Button, défilement horizontal',
+    });
+    expect(code).toHaveTextContent('<Opale.Button variant="primary">Primaire</Opale.Button>');
+    expect(code).toHaveTextContent('<Opale.Button variant="danger">Danger</Opale.Button>');
+  });
+});
+
+describe('le catalogue interactif V3', () => {
+  it('possède exactement une page, un export public et une démo pour chaque composant', () => {
+    expect(opaleComponentPages).toHaveLength(CANOP_CATALOG.length);
+    expect(new Set(CANOP_CATALOG.map((entry) => entry.name))).toHaveProperty(
+      'size',
+      CANOP_CATALOG.length,
+    );
+
+    for (const entry of CANOP_CATALOG) {
+      const publicName = catalogComponentLabel(entry.name) as keyof typeof Opale;
+      expect(Opale[publicName], `${entry.name} doit être exporté par Opale`).toBeDefined();
+    }
+  });
+
+  it.each(CANOP_CATALOG)('$name rend un spécimen réel et non la carte générique', (entry) => {
+    const { container } = render(<CatalogPreview name={entry.name} liquidGlass={false} />);
+    const preview = container.querySelector(`[data-preview-component="${entry.name}"]`);
+
+    expect(preview).not.toBeNull();
+    expect(preview).not.toHaveTextContent('Démonstration manquante');
+    expect(preview?.childElementCount).toBeGreaterThan(0);
+  });
+
+  it('fait réellement basculer ThemeToggle', async () => {
+    const user = userEvent.setup();
+    render(<CatalogPreview name="CanopThemeToggle" liquidGlass={false} />);
+
+    expect(screen.getByRole('status')).toHaveTextContent('Thème clair');
+    await user.click(screen.getByRole('checkbox', { name: 'Thème' }));
+    expect(screen.getByRole('status')).toHaveTextContent('Thème sombre');
+  });
+
+  it('rend SegmentedControl contrôlable', async () => {
+    const user = userEvent.setup();
+    render(<CatalogPreview name="CanopSegmentedControl" liquidGlass={false} />);
+
+    await user.click(screen.getByRole('button', { name: 'Code' }));
+
+    expect(screen.getByRole('button', { name: 'Code' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Design system' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
+
+  it('ouvre puis confirme ConfirmDialog', async () => {
+    const user = userEvent.setup();
+    render(<CatalogPreview name="CanopConfirmDialog" liquidGlass={false} />);
+
+    await user.click(screen.getByRole('button', { name: 'Supprimer le fichier' }));
+    expect(screen.getByRole('dialog', { name: 'Supprimer le fichier ?' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Confirmer' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('ferme puis réaffiche Toast', async () => {
+    const user = userEvent.setup();
+    render(<CatalogPreview name="CanopToast" liquidGlass={false} />);
+
+    expect(screen.getByText('Modifications enregistrées')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Fermer' }));
+    expect(screen.queryByText('Modifications enregistrées')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Afficher le toast' }));
+    expect(screen.getByText('Modifications enregistrées')).toBeInTheDocument();
+  });
+
+  it('soumet Form et affiche son résultat', async () => {
+    const user = userEvent.setup();
+    render(<CatalogPreview name="CanopForm" liquidGlass={false} />);
+
+    await user.click(screen.getByRole('button', { name: 'Envoyer' }));
+    expect(screen.getByRole('status')).toHaveTextContent('Formulaire envoyé');
+  });
+
+  it('rend LanguageSelector et MultiSelect contrôlables', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <CatalogPreview name="CanopLanguageSelector" liquidGlass={false} />,
+    );
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Langue' }), 'ES');
+    expect(screen.getByRole('combobox', { name: 'Langue' })).toHaveValue('ES');
+    expect(screen.getByText('ES')).toBeInTheDocument();
+
+    rerender(<CatalogPreview name="CanopMultiSelect" liquidGlass={false} />);
+    await user.deselectOptions(
+      screen.getByRole('listbox', { name: 'Sélection multiple' }),
+      'design',
+    );
+    await user.selectOptions(screen.getByRole('listbox', { name: 'Sélection multiple' }), [
+      'code',
+      'docs',
+    ]);
+    expect(screen.getByRole('listbox', { name: 'Sélection multiple' })).toHaveValue([
+      'code',
+      'docs',
+    ]);
+  });
+
+  it('confirme les actions des boutons spécialisés', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<CatalogPreview name="CanopAddButton" liquidGlass={false} />);
+
+    await user.click(screen.getByRole('button', { name: /Ajouter/ }));
+    expect(screen.getByRole('status')).toHaveTextContent('Élément ajouté');
+
+    rerender(<CatalogPreview name="CanopSaveButton" liquidGlass={false} />);
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
+    expect(screen.getByRole('button', { name: 'Enregistré' })).toBeInTheDocument();
+  });
+
+  it('met à jour la page active de Navbar', async () => {
+    const user = userEvent.setup();
+    render(<CatalogPreview name="CanopNavbar" liquidGlass={false} />);
+
+    await user.click(screen.getByRole('button', { name: 'Activité' }));
+    expect(screen.getByRole('button', { name: 'Activité' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  });
+
+  it('ferme CookieBanner après consentement', async () => {
+    const user = userEvent.setup();
+    render(<CatalogPreview name="CanopCookieBanner" liquidGlass={false} />);
+
+    await user.click(screen.getByRole('button', { name: 'Accepter' }));
+    expect(screen.queryByText(/Nous utilisons des cookies/)).not.toBeInTheDocument();
+  });
+
+  it('sélectionne FileCard et bloque RouteGuard', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<CatalogPreview name="CanopFileCard" liquidGlass={false} />);
+
+    const file = screen.getByRole('button', { name: /design-system\.fig/ });
+    await user.click(file);
+    expect(file).toHaveClass('canop-liquid');
+
+    rerender(<CatalogPreview name="CanopRouteGuard" liquidGlass={false} />);
+    await user.click(screen.getByRole('checkbox', { name: 'Accès autorisé' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Accès administrateur requis');
+  });
+
+  it('réagit à la validation et au score de Game', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<CatalogPreview name="CanopValidation" liquidGlass={false} />);
+
+    await user.clear(screen.getByRole('textbox', { name: 'Identifiant' }));
+    expect(screen.getByText('À corriger')).toBeInTheDocument();
+
+    rerender(<CatalogPreview name="CanopGame" liquidGlass={false} />);
+    await user.click(screen.getByRole('button', { name: 'Marquer un point' }));
+    expect(screen.getByText('13')).toBeInTheDocument();
+  });
+});

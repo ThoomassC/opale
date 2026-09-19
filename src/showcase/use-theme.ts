@@ -7,10 +7,12 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
  *
  * ET IL N'Y A PAS D'ENTRÉE `./client` : ce hook n'est pas publiable, parce
  * qu'il n'y a pas UNE bascule à publier mais trois mécaniques incompatibles.
- * Celle-ci veut deux états et écrit toujours `data-theme` ; celle qu'il
+ * Celle-ci gère les deux thèmes de la vitrine et écrit toujours `data-theme` ; celle qu'il
  * faudrait à un site prérendu veut un script en `<head>` ou un cookie, pas un
  * `localStorage` lu dans un initialiseur de `useState` — qui produit un flash.
- * Publier l'une reviendrait à publier la mauvaise deux fois.
+ * Publier l'une reviendrait à publier la mauvaise deux fois. Le matériau Liquid
+ * Glass reste volontairement hors de cet état global : chaque page de composant
+ * le porte avec son propre contrôle.
  */
 export type Theme = 'light' | 'dark';
 
@@ -133,7 +135,8 @@ export interface ThemeControl {
  * système est un magasin extérieur, pas un état dérivé, l'abonnement se nettoie
  * tout seul et le hook a un instantané serveur. Le seul `useEffect` ici
  * synchronise deux systèmes extérieurs — l'attribut `data-theme` du document et
- * la balise `theme-color` — ce pour quoi il est fait.
+ * la balise `theme-color` — ce pour quoi il est fait. Le matériau des composants
+ * ne passe jamais par cet effet.
  *
  * `localStorage` N'EST ÉCRIT QU'AU CLIC, jamais au montage, et cette fois la
  * garantie est structurelle plutôt que gardée : l'écriture ne vit que dans
@@ -175,8 +178,7 @@ export function useTheme(): ThemeControl {
     meta.setAttribute('content', ground);
   }, [theme]);
 
-  const toggleTheme = useCallback(() => {
-    const nextTheme: Theme = theme === 'dark' ? 'light' : 'dark';
+  const setTheme = useCallback((nextTheme: Theme) => {
 
     try {
       window.localStorage.setItem(STORAGE_KEY, nextTheme);
@@ -185,7 +187,15 @@ export function useTheme(): ThemeControl {
     }
 
     setStoredTheme(nextTheme);
-  }, [theme]);
+  }, []);
 
-  return { theme, isDarkTheme: theme === 'dark', toggleTheme };
+  const toggleTheme = useCallback(() => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  }, [setTheme, theme]);
+
+  return {
+    theme,
+    isDarkTheme: theme === 'dark',
+    toggleTheme,
+  };
 }

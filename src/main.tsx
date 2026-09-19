@@ -59,9 +59,14 @@ import './tokens/tokens.css';
    ========================================================================== */
 import './magic/magic.scss';
 
+// Hack est embarquée avec la vitrine : les exemples restent identiques sur
+// toutes les machines, sans dépendre d'une police installée localement.
+import 'hack-font/build/web/hack.css';
+
 // L'habillage de la vitrine, et lui seul : `doc.css` n'est pas publié dans le
 // paquet, donc aucun consommateur ne le télécharge. Il vient en dernier.
 import './styles/doc.css';
+import './styles/doc-v3.css';
 
 import { CharterPage } from './showcase/charter-page';
 
